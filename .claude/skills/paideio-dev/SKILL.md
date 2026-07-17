@@ -14,9 +14,14 @@ vince** ed è il file da correggere.
 ## Avvio rapido
 
 ```bash
-npm run db:seed   # azzera e ripopola il database demo (paideio.db, SQLite locale)
+npm run db:seed   # azzera e ripopola il database demo (Postgres/Neon, non più SQLite)
 npm run dev        # avvia il dev server (porta 3000, o la prima libera)
 ```
+
+**Attenzione**: sviluppo locale e produzione (https://paideio.vercel.app)
+condividono lo stesso database Neon — `npm run db:seed` scrive anche in
+quello che vedono gli utenti reali. Vedi AGENTS.md sezioni "Dati demo" e
+"Deploy in produzione" prima di rilanciarlo.
 
 Il seed crea solo coach demo pubblici (Elena Ferraro, Davide Conti, Giulia
 Romano — non collegati a nessun account Clerk). Login/registrazione vera
@@ -27,12 +32,18 @@ giocatore a coach dopo la registrazione.
 
 - Next.js 16 (App Router, Turbopack) + TypeScript + Tailwind v4 + shadcn/ui (style
   `base-nova`, primitive **Base UI**, non Radix).
-- Drizzle ORM su SQLite locale in sviluppo (`paideio.db`, gitignored). Migrazione a
-  Postgres (Vercel Marketplace/Neon) prevista prima del deploy in produzione.
+- Drizzle ORM su **Postgres (Neon)**, driver `drizzle-orm/node-postgres` + `pg.Pool`
+  a module scope in `src/lib/db/index.ts` (scelto per Vercel Fluid Compute, non
+  neon-http/neon-serverless — vedi AGENTS.md sezione Stack per il perché).
 - `src/lib/db/schema.ts` — schema Drizzle. `src/lib/db/seed.ts` — dati demo.
+- `src/lib/action-result.ts` — tipo `ActionResult<T>` che tutte le Server Action
+  ritornano invece di `throw`: in produzione Next.js oscura i messaggi di un throw
+  non gestito da una Server Action, non i valori di ritorno normali. I client
+  controllano `result.ok`, non try/catch.
 - `src/lib/queries.ts` — letture lato server, marcato `"server-only"`: **mai
-  importarlo da un client component**, trascinerebbe `better-sqlite3` nel bundle
-  browser (è già successo, vedi commit di fix).
+  importarlo da un client component**, trascinerebbe il driver `pg` nel bundle
+  browser (è già successo con better-sqlite3 prima della migrazione, vedi commit
+  di fix storico).
 - `src/lib/constants.ts` — costanti/tipi condivisi tra server e client (`LEVELS`,
   `TRAINING_TYPES`, `dayName`, `parseJsonArray`, `toLocalDateString`): importare da
   qui nei client component, non da `queries.ts`.
@@ -97,8 +108,8 @@ voci cambia stato, così le sessioni future partono dal punto giusto.
       (provisioning lazy dell'utente, `becomeCoach()`, proxy public-first)
 - [x] Ricerca coach per posizione/geolocalizzazione — vedi `AGENTS.md` per i
       dettagli implementativi
-- [x] Rifinitura design e responsività mobile — nav mobile in `Sheet`, form di
-      prenotazione riordinato su schermi piccoli
+- [x] Rifinitura design e responsività mobile — form di prenotazione
+      riordinato su schermi piccoli, shell sidebar/topbar/bottom-nav
 - [x] Redesign "Agonistic Pulse", replica export Stitch — vedi `AGENTS.md`
       sezione Design system; home/cerca/coach/dashboard allineate 1:1,
       resto del sito su token nuovi ma decorazioni non ancora riportate
@@ -111,9 +122,15 @@ voci cambia stato, così le sessioni future partono dal punto giusto.
       ordinamento ricerca) — vedi sezione "Round squadra di agenti" in
       `AGENTS.md` per l'elenco completo e cosa è stato deliberatamente
       rimandato
-- [ ] Migrazione da SQLite locale a Postgres (Vercel Marketplace) prima del deploy
+- [x] Migrazione a Postgres (Neon) + primo deploy in produzione
+      (https://paideio.vercel.app) + refactor errori Server Action da
+      `throw` a `ActionResult` strutturato — vedi `AGENTS.md` sezione
+      "Deploy in produzione" per le limitazioni note (Clerk su chiavi dev,
+      DB condiviso dev/prod, deploy manuale non collegato a Git)
 - [ ] Decisione su integrazione pagamenti (al momento assente)
 - [ ] PWA: manifest + icone + installabilità
+- [ ] Branch Neon dedicato allo sviluppo, istanza Clerk di produzione
+      (richiede dominio), collegamento Git→Vercel per deploy automatico
 
 ## Nota Base UI: prop `nativeButton`
 

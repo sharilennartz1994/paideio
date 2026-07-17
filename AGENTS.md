@@ -15,8 +15,17 @@ allenamento, livelli, richieste).
 - Next.js 16 (App Router, Turbopack), TypeScript, Tailwind v4
 - shadcn/ui, style `base-nova`, primitive **Base UI** (non Radix): i bottoni
   polimorfici usano `render={<Link .../>}` + `nativeButton={false}`, non `asChild`
-- Drizzle ORM su SQLite locale (`paideio.db`, gitignored) — da migrare a Postgres
-  (Vercel Marketplace/Neon) prima del deploy in produzione
+- Drizzle ORM su **Postgres (Neon, via Vercel Marketplace)** — migrato da
+  SQLite locale prima del primo deploy in produzione. Driver
+  `drizzle-orm/node-postgres` + `pg.Pool` creato una volta a module scope in
+  `src/lib/db/index.ts` (non `neon-http`/`neon-serverless`: Vercel gira su
+  Fluid Compute, che tiene vivo il runtime tra le richieste, quindi un pool
+  TCP riutilizzabile è la scelta giusta — vedi skill `neon-postgres`).
+  `attachDatabasePool` da `@vercel/functions` lascia che il runtime dreni le
+  connessioni prima che l'istanza vada in sospensione. **Un solo database
+  Neon condiviso tra sviluppo locale e produzione** (nessun branch
+  dedicato ancora) — vedi "Stato e prossimi passi" per il follow-up
+  consigliato prima che ci siano utenti reali.
 - Autenticazione: Clerk (`@clerk/nextjs`). `src/proxy.ts` protegge
   `/coach-admin(.*)` e `/prenotazioni(.*)`; le altre rotte sono pubbliche
   (pattern "public-first"). `getCurrentUser()` in `src/lib/session.ts` fa da
@@ -33,8 +42,20 @@ allenamento, livelli, richieste).
   availabilitySlots, bookings)
 - `src/lib/db/seed.ts` — dati demo (`npm run db:seed`)
 - `src/lib/queries.ts` — query lato server, marcato `"server-only"`: **non
-  importarlo da client component** (trascinerebbe `better-sqlite3` nel bundle
+  importarlo da client component** (trascinerebbe il driver `pg` nel bundle
   browser)
+- `src/lib/action-result.ts` — tipo `ActionResult<T>` (`{ok:true,data} |
+  {ok:false,error}`) che tutte le Server Action in `lib/actions/*` ritornano
+  invece di lanciare eccezioni per gli errori attesi (validazione, permessi,
+  limiti). **Non tornare a `throw new Error(...)` per errori che l'utente
+  deve vedere**: Next.js in produzione oscura il messaggio di un throw non
+  gestito da una Server Action (mostra un generico "An error occurred"), ma
+  non tocca un valore di ritorno normale — è per questo che il refactor è
+  stato fatto. I client caller controllano `result.ok` invece di
+  try/catch. Fa eccezione `becomeCoach()` in `actions/account.ts`: chiamata
+  da un `<form action={...}>` diretto via `useActionState`
+  (`components/become-coach-form.tsx`), stessa idea ma firma
+  `(prevState, formData) => ActionResult` richiesta dall'hook.
 - `src/lib/constants.ts` — costanti/tipi condivisi (`LEVELS`, `TRAINING_TYPES`,
   `dayName`, `parseJsonArray`, `toLocalDateString`) — usare questo import nei
   client component
@@ -205,24 +226,65 @@ sistema è fatto così:
 ## Comandi
 
 - `npm run dev` — dev server
-- `npm run db:seed` — resetta e ripopola il database demo
-- `npm run db:push` — applica lo schema Drizzle al DB locale
+- `npm run db:seed` — resetta e ripopola il database demo (`dotenv -e
+  .env.local --` davanti: né `tsx` né `drizzle-kit` caricano `.env.local` da
+  soli, vedi skill `vercel-storage`)
+- `npm run db:push` — applica lo schema Drizzle al database (stessa nota sul
+  dotenv, già nello script)
 - `npm run build` — build di produzione
 
 ## Dati demo
 
-Il seed crea solo tre coach pubblici, navigabili senza autenticazione:
-Elena Ferraro (Milano), Davide Conti (Milano), Giulia Romano (Torino). Non
-sono collegati a nessun account Clerk (`clerkId` null) — servono solo come
-annunci di esempio nella ricerca. Per provare il flusso giocatore/coach vero,
+Il seed crea tre coach pubblici, navigabili senza autenticazione: Elena
+Ferraro (Milano), Davide Conti (Milano), Giulia Romano (Torino). Non sono
+collegati a nessun account Clerk (`clerkId` null) — servono solo come annunci
+di esempio nella ricerca. Per provare il flusso giocatore/coach vero,
 registrati con Clerk (bottone "Registrati") e usa "Diventa coach" da
 `/diventa-coach` per passare al ruolo coach.
+
+**Attenzione**: sviluppo locale e produzione condividono lo stesso database
+Neon (vedi sezione Stack). Il seed scrive quindi anche in quello che gli
+utenti reali vedono. La produzione è stata deliberatamente lanciata **vuota**
+(nessun dato demo, vedi sezione "Deploy in produzione") — se rilanci il seed
+per testare in locale, ricordati di ripulire prima di considerare la cosa di
+nuovo "live" per davvero, oppure crea un branch Neon dedicato allo sviluppo
+(vedi "Stato e prossimi passi").
 
 `npm run db:seed` è **sicuro da rilanciare**: cancella solo gli utenti con
 `clerkId` nullo (i coach demo), mai gli account Clerk reali collegati
 durante i test. In passato faceva `db.delete(users)` su tutta la tabella —
 corretto perché avrebbe cancellato anche gli utenti reali ad ogni reseed. Se
 tocchi `seed.ts`, mantieni il filtro `isNull(users.clerkId)`.
+
+## Deploy in produzione
+
+Live su **https://paideio.vercel.app** (progetto Vercel
+`sharilennartz1994s-projects/paideio`, deploy manuale via `vercel --prod` —
+il collegamento Git per il deploy automatico su push a `main` non è ancora
+attivo, vedi sotto). Database Postgres su Neon, provisionato tramite
+Vercel Marketplace (`vercel integration add neon`, richiede accettazione
+termini via browser la prima volta).
+
+**Limitazioni note di questo primo deploy, deliberate per andare live senza
+un dominio**:
+- **Clerk è ancora su chiavi di sviluppo** (`pk_test_`/`sk_test_`), non
+  un'istanza di produzione. Clerk richiede un dominio personalizzato con
+  record DNS verificabili per l'istanza di produzione — non funziona su un
+  sottodominio `*.vercel.app`. Le chiavi dev funzionano per un lancio reale
+  ma hanno i limiti pensati per lo sviluppo, non per traffico pubblico. Da
+  aggiornare non appena c'è un dominio: https://clerk.com/docs/guides/development/deployment/production
+- **Un solo database Neon condiviso** tra sviluppo locale e produzione
+  (nessun branch dedicato) — vedi "Dati demo" sopra per le implicazioni
+  pratiche. Da separare con un branch Neon prima che ci siano utenti reali
+  che contano.
+- **Deploy manuale via CLI**, non collegato a GitHub: `vercel git connect`
+  ha fallito con "Make sure ... you have access to the repository" perché
+  la GitHub App di Vercel non ha ancora accesso al repo privato
+  `sharilennartz1994s-projects/paideio` — va concesso dalla dashboard
+  GitHub (Settings → Integrations → Vercel) o rifacendo `vercel git connect`
+  dopo aver installato/autorizzato l'app sul repo. Una volta collegato, ogni
+  push su `main` farà deploy automatico e questa nota va rimossa.
+- **Pagamenti**: ancora assenti, nessuna decisione presa (vedi sotto).
 
 ## Stato e prossimi passi noti
 
@@ -239,11 +301,31 @@ tocchi `seed.ts`, mantieni il filtro `isNull(users.clerkId)`.
       da `coach-admin/campi` rilevando la posizione del dispositivo (nessuna
       chiave di geocoding usata). Location senza coordinate non compaiono nella
       ricerca "vicino a me" ma restano cercabili per città.
-- [x] Rifinitura design e responsività mobile — header con nav collassata in
-      `Sheet` (`MobileNav`) sotto `sm`, pannello prenotazione riordinato sopra
-      il calendario su mobile e `sticky` su desktop (`booking-calendar.tsx`)
-- [ ] Migrazione da SQLite locale a Postgres prima del deploy
+- [x] Rifinitura design e responsività mobile — vedi sezione Design system
+      per la shell attuale (sidebar/topbar/bottom-nav); pannello prenotazione
+      riordinato sopra il calendario su mobile e `sticky` su desktop
+- [x] Migrazione da SQLite locale a Postgres (Neon) + primo deploy in
+      produzione — vedi sezione "Deploy in produzione" per URL e limitazioni
+      note (Clerk ancora su chiavi dev, DB condiviso dev/prod, deploy manuale
+      non ancora collegato a Git)
+- [x] Refactor Server Action da `throw` a `ActionResult` strutturato
+      (`src/lib/action-result.ts`) — senza questo, in produzione Next.js
+      oscura tutti i messaggi di errore lanciati da una Server Action
+      mostrando un generico "An error occurred"; ora i messaggi italiani di
+      validazione/permessi/limiti arrivano intatti al client. Tocca tutte le
+      action in `lib/actions/*` e i relativi client caller. `becomeCoach()`
+      passato a `useActionState` (vedi `become-coach-form.tsx`) perché è
+      legato a un `<form action={...}>` diretto.
 - [ ] Decisione su integrazione pagamenti (al momento assente)
+- [ ] Branch Neon dedicato allo sviluppo locale, separato dalla produzione
+      (oggi condividono lo stesso database — vedi "Dati demo" e "Deploy in
+      produzione")
+- [ ] Collegare il repo GitHub a Vercel per il deploy automatico su push a
+      `main` (oggi richiede `vercel --prod` manuale — vedi "Deploy in
+      produzione" per il motivo)
+- [ ] Istanza Clerk di produzione, quando c'è un dominio personalizzato
+      (oggi gira su chiavi di sviluppo anche in produzione — vedi "Deploy in
+      produzione")
 - [x] Pagina concept (`/chi-siamo`) — perché il nome "Paideio" (dal greco
       antico παιδεία), collegata da footer (`site-footer.tsx`, nuovo, presente
       su ogni pagina via `layout.tsx`) e da una sezione teaser in home
