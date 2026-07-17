@@ -7,9 +7,15 @@ import { db } from "@/lib/db";
 import { bookings, availabilitySlots, coachProfiles } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/session";
 import { parseJsonArray, toLocalDateString } from "@/lib/constants";
+import { type ActionResult, ok, err } from "@/lib/action-result";
 
 const MAX_NOTES_LENGTH = 500;
 const MAX_OPEN_REQUESTS = 10;
+const POSTGRES_UNIQUE_VIOLATION = "23505";
+
+function isUniqueViolation(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === POSTGRES_UNIQUE_VIOLATION;
+}
 
 export async function createBooking(input: {
   coachId: string;
@@ -20,17 +26,17 @@ export async function createBooking(input: {
   type: "singolo" | "gruppo";
   level: string;
   notes?: string;
-}) {
+}): Promise<ActionResult> {
   const user = await getCurrentUser();
   if (!user || user.role !== "player") {
-    throw new Error("Devi accedere come giocatore per prenotare.");
+    return err("Devi accedere come giocatore per prenotare.");
   }
 
   // Data valida (YYYY-MM-DD) e non nel passato — le stringhe in questo formato
   // sono ordinabili lessicograficamente.
   const today = toLocalDateString(new Date());
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date) || input.date < today) {
-    throw new Error("Data non valida: scegli una data a partire da oggi.");
+    return err("Data non valida: scegli una data a partire da oggi.");
   }
 
   // Lo slot richiesto deve corrispondere a una disponibilità reale del coach
@@ -46,7 +52,7 @@ export async function createBooking(input: {
     ),
   });
   if (!slot) {
-    throw new Error("Questo orario non corrisponde a nessuna disponibilità del coach.");
+    return err("Questo orario non corrisponde a nessuna disponibilità del coach.");
   }
 
   // Tipo di allenamento e livello devono essere tra quelli offerti dal coach.
@@ -54,13 +60,13 @@ export async function createBooking(input: {
     where: eq(coachProfiles.userId, input.coachId),
   });
   if (!profile) {
-    throw new Error("Coach non trovato.");
+    return err("Coach non trovato.");
   }
   if (!parseJsonArray(profile.trainingTypes).includes(input.type)) {
-    throw new Error("Questo coach non offre questo tipo di allenamento.");
+    return err("Questo coach non offre questo tipo di allenamento.");
   }
   if (!parseJsonArray(profile.levels).includes(input.level)) {
-    throw new Error("Questo coach non offre lezioni per questo livello.");
+    return err("Questo coach non offre lezioni per questo livello.");
   }
 
   // Note: trim + taglio a 500 caratteri (non rifiutiamo, tronchiamo).
@@ -71,7 +77,7 @@ export async function createBooking(input: {
     where: and(eq(bookings.playerId, user.id), eq(bookings.status, "richiesta")),
   });
   if (openRequests.length >= MAX_OPEN_REQUESTS) {
-    throw new Error("Hai troppe richieste in attesa, aspetta una risposta prima di prenotarne altre.");
+    return err("Hai troppe richieste in attesa, aspetta una risposta prima di prenotarne altre.");
   }
 
   const conflict = await db.query.bookings.findFirst({
@@ -84,7 +90,7 @@ export async function createBooking(input: {
     ),
   });
   if (conflict) {
-    throw new Error("Questo slot non è più disponibile.");
+    return err("Questo slot non è più disponibile.");
   }
 
   try {
@@ -105,8 +111,8 @@ export async function createBooking(input: {
   } catch (error) {
     // L'indice unico parziale (bookings_active_slot_idx) intercetta le
     // prenotazioni concorrenti sullo stesso slot sfuggite al check sopra.
-    if (error instanceof Error && error.message.includes("UNIQUE constraint failed")) {
-      throw new Error("Questo slot non è più disponibile.");
+    if (isUniqueViolation(error)) {
+      return err("Questo slot non è più disponibile.");
     }
     throw error;
   }
@@ -114,26 +120,30 @@ export async function createBooking(input: {
   revalidatePath("/prenotazioni");
   revalidatePath(`/coach/${input.coachId}`);
   revalidatePath("/coach-admin/richieste");
+  return ok(undefined);
 }
 
 const BOOKING_STATUSES = ["confermata", "rifiutata", "annullata"] as const;
 
-export async function updateBookingStatus(bookingId: string, status: "confermata" | "rifiutata" | "annullata") {
+export async function updateBookingStatus(
+  bookingId: string,
+  status: "confermata" | "rifiutata" | "annullata"
+): Promise<ActionResult> {
   const user = await getCurrentUser();
-  if (!user) throw new Error("Non autenticato.");
+  if (!user) return err("Non autenticato.");
 
   // Difesa contro chiamate raw che bypassano il tipo TS.
   if (!BOOKING_STATUSES.includes(status)) {
-    throw new Error("Stato non valido.");
+    return err("Stato non valido.");
   }
 
   const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) });
-  if (!booking) throw new Error("Prenotazione non trovata.");
+  if (!booking) return err("Prenotazione non trovata.");
 
   const isOwnerCoach = user.role === "coach" && booking.coachId === user.id;
   const isOwnerPlayer = user.role === "player" && booking.playerId === user.id;
   if (!isOwnerCoach && !isOwnerPlayer) {
-    throw new Error("Non autorizzato a modificare questa prenotazione.");
+    return err("Non autorizzato a modificare questa prenotazione.");
   }
 
   // Transizioni consentite:
@@ -143,15 +153,16 @@ export async function updateBookingStatus(bookingId: string, status: "confermata
     ? booking.status === "richiesta" && (status === "confermata" || status === "rifiutata")
     : (booking.status === "richiesta" || booking.status === "confermata") && status === "annullata";
   if (!allowed) {
-    throw new Error("Questo cambio di stato non è consentito.");
+    return err("Questo cambio di stato non è consentito.");
   }
 
   if (status === "confermata" && booking.date < toLocalDateString(new Date())) {
-    throw new Error("Non puoi confermare una prenotazione con data già passata.");
+    return err("Non puoi confermare una prenotazione con data già passata.");
   }
 
   await db.update(bookings).set({ status }).where(eq(bookings.id, bookingId));
 
   revalidatePath("/prenotazioni");
   revalidatePath("/coach-admin/richieste");
+  return ok(undefined);
 }

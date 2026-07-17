@@ -44,17 +44,25 @@ export function LocationManager({ initialLocations }: { initialLocations: Locati
       return;
     }
     startTransition(async () => {
-      await addLocation({ name, address, city, lat: coords?.lat, lng: coords?.lng });
-      formRef.current?.reset();
-      setCoords(null);
-      toast.success(`${name} aggiunto ai tuoi campi 🎾`);
+      const result = await addLocation({ name, address, city, lat: coords?.lat, lng: coords?.lng });
+      if (result.ok) {
+        formRef.current?.reset();
+        setCoords(null);
+        toast.success(`${name} aggiunto ai tuoi campi 🎾`);
+      } else {
+        setError(result.error);
+      }
     });
   }
 
   function handleRemove(id: string) {
     startTransition(async () => {
-      await removeLocation(id);
-      toast("Campo rimosso.");
+      const result = await removeLocation(id);
+      if (result.ok) {
+        toast("Campo rimosso.");
+      } else {
+        toast.error(result.error);
+      }
     });
   }
 

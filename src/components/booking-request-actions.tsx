@@ -11,16 +11,24 @@ export function BookingRequestActions({ bookingId }: { bookingId: string }) {
 
   function handleConfirm() {
     startTransition(async () => {
-      await updateBookingStatus(bookingId, "confermata");
-      celebrate();
-      toast.success("Lezione confermata! Il giocatore riceverà l'ok.");
+      const result = await updateBookingStatus(bookingId, "confermata");
+      if (result.ok) {
+        celebrate();
+        toast.success("Lezione confermata! Il giocatore riceverà l'ok.");
+      } else {
+        toast.error(result.error);
+      }
     });
   }
 
   function handleReject() {
     startTransition(async () => {
-      await updateBookingStatus(bookingId, "rifiutata");
-      toast("Richiesta rifiutata.");
+      const result = await updateBookingStatus(bookingId, "rifiutata");
+      if (result.ok) {
+        toast("Richiesta rifiutata.");
+      } else {
+        toast.error(result.error);
+      }
     });
   }
 

@@ -6,10 +6,11 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { favorites } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/session";
+import { type ActionResult, ok, err } from "@/lib/action-result";
 
-export async function toggleFavorite(coachId: string): Promise<boolean> {
+export async function toggleFavorite(coachId: string): Promise<ActionResult<boolean>> {
   const user = await getCurrentUser();
-  if (!user || user.role !== "player") throw new Error("Devi accedere come giocatore.");
+  if (!user || user.role !== "player") return err("Devi accedere come giocatore.");
 
   const existing = await db.query.favorites.findFirst({
     where: and(eq(favorites.playerId, user.id), eq(favorites.coachId, coachId)),
@@ -32,5 +33,5 @@ export async function toggleFavorite(coachId: string): Promise<boolean> {
   revalidatePath("/cerca");
   revalidatePath(`/coach/${coachId}`);
   revalidatePath("/preferiti");
-  return isFavorite;
+  return ok(isFavorite);
 }

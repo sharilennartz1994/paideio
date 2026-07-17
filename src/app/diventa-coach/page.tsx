@@ -2,9 +2,9 @@ import Link from "next/link";
 import { SignInButton } from "@clerk/nextjs";
 import { Trophy } from "lucide-react";
 import { getCurrentUser } from "@/lib/session";
-import { becomeCoach } from "@/lib/actions/account";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { BecomeCoachForm } from "@/components/become-coach-form";
 
 export default async function DiventaCoachPage() {
   const user = await getCurrentUser();
@@ -32,14 +32,7 @@ export default async function DiventaCoachPage() {
               Vai alla tua area coach
             </Button>
           ) : user ? (
-            <form action={becomeCoach}>
-              <Button
-                type="submit"
-                className="cut-cta bg-ball font-mono text-xs font-bold tracking-wider text-ball-foreground uppercase hover:bg-ball/90"
-              >
-                Diventa coach
-              </Button>
-            </form>
+            <BecomeCoachForm />
           ) : (
             <SignInButton mode="modal">
               <Button className="cut-cta bg-ball font-mono text-xs font-bold tracking-wider text-ball-foreground uppercase hover:bg-ball/90">

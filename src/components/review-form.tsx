@@ -33,13 +33,13 @@ export function ReviewForm({ bookingId, coachName }: { bookingId: string; coachN
       return;
     }
     startTransition(async () => {
-      try {
-        await createReview({ bookingId, rating, comment });
+      const result = await createReview({ bookingId, rating, comment });
+      if (result.ok) {
         celebrate();
         toast.success(`Recensione inviata${coachName ? ` a ${coachName}` : ""}!`);
         setDone(true);
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Errore imprevisto.");
+      } else {
+        toast.error(result.error);
       }
     });
   }

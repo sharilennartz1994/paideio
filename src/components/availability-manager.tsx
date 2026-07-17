@@ -43,16 +43,24 @@ export function AvailabilityManager({
     }
 
     startTransition(async () => {
-      await addAvailabilitySlot({ locationId, dayOfWeek, startTime, endTime });
-      formRef.current?.reset();
-      toast.success("Orario aggiunto al tuo calendario 🎾");
+      const result = await addAvailabilitySlot({ locationId, dayOfWeek, startTime, endTime });
+      if (result.ok) {
+        formRef.current?.reset();
+        toast.success("Orario aggiunto al tuo calendario 🎾");
+      } else {
+        setError(result.error);
+      }
     });
   }
 
   function handleRemove(id: string) {
     startTransition(async () => {
-      await removeAvailabilitySlot(id);
-      toast("Orario rimosso.");
+      const result = await removeAvailabilitySlot(id);
+      if (result.ok) {
+        toast("Orario rimosso.");
+      } else {
+        toast.error(result.error);
+      }
     });
   }
 

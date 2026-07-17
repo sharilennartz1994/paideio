@@ -43,16 +43,16 @@ export function CoachProfileForm({
       return;
     }
     startTransition(async () => {
-      try {
-        await updateCoachProfile({
-          bio,
-          levels: Array.from(levels),
-          trainingTypes: Array.from(trainingTypes),
-          pricePerLesson: parsedPrice,
-        });
+      const result = await updateCoachProfile({
+        bio,
+        levels: Array.from(levels),
+        trainingTypes: Array.from(trainingTypes),
+        pricePerLesson: parsedPrice,
+      });
+      if (result.ok) {
         toast.success("Profilo aggiornato!");
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Errore imprevisto, riprova.");
+      } else {
+        toast.error(result.error);
       }
     });
   }

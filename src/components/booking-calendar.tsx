@@ -61,23 +61,23 @@ export function BookingCalendar({
   function handleSubmit() {
     if (!selected) return;
     startTransition(async () => {
-      try {
-        await createBooking({
-          coachId,
-          locationId: selected.locationId,
-          date: selected.date,
-          startTime: selected.startTime,
-          endTime: selected.endTime,
-          type: type as "singolo" | "gruppo",
-          level,
-          notes,
-        });
+      const result = await createBooking({
+        coachId,
+        locationId: selected.locationId,
+        date: selected.date,
+        startTime: selected.startTime,
+        endTime: selected.endTime,
+        type: type as "singolo" | "gruppo",
+        level,
+        notes,
+      });
+      if (result.ok) {
         celebrate();
         toast.success(SUCCESS_MESSAGES[Math.floor(Math.random() * SUCCESS_MESSAGES.length)]);
         setSelected(null);
         setNotes("");
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Errore imprevisto, riprova.");
+      } else {
+        toast.error(result.error);
       }
     });
   }

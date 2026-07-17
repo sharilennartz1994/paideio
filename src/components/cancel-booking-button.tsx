@@ -10,8 +10,12 @@ export function CancelBookingButton({ bookingId }: { bookingId: string }) {
 
   function handleCancel() {
     startTransition(async () => {
-      await updateBookingStatus(bookingId, "annullata");
-      toast("Prenotazione annullata.");
+      const result = await updateBookingStatus(bookingId, "annullata");
+      if (result.ok) {
+        toast("Prenotazione annullata.");
+      } else {
+        toast.error(result.error);
+      }
     });
   }
 

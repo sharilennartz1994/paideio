@@ -22,15 +22,14 @@ export function AvatarUpload({ name, currentUrl }: { name: string; currentUrl: s
     formData.set("avatar", file);
 
     startTransition(async () => {
-      try {
-        await updateCoachAvatar(formData);
+      const result = await updateCoachAvatar(formData);
+      if (result.ok) {
         toast.success("Foto profilo aggiornata!");
-      } catch (err) {
+      } else {
         setPreview(currentUrl);
-        toast.error(err instanceof Error ? err.message : "Errore imprevisto.");
-      } finally {
-        event.target.value = "";
+        toast.error(result.error);
       }
+      event.target.value = "";
     });
   }
 

@@ -27,13 +27,13 @@ export function FavoriteButton({
     const next = !isFavorite;
     setIsFavorite(next);
     startTransition(async () => {
-      try {
-        const result = await toggleFavorite(coachId);
-        setIsFavorite(result);
-        if (result) toast.success("Aggiunto ai preferiti");
-      } catch (err) {
+      const result = await toggleFavorite(coachId);
+      if (result.ok) {
+        setIsFavorite(result.data);
+        if (result.data) toast.success("Aggiunto ai preferiti");
+      } else {
         setIsFavorite(!next);
-        toast.error(err instanceof Error ? err.message : "Errore imprevisto.");
+        toast.error(result.error);
       }
     });
   }

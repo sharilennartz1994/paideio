@@ -8,14 +8,15 @@ import { db } from "@/lib/db";
 import { locations, availabilitySlots, coachProfiles, bookings } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/session";
 import { LEVELS, TRAINING_TYPES, toLocalDateString } from "@/lib/constants";
+import { type ActionResult, ok, err } from "@/lib/action-result";
 
 const MAX_AVATAR_BYTES = 4 * 1024 * 1024;
 const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-async function requireCoach() {
+async function requireCoach(): Promise<ActionResult<NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>>> {
   const user = await getCurrentUser();
-  if (!user || user.role !== "coach") throw new Error("Devi accedere come coach.");
-  return user;
+  if (!user || user.role !== "coach") return err("Devi accedere come coach.");
+  return ok(user);
 }
 
 export async function addLocation(input: {
@@ -24,11 +25,13 @@ export async function addLocation(input: {
   city: string;
   lat?: number;
   lng?: number;
-}) {
-  const coach = await requireCoach();
+}): Promise<ActionResult> {
+  const coachResult = await requireCoach();
+  if (!coachResult.ok) return coachResult;
+
   await db.insert(locations).values({
     id: randomUUID(),
-    coachId: coach.id,
+    coachId: coachResult.data.id,
     name: input.name,
     address: input.address,
     city: input.city,
@@ -36,19 +39,24 @@ export async function addLocation(input: {
     lng: input.lng ?? null,
   });
   revalidatePath("/coach-admin/campi");
+  return ok(undefined);
 }
 
-export async function removeLocation(locationId: string) {
-  const coach = await requireCoach();
+export async function removeLocation(locationId: string): Promise<ActionResult> {
+  const coachResult = await requireCoach();
+  if (!coachResult.ok) return coachResult;
+  const coach = coachResult.data;
+
   const location = await db.query.locations.findFirst({ where: eq(locations.id, locationId) });
-  if (!location || location.coachId !== coach.id) throw new Error("Non autorizzato.");
+  if (!location || location.coachId !== coach.id) return err("Non autorizzato.");
 
   // Prima di eliminare il campo, annulliamo esplicitamente le prenotazioni
   // future ancora attive: il cascade della FK le cancellerebbe in silenzio e
   // i giocatori non saprebbero mai che la lezione è saltata.
   const today = toLocalDateString(new Date());
-  db.transaction((tx) => {
-    tx.update(bookings)
+  await db.transaction(async (tx) => {
+    await tx
+      .update(bookings)
       .set({ status: "annullata" })
       .where(
         and(
@@ -56,13 +64,13 @@ export async function removeLocation(locationId: string) {
           inArray(bookings.status, ["richiesta", "confermata"]),
           gte(bookings.date, today)
         )
-      )
-      .run();
-    tx.delete(locations).where(eq(locations.id, locationId)).run();
+      );
+    await tx.delete(locations).where(eq(locations.id, locationId));
   });
 
   revalidatePath("/coach-admin/campi");
   revalidatePath("/prenotazioni");
+  return ok(undefined);
 }
 
 export async function addAvailabilitySlot(input: {
@@ -70,10 +78,13 @@ export async function addAvailabilitySlot(input: {
   dayOfWeek: number;
   startTime: string;
   endTime: string;
-}) {
-  const coach = await requireCoach();
+}): Promise<ActionResult> {
+  const coachResult = await requireCoach();
+  if (!coachResult.ok) return coachResult;
+  const coach = coachResult.data;
+
   const location = await db.query.locations.findFirst({ where: eq(locations.id, input.locationId) });
-  if (!location || location.coachId !== coach.id) throw new Error("Non autorizzato.");
+  if (!location || location.coachId !== coach.id) return err("Non autorizzato.");
 
   await db.insert(availabilitySlots).values({
     id: randomUUID(),
@@ -84,30 +95,38 @@ export async function addAvailabilitySlot(input: {
     endTime: input.endTime,
   });
   revalidatePath("/coach-admin/orari");
+  return ok(undefined);
 }
 
-export async function removeAvailabilitySlot(slotId: string) {
-  const coach = await requireCoach();
+export async function removeAvailabilitySlot(slotId: string): Promise<ActionResult> {
+  const coachResult = await requireCoach();
+  if (!coachResult.ok) return coachResult;
+  const coach = coachResult.data;
+
   const slot = await db.query.availabilitySlots.findFirst({ where: eq(availabilitySlots.id, slotId) });
-  if (!slot || slot.coachId !== coach.id) throw new Error("Non autorizzato.");
+  if (!slot || slot.coachId !== coach.id) return err("Non autorizzato.");
   await db.delete(availabilitySlots).where(eq(availabilitySlots.id, slotId));
   revalidatePath("/coach-admin/orari");
+  return ok(undefined);
 }
 
-export async function updateCoachAvatar(formData: FormData) {
-  const coach = await requireCoach();
+export async function updateCoachAvatar(formData: FormData): Promise<ActionResult> {
+  const coachResult = await requireCoach();
+  if (!coachResult.ok) return coachResult;
+  const coach = coachResult.data;
+
   const file = formData.get("avatar");
   if (!(file instanceof File) || file.size === 0) {
-    throw new Error("Seleziona un'immagine.");
+    return err("Seleziona un'immagine.");
   }
   if (!ALLOWED_AVATAR_TYPES.has(file.type)) {
-    throw new Error("Formato non supportato: usa JPG, PNG o WebP.");
+    return err("Formato non supportato: usa JPG, PNG o WebP.");
   }
   if (file.size > MAX_AVATAR_BYTES) {
-    throw new Error("L'immagine supera i 4 MB.");
+    return err("L'immagine supera i 4 MB.");
   }
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    throw new Error("Upload foto non ancora configurato su questo ambiente.");
+    return err("Upload foto non ancora configurato su questo ambiente.");
   }
 
   const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
@@ -117,6 +136,7 @@ export async function updateCoachAvatar(formData: FormData) {
   revalidatePath("/coach-admin/profilo");
   revalidatePath(`/coach/${coach.id}`);
   revalidatePath("/cerca");
+  return ok(undefined);
 }
 
 export async function updateCoachProfile(input: {
@@ -124,8 +144,10 @@ export async function updateCoachProfile(input: {
   levels: string[];
   trainingTypes: string[];
   pricePerLesson?: number | null;
-}) {
-  const coach = await requireCoach();
+}): Promise<ActionResult> {
+  const coachResult = await requireCoach();
+  if (!coachResult.ok) return coachResult;
+  const coach = coachResult.data;
 
   // Whitelist contro i valori canonici: scarta qualsiasi voce sconosciuta.
   const levels = input.levels.filter((l) => (LEVELS as readonly string[]).includes(l));
@@ -135,7 +157,7 @@ export async function updateCoachProfile(input: {
 
   const pricePerLesson = input.pricePerLesson ?? null;
   if (pricePerLesson !== null && (!Number.isInteger(pricePerLesson) || pricePerLesson <= 0)) {
-    throw new Error("Il prezzo per lezione deve essere un numero intero positivo.");
+    return err("Il prezzo per lezione deve essere un numero intero positivo.");
   }
 
   await db
@@ -148,4 +170,5 @@ export async function updateCoachProfile(input: {
     })
     .where(eq(coachProfiles.userId, coach.id));
   revalidatePath("/coach-admin/profilo");
+  return ok(undefined);
 }
