@@ -1,26 +1,337 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@clerk/ui/themes/shadcn.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: "Hanken Grotesk", "Hanken Grotesk Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Space Mono", "Space Mono Fallback", ui-monospace, monospace;
+  --font-heading: "Anybody", "Anybody Fallback", var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-ball: var(--ball);
+  --color-ball-foreground: var(--ball-foreground);
+  --color-court: var(--court);
+  --color-court-foreground: var(--court-foreground);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /*
+   * Token M3 esatti dell'export Google Stitch ("Agonistic Pulse"), stessi nomi
+   * usati nell'HTML sorgente di Stitch — permette di riusare le classi Tailwind
+   * di Stitch quasi alla lettera (bg-primary-container, text-on-surface-variant,
+   * ecc.). Non toccare i valori: sono la fonte di verità approvata dall'utente,
+   * vedi AGENTS.md.
+   */
+  --color-primary-container: var(--primary-container);
+  --color-on-primary: var(--on-primary);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-secondary-container: var(--secondary-container);
+  --color-secondary-fixed: var(--secondary-fixed);
+  --color-secondary-fixed-dim: var(--secondary-fixed-dim);
+  --color-on-secondary: var(--on-secondary);
+  --color-on-secondary-container: var(--on-secondary-container);
+  --color-on-secondary-fixed: var(--on-secondary-fixed);
+  --color-tertiary: var(--tertiary);
+  --color-tertiary-container: var(--tertiary-container);
+  --color-on-tertiary: var(--on-tertiary);
+  --color-on-tertiary-container: var(--on-tertiary-container);
+  --color-surface: var(--surface);
+  --color-surface-dim: var(--surface-dim);
+  --color-surface-bright: var(--surface-bright);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-on-background: var(--on-background);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+  --color-error: var(--error);
+  --color-error-container: var(--error-container);
+  --color-on-error: var(--on-error);
+  --color-on-error-container: var(--on-error-container);
+
+  /* Scala tipografica esatta di Stitch (nomi identici, sintassi compound v4) */
+  --text-display-hero: 80px;
+  --text-display-hero--line-height: 80px;
+  --text-display-hero--letter-spacing: -0.04em;
+  --text-display-hero--font-weight: 900;
+  --text-headline-lg: 48px;
+  --text-headline-lg--line-height: 52px;
+  --text-headline-lg--letter-spacing: -0.02em;
+  --text-headline-lg--font-weight: 800;
+  --text-headline-lg-mobile: 32px;
+  --text-headline-lg-mobile--line-height: 36px;
+  --text-headline-lg-mobile--font-weight: 800;
+  --text-headline-md: 24px;
+  --text-headline-md--line-height: 28px;
+  --text-headline-md--font-weight: 700;
+  --text-label-caps: 12px;
+  --text-label-caps--line-height: 16px;
+  --text-label-caps--letter-spacing: 0.1em;
+  --text-label-caps--font-weight: 700;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 28px;
+  --text-body-md: 16px;
+  --text-body-md--line-height: 24px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/*
+ * "Agonistic Pulse" — palette M3 esatta dell'export Google Stitch, dark-only
+ * (asfalto notturno + giallo pallina neon come colore guida, dosato). Vedi
+ * AGENTS.md per la cronologia (2 rifiniture precedenti scartate) e il perché.
+ * <html> porta sempre la classe `dark`.
+ */
+:root {
+  /* --- token M3 con i nomi/valori esatti di Stitch --- */
+  --background: #111316;
+  --on-background: #e2e2e6;
+  --surface: #111316;
+  --surface-dim: #111316;
+  --surface-bright: #37393d;
+  --surface-container-lowest: #0c0e11;
+  --surface-container-low: #1a1c1f;
+  --surface-container: #1e2023;
+  --surface-container-high: #282a2d;
+  --surface-container-highest: #333538;
+  --on-surface: #e2e2e6;
+  --on-surface-variant: #c3c5d9;
+  --outline: #8d90a2;
+  --outline-variant: #434656;
+  --primary: #b6c4ff;
+  --primary-container: #0057ff;
+  --on-primary: #00277f;
+  --on-primary-container: #e5e8ff;
+  --secondary: #ffffff;
+  --secondary-container: #d2f000;
+  --secondary-fixed: #d2f000;
+  --secondary-fixed-dim: #b8d300;
+  --on-secondary: #2c3400;
+  --on-secondary-container: #5d6b00;
+  --on-secondary-fixed: #191e00;
+  --tertiary: #ffb4a2;
+  --tertiary-container: #c72e00;
+  --on-tertiary: #621100;
+  --on-tertiary-container: #ffe4dd;
+  --error: #ffb4ab;
+  --error-container: #93000a;
+  --on-error: #690005;
+  --on-error-container: #ffdad6;
+
+  /* --- token semantici shadcn, mappati sui ruoli M3 equivalenti --- */
+  --foreground: var(--on-background);
+  --card: var(--surface-container);
+  --card-foreground: var(--on-surface);
+  --popover: var(--surface-container-high);
+  --popover-foreground: var(--on-surface);
+  --primary-foreground: var(--on-primary);
+  --secondary-foreground: var(--on-surface);
+  --muted: var(--surface-container-high);
+  --muted-foreground: var(--on-surface-variant);
+  --accent: var(--surface-bright);
+  --accent-foreground: var(--on-surface);
+  --destructive: var(--error);
+  --border: var(--outline-variant);
+  --input: var(--outline-variant);
+  --ring: var(--primary);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.5rem;
+  --sidebar: var(--surface-container-highest);
+  --sidebar-foreground: var(--on-surface);
+  --sidebar-primary: var(--primary-container);
+  --sidebar-primary-foreground: var(--on-primary-container);
+  --sidebar-accent: var(--surface-bright);
+  --sidebar-accent-foreground: var(--on-surface);
+  --sidebar-border: var(--outline-variant);
+  --sidebar-ring: var(--primary);
+  /* Pallina da padel — giallo neon (= secondary-fixed), colore guida dosato per CTA/stato attivo */
+  --ball: var(--secondary-fixed);
+  --ball-foreground: var(--on-secondary-fixed);
+  /* Fascia "asfalto" — sezioni decorative/hero, la superficie più scura della scala */
+  --court: var(--surface-container-lowest);
+  --court-foreground: var(--on-background);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-heading;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Texture "carbon fibre" a puntini — sfondo per fasce/pagine scure (sostituisce
+     l'asset esterno transparenttextures.com usato da Stitch: stesso effetto, self-hosted) */
+  .hex-texture,
+  .hex-tex {
+    background-image: radial-gradient(circle at 1px 1px, rgba(141, 144, 162, 0.12) 1px, transparent 0);
+    background-size: 24px 24px;
+  }
+  /* Alias legacy — pagine non ancora riportate 1:1 su Stitch in questo giro */
+  .cut-cta {
+    clip-path: polygon(0 0, 100% 0, 100% 78%, 92% 100%, 0 100%);
+  }
+  .cut-corner {
+    clip-path: polygon(14px 0, 100% 0, 100% 100%, 0 100%);
+  }
+
+  /* Taglio diagonale delle card coach/lezioni (angolo alto-destro smussato) */
+  .card-clip {
+    clip-path: polygon(0 0, 85% 0, 100% 15%, 100% 100%, 0 100%);
+  }
+  /* Esagono per i badge traguardo */
+  .badge-polygon {
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+  /* Chip "slanted" per i toggle tipo lezione nei filtri */
+  .slanted-chip {
+    clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+  }
+  .neon-glow-primary {
+    box-shadow: 0 0 20px rgba(0, 87, 255, 0.3);
+  }
+  .neon-glow-secondary {
+    box-shadow: 0 0 20px rgba(210, 240, 0, 0.4);
+  }
+  /* Ombra "hard edge" per la CTA sticky del profilo coach */
+  .neo-shadow {
+    box-shadow: 4px 4px 0px 0px #0057ff;
+  }
+  /* Fascia inclinata full-bleed con contenuto raddrizzato dentro (sezione "Perché Paideio") */
+  .slanted-divider {
+    transform: skewY(-2deg);
+  }
+  .un-skew {
+    transform: skewY(2deg);
+  }
+}
+
+@keyframes ball-bounce {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  45% {
+    transform: translateY(-22%) scale(0.96, 1.04);
+  }
+  55% {
+    transform: translateY(-22%) scale(0.96, 1.04);
+  }
+  85% {
+    transform: translateY(0) scale(1.06, 0.94);
+  }
+}
+
+@keyframes ball-shadow {
+  0%,
+  100% {
+    transform: scaleX(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scaleX(0.6);
+    opacity: 0.15;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes rotate-ring {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-ball-bounce {
+  animation: ball-bounce 1.6s cubic-bezier(0.33, 0, 0.2, 1) infinite;
+}
+
+.animate-ball-shadow {
+  animation: ball-shadow 1.6s cubic-bezier(0.33, 0, 0.2, 1) infinite;
+}
+
+.animate-pop-in {
+  animation: pop-in 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+
+.animate-active-ring {
+  animation: rotate-ring 4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-ball-bounce,
+  .animate-ball-shadow,
+  .animate-pop-in,
+  .animate-active-ring {
+    animation: none;
+  }
 }
