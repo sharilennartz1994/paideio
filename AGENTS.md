@@ -258,21 +258,44 @@ tocchi `seed.ts`, mantieni il filtro `isNull(users.clerkId)`.
 
 ## Deploy in produzione
 
-Live su **https://paideio.vercel.app** (progetto Vercel
+Live su **https://playpaideio.com** (dominio proprio, registrato tramite
+Vercel — `paideio.com` non era disponibile, da cui il nome scelto; alias
+anche su `https://paideio.vercel.app`). Progetto Vercel
 `sharilennartz1994s-projects/paideio`, deploy manuale via `vercel --prod` —
 il collegamento Git per il deploy automatico su push a `main` non è ancora
-attivo, vedi sotto). Database Postgres su Neon, provisionato tramite
-Vercel Marketplace (`vercel integration add neon`, richiede accettazione
-termini via browser la prima volta).
+attivo, vedi sotto. Database Postgres su Neon, provisionato tramite Vercel
+Marketplace (`vercel integration add neon`, richiede accettazione termini
+via browser la prima volta).
 
-**Limitazioni note di questo primo deploy, deliberate per andare live senza
-un dominio**:
-- **Clerk è ancora su chiavi di sviluppo** (`pk_test_`/`sk_test_`), non
-  un'istanza di produzione. Clerk richiede un dominio personalizzato con
-  record DNS verificabili per l'istanza di produzione — non funziona su un
-  sottodominio `*.vercel.app`. Le chiavi dev funzionano per un lancio reale
-  ma hanno i limiti pensati per lo sviluppo, non per traffico pubblico. Da
-  aggiornare non appena c'è un dominio: https://clerk.com/docs/guides/development/deployment/production
+**Clerk è in produzione vera** (non più chiavi `pk_test_`/`sk_test_`):
+istanza production creata dalla dashboard Clerk, dominio `playpaideio.com`
+verificato via 5 record CNAME aggiunti su Vercel DNS (`vercel dns add`,
+il DNS di `playpaideio.com` è gestito da Vercel quindi niente registrar
+esterno da toccare):
+- `clerk` → `frontend-api.clerk.services`
+- `accounts` → `accounts.clerk.services`
+- `clkmail` → `mail.<id>.clerk.services`
+- `clk._domainkey` → `dkim1.<id>.clerk.services`
+- `clk2._domainkey` → `dkim2.<id>.clerk.services`
+
+Le chiavi `pk_live_`/`sk_live_` sono impostate **solo sull'ambiente
+Production** di Vercel (`vercel env add ... production`) — Preview e
+Development restano sulle chiavi dev, perché i deploy Preview girano su
+sottodomini `*.vercel.app` che l'istanza production di Clerk non riconosce
+come dominio verificato.
+
+**Nota da non dimenticare se un deploy resta bloccato su "Building…" senza
+log**: non è detto sia la build. `vercel --prod` legge i metadati
+dell'autore dell'ultimo commit Git locale e Vercel **blocca silenziosamente
+il deploy** (mostra "Deployment Blocked" solo nella dashboard web, non in
+CLI) se quell'email non corrisponde a un account GitHub verificato — es. se
+`git config user.email` non è mai stato impostato, git genera un'email
+placeholder tipo `utente@hostname.local` che fa scattare il blocco. Prima
+di sospettare un problema di build/codice, controlla la dashboard
+(`https://vercel.com/<team>/<progetto>/deployments`, apri il deploy
+bloccato) per un banner "Deployment Blocked" / "Fix Git Configuration".
+
+**Limitazioni note ancora aperte**:
 - **Un solo database Neon condiviso** tra sviluppo locale e produzione
   (nessun branch dedicato) — vedi "Dati demo" sopra per le implicazioni
   pratiche. Da separare con un branch Neon prima che ci siano utenti reali
@@ -323,9 +346,9 @@ un dominio**:
 - [ ] Collegare il repo GitHub a Vercel per il deploy automatico su push a
       `main` (oggi richiede `vercel --prod` manuale — vedi "Deploy in
       produzione" per il motivo)
-- [ ] Istanza Clerk di produzione, quando c'è un dominio personalizzato
-      (oggi gira su chiavi di sviluppo anche in produzione — vedi "Deploy in
-      produzione")
+- [x] Dominio personalizzato (`playpaideio.com`, comprato tramite Vercel —
+      "paideio.com" non era libero) + istanza Clerk di produzione con DNS
+      verificato — vedi "Deploy in produzione" per i dettagli
 - [x] Pagina concept (`/chi-siamo`) — perché il nome "Paideio" (dal greco
       antico παιδεία), collegata da footer (`site-footer.tsx`, nuovo, presente
       su ogni pagina via `layout.tsx`) e da una sezione teaser in home
