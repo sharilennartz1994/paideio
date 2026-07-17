@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
-import { sqliteTable, text, integer, real, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { pgTable, text, integer, real, uniqueIndex } from "drizzle-orm/pg-core";
 
-export const users = sqliteTable("users", {
+export const users = pgTable("users", {
   id: text("id").primaryKey(),
   // null per gli account demo seedati senza un vero utente Clerk collegato
   clerkId: text("clerk_id").unique(),
@@ -11,7 +11,7 @@ export const users = sqliteTable("users", {
   createdAt: text("created_at").notNull(),
 });
 
-export const coachProfiles = sqliteTable("coach_profiles", {
+export const coachProfiles = pgTable("coach_profiles", {
   userId: text("user_id")
     .primaryKey()
     .references(() => users.id, { onDelete: "cascade" }),
@@ -26,7 +26,7 @@ export const coachProfiles = sqliteTable("coach_profiles", {
   pricePerLesson: integer("price_per_lesson"),
 });
 
-export const locations = sqliteTable("locations", {
+export const locations = pgTable("locations", {
   id: text("id").primaryKey(),
   coachId: text("coach_id")
     .notNull()
@@ -40,7 +40,7 @@ export const locations = sqliteTable("locations", {
   lng: real("lng"),
 });
 
-export const availabilitySlots = sqliteTable("availability_slots", {
+export const availabilitySlots = pgTable("availability_slots", {
   id: text("id").primaryKey(),
   coachId: text("coach_id")
     .notNull()
@@ -54,7 +54,7 @@ export const availabilitySlots = sqliteTable("availability_slots", {
   endTime: text("end_time").notNull(), // "HH:MM"
 });
 
-export const bookings = sqliteTable(
+export const bookings = pgTable(
   "bookings",
   {
     id: text("id").primaryKey(),
@@ -89,7 +89,7 @@ export const bookings = sqliteTable(
   ]
 );
 
-export const reviews = sqliteTable("reviews", {
+export const reviews = pgTable("reviews", {
   id: text("id").primaryKey(),
   // una recensione per prenotazione
   bookingId: text("booking_id")
@@ -107,7 +107,7 @@ export const reviews = sqliteTable("reviews", {
   createdAt: text("created_at").notNull(),
 });
 
-export const favorites = sqliteTable(
+export const favorites = pgTable(
   "favorites",
   {
     id: text("id").primaryKey(),
