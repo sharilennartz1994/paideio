@@ -1,0 +1,123 @@
+import { sql } from "drizzle-orm";
+import { sqliteTable, text, integer, real, uniqueIndex } from "drizzle-orm/sqlite-core";
+
+export const users = sqliteTable("users", {
+  id: text("id").primaryKey(),
+  // null per gli account demo seedati senza un vero utente Clerk collegato
+  clerkId: text("clerk_id").unique(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  role: text("role", { enum: ["player", "coach"] }).notNull(),
+  createdAt: text("created_at").notNull(),
+});
+
+export const coachProfiles = sqliteTable("coach_profiles", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  bio: text("bio").notNull().default(""),
+  // JSON-encoded string[] — e.g. ["principiante","intermedio"]
+  levels: text("levels").notNull().default("[]"),
+  // JSON-encoded string[] — subset of ["singolo","gruppo"]
+  trainingTypes: text("training_types").notNull().default("[]"),
+  // URL Vercel Blob; null finché il coach non carica una foto (fallback iniziali)
+  avatarUrl: text("avatar_url"),
+  // Prezzo per lezione in euro interi; null = non indicato
+  pricePerLesson: integer("price_per_lesson"),
+});
+
+export const locations = sqliteTable("locations", {
+  id: text("id").primaryKey(),
+  coachId: text("coach_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  address: text("address").notNull(),
+  city: text("city").notNull(),
+  // Coordinate opzionali per la ricerca per posizione; null finché il coach non
+  // le imposta (geocoding manuale per ora, vedi coach-admin/campi).
+  lat: real("lat"),
+  lng: real("lng"),
+});
+
+export const availabilitySlots = sqliteTable("availability_slots", {
+  id: text("id").primaryKey(),
+  coachId: text("coach_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  locationId: text("location_id")
+    .notNull()
+    .references(() => locations.id, { onDelete: "cascade" }),
+  // 0 = domenica ... 6 = sabato
+  dayOfWeek: integer("day_of_week").notNull(),
+  startTime: text("start_time").notNull(), // "HH:MM"
+  endTime: text("end_time").notNull(), // "HH:MM"
+});
+
+export const bookings = sqliteTable(
+  "bookings",
+  {
+    id: text("id").primaryKey(),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    coachId: text("coach_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    // Nullable: se il coach elimina il campo, la prenotazione sopravvive
+    // (annullata da removeLocation) con locationId azzerato dalla FK.
+    locationId: text("location_id").references(() => locations.id, { onDelete: "set null" }),
+    date: text("date").notNull(), // "YYYY-MM-DD"
+    startTime: text("start_time").notNull(),
+    endTime: text("end_time").notNull(),
+    type: text("type", { enum: ["singolo", "gruppo"] }).notNull(),
+    level: text("level").notNull(),
+    status: text("status", {
+      enum: ["richiesta", "confermata", "rifiutata", "annullata"],
+    })
+      .notNull()
+      .default("richiesta"),
+    notes: text("notes").notNull().default(""),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    // Impedisce doppie prenotazioni attive sullo stesso slot (indice parziale:
+    // le prenotazioni rifiutate/annullate non bloccano lo slot)
+    uniqueIndex("bookings_active_slot_idx")
+      .on(table.coachId, table.locationId, table.date, table.startTime)
+      .where(sql`status IN ('richiesta', 'confermata')`),
+  ]
+);
+
+export const reviews = sqliteTable("reviews", {
+  id: text("id").primaryKey(),
+  // una recensione per prenotazione
+  bookingId: text("booking_id")
+    .notNull()
+    .unique()
+    .references(() => bookings.id, { onDelete: "cascade" }),
+  playerId: text("player_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  coachId: text("coach_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  rating: integer("rating").notNull(), // 1-5
+  comment: text("comment").notNull().default(""),
+  createdAt: text("created_at").notNull(),
+});
+
+export const favorites = sqliteTable(
+  "favorites",
+  {
+    id: text("id").primaryKey(),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    coachId: text("coach_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [uniqueIndex("favorites_player_coach_idx").on(table.playerId, table.coachId)]
+);
