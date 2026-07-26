@@ -83,8 +83,35 @@ export async function addAvailabilitySlot(input: {
   if (!coachResult.ok) return coachResult;
   const coach = coachResult.data;
 
+  const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
+  if (
+    !Number.isInteger(input.dayOfWeek) ||
+    input.dayOfWeek < 0 ||
+    input.dayOfWeek > 6 ||
+    !timePattern.test(input.startTime) ||
+    !timePattern.test(input.endTime)
+  ) {
+    return err("Giorno o orario non valido.");
+  }
+  if (input.startTime >= input.endTime) {
+    return err("L'orario di fine deve essere dopo l'orario di inizio.");
+  }
+
   const location = await db.query.locations.findFirst({ where: eq(locations.id, input.locationId) });
   if (!location || location.coachId !== coach.id) return err("Non autorizzato.");
+
+  const duplicate = await db.query.availabilitySlots.findFirst({
+    where: and(
+      eq(availabilitySlots.coachId, coach.id),
+      eq(availabilitySlots.locationId, input.locationId),
+      eq(availabilitySlots.dayOfWeek, input.dayOfWeek),
+      eq(availabilitySlots.startTime, input.startTime),
+      eq(availabilitySlots.endTime, input.endTime)
+    ),
+  });
+  if (duplicate) {
+    return err("Questo turno è già presente nel calendario.");
+  }
 
   await db.insert(availabilitySlots).values({
     id: randomUUID(),

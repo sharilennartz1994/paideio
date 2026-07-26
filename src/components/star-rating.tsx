@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Star } from "lucide-react";
+import { Star } from "@/components/icons/paideio-icons";
 import { cn } from "@/lib/utils";
 
 export function StarRatingDisplay({
@@ -24,7 +24,7 @@ export function StarRatingDisplay({
         {Array.from({ length: 5 }).map((_, i) => (
           <Star
             key={i}
-            className={cn(sizeClass, i < rounded ? "fill-ball text-ball" : "fill-transparent text-muted-foreground/40")}
+            className={cn(sizeClass, i < rounded ? "fill-ball text-accent-ball-ink" : "fill-transparent text-muted-foreground/55")}
           />
         ))}
       </div>
@@ -45,20 +45,27 @@ export function StarRatingInput({ value, onChange }: { value: number; onChange: 
   const active = hovered ?? value;
 
   return (
-    <div className="flex gap-1" onMouseLeave={() => setHovered(null)}>
+    <div
+      className="flex gap-1"
+      role="radiogroup"
+      aria-label="Valutazione"
+      onMouseLeave={() => setHovered(null)}
+    >
       {Array.from({ length: 5 }).map((_, i) => {
         const starValue = i + 1;
         return (
           <button
             key={i}
             type="button"
-            className="p-0.5 transition-transform hover:scale-110"
+            role="radio"
+            aria-checked={value === starValue}
+            className="flex size-11 items-center justify-center transition-transform hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vetro"
             onMouseEnter={() => setHovered(starValue)}
             onClick={() => onChange(starValue)}
             aria-label={`${starValue} stelle`}
           >
             <Star
-              className={cn("size-6", starValue <= active ? "fill-ball text-ball" : "fill-transparent text-muted-foreground/40")}
+              className={cn("size-6", starValue <= active ? "fill-ball text-accent-ball-ink" : "fill-transparent text-muted-foreground/55")}
             />
           </button>
         );

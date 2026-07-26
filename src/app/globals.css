@@ -6,332 +6,720 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-carta: var(--carta);
+  --color-carta-alta: var(--carta-alta);
+  --color-carta-bassa: var(--carta-bassa);
+  --color-calce: var(--calce);
+  --color-nebbia: var(--nebbia);
+  --color-vetro: var(--vetro);
+  --color-ottico: var(--ottico);
+  --color-ruggine: var(--ruggine);
+  --color-sabbia: var(--sabbia);
+  --color-game-ink: var(--game-ink);
+  --color-game-blue: var(--game-blue);
+  --color-game-cyan: var(--game-cyan);
+  --color-game-white: var(--game-white);
+  --color-game-orange: var(--game-orange);
+  --color-game-ball: var(--game-ball);
+  --color-accent-cyan-ink: var(--accent-cyan-ink);
+  --color-accent-ball-ink: var(--accent-ball-ink);
+  --color-accent-orange-ink: var(--accent-orange-ink);
   --font-sans: "Hanken Grotesk", "Hanken Grotesk Fallback", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Space Mono", "Space Mono Fallback", ui-monospace, monospace;
-  --font-heading: "Anybody", "Anybody Fallback", var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --color-ball: var(--ball);
-  --color-ball-foreground: var(--ball-foreground);
-  --color-court: var(--court);
-  --color-court-foreground: var(--court-foreground);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --font-heading: "Oxanium", "Oxanium Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-sans);
 
-  /*
-   * Token M3 esatti dell'export Google Stitch ("Agonistic Pulse"), stessi nomi
-   * usati nell'HTML sorgente di Stitch — permette di riusare le classi Tailwind
-   * di Stitch quasi alla lettera (bg-primary-container, text-on-surface-variant,
-   * ecc.). Non toccare i valori: sono la fonte di verità approvata dall'utente,
-   * vedi AGENTS.md.
-   */
-  --color-primary-container: var(--primary-container);
-  --color-on-primary: var(--on-primary);
-  --color-on-primary-container: var(--on-primary-container);
-  --color-secondary-container: var(--secondary-container);
-  --color-secondary-fixed: var(--secondary-fixed);
-  --color-secondary-fixed-dim: var(--secondary-fixed-dim);
-  --color-on-secondary: var(--on-secondary);
-  --color-on-secondary-container: var(--on-secondary-container);
-  --color-on-secondary-fixed: var(--on-secondary-fixed);
-  --color-tertiary: var(--tertiary);
-  --color-tertiary-container: var(--tertiary-container);
-  --color-on-tertiary: var(--on-tertiary);
-  --color-on-tertiary-container: var(--on-tertiary-container);
-  --color-surface: var(--surface);
-  --color-surface-dim: var(--surface-dim);
-  --color-surface-bright: var(--surface-bright);
-  --color-surface-container-lowest: var(--surface-container-lowest);
-  --color-surface-container-low: var(--surface-container-low);
-  --color-surface-container: var(--surface-container);
-  --color-surface-container-high: var(--surface-container-high);
-  --color-surface-container-highest: var(--surface-container-highest);
-  --color-on-surface: var(--on-surface);
-  --color-on-surface-variant: var(--on-surface-variant);
-  --color-on-background: var(--on-background);
-  --color-outline: var(--outline);
-  --color-outline-variant: var(--outline-variant);
-  --color-error: var(--error);
-  --color-error-container: var(--error-container);
-  --color-on-error: var(--on-error);
-  --color-on-error-container: var(--on-error-container);
+  --color-background: var(--carta);
+  --color-foreground: var(--calce);
+  --color-card: var(--carta-alta);
+  --color-card-foreground: var(--calce);
+  --color-popover: var(--carta-alta);
+  --color-popover-foreground: var(--calce);
+  --color-primary: var(--vetro);
+  --color-primary-foreground: var(--carta);
+  --color-secondary: var(--sabbia);
+  --color-secondary-foreground: var(--carta);
+  --color-muted: var(--carta-bassa);
+  --color-muted-foreground: var(--nebbia);
+  --color-accent: var(--carta-alta);
+  --color-accent-foreground: var(--calce);
+  --color-destructive: var(--ruggine);
+  --color-border: color-mix(in srgb, var(--nebbia) 30%, transparent);
+  --color-input: color-mix(in srgb, var(--nebbia) 38%, transparent);
+  --color-ring: var(--vetro);
+  --color-ball: var(--ottico);
+  --color-ball-foreground: var(--carta);
+  --color-court: var(--carta);
+  --color-court-foreground: var(--calce);
 
-  /* Scala tipografica esatta di Stitch (nomi identici, sintassi compound v4) */
-  --text-display-hero: 80px;
-  --text-display-hero--line-height: 80px;
-  --text-display-hero--letter-spacing: -0.04em;
-  --text-display-hero--font-weight: 900;
-  --text-headline-lg: 48px;
-  --text-headline-lg--line-height: 52px;
-  --text-headline-lg--letter-spacing: -0.02em;
-  --text-headline-lg--font-weight: 800;
-  --text-headline-lg-mobile: 32px;
-  --text-headline-lg-mobile--line-height: 36px;
-  --text-headline-lg-mobile--font-weight: 800;
-  --text-headline-md: 24px;
-  --text-headline-md--line-height: 28px;
+  /* Compatibility aliases while product surfaces migrate from Stitch. */
+  --color-surface: var(--carta);
+  --color-surface-dim: var(--carta-bassa);
+  --color-surface-bright: var(--carta-alta);
+  --color-surface-container-lowest: var(--carta-bassa);
+  --color-surface-container-low: var(--carta);
+  --color-surface-container: var(--carta-alta);
+  --color-surface-container-high: var(--carta-alta);
+  --color-surface-container-highest: var(--carta-alta);
+  --color-on-surface: var(--calce);
+  --color-on-surface-variant: var(--nebbia);
+  --color-on-background: var(--calce);
+  --color-outline: var(--nebbia);
+  --color-outline-variant: color-mix(in srgb, var(--nebbia) 32%, transparent);
+  --color-primary-container: var(--vetro);
+  --color-on-primary: var(--carta);
+  --color-on-primary-container: var(--carta);
+  --color-secondary-container: var(--ottico);
+  --color-secondary-fixed: var(--ottico);
+  --color-secondary-fixed-dim: var(--ottico);
+  --color-on-secondary: var(--carta);
+  --color-on-secondary-container: var(--carta);
+  --color-on-secondary-fixed: var(--carta);
+  --color-tertiary: var(--ruggine);
+  --color-tertiary-container: var(--ruggine);
+  --color-on-tertiary: var(--carta);
+  --color-on-tertiary-container: var(--carta);
+  --color-error: var(--ruggine);
+  --color-error-container: var(--ruggine);
+  --color-on-error: var(--carta);
+  --color-on-error-container: var(--carta);
+
+  --color-sidebar: var(--carta-bassa);
+  --color-sidebar-foreground: var(--calce);
+  --color-sidebar-primary: var(--vetro);
+  --color-sidebar-primary-foreground: var(--carta);
+  --color-sidebar-accent: var(--carta-alta);
+  --color-sidebar-accent-foreground: var(--calce);
+  --color-sidebar-border: color-mix(in srgb, var(--nebbia) 24%, transparent);
+  --color-sidebar-ring: var(--vetro);
+
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
+  --radius-4xl: 2px;
+
+  --text-display-hero: 62px;
+  --text-display-hero--line-height: 0.98;
+  --text-display-hero--letter-spacing: -0.035em;
+  --text-display-hero--font-weight: 800;
+  --text-headline-lg: 44px;
+  --text-headline-lg--line-height: 1.05;
+  --text-headline-lg--letter-spacing: -0.025em;
+  --text-headline-lg--font-weight: 750;
+  --text-headline-lg-mobile: 33px;
+  --text-headline-lg-mobile--line-height: 1.08;
+  --text-headline-lg-mobile--font-weight: 750;
+  --text-headline-md: 26px;
+  --text-headline-md--line-height: 1.12;
   --text-headline-md--font-weight: 700;
-  --text-label-caps: 12px;
-  --text-label-caps--line-height: 16px;
-  --text-label-caps--letter-spacing: 0.1em;
-  --text-label-caps--font-weight: 700;
-  --text-body-lg: 18px;
-  --text-body-lg--line-height: 28px;
-  --text-body-md: 16px;
-  --text-body-md--line-height: 24px;
+  --text-label-caps: 14px;
+  --text-label-caps--line-height: 1.35;
+  --text-label-caps--letter-spacing: 0.04em;
+  --text-label-caps--font-weight: 600;
+  --text-body-lg: 19px;
+  --text-body-lg--line-height: 1.6;
+  --text-body-md: 17px;
+  --text-body-md--line-height: 1.65;
 }
 
-/*
- * "Agonistic Pulse" — palette M3 esatta dell'export Google Stitch, dark-only
- * (asfalto notturno + giallo pallina neon come colore guida, dosato). Vedi
- * AGENTS.md per la cronologia (2 rifiniture precedenti scartate) e il perché.
- * <html> porta sempre la classe `dark`.
- */
 :root {
-  /* --- token M3 con i nomi/valori esatti di Stitch --- */
-  --background: #111316;
-  --on-background: #e2e2e6;
-  --surface: #111316;
-  --surface-dim: #111316;
-  --surface-bright: #37393d;
-  --surface-container-lowest: #0c0e11;
-  --surface-container-low: #1a1c1f;
-  --surface-container: #1e2023;
-  --surface-container-high: #282a2d;
-  --surface-container-highest: #333538;
-  --on-surface: #e2e2e6;
-  --on-surface-variant: #c3c5d9;
-  --outline: #8d90a2;
-  --outline-variant: #434656;
-  --primary: #b6c4ff;
-  --primary-container: #0057ff;
-  --on-primary: #00277f;
-  --on-primary-container: #e5e8ff;
-  --secondary: #ffffff;
-  --secondary-container: #d2f000;
-  --secondary-fixed: #d2f000;
-  --secondary-fixed-dim: #b8d300;
-  --on-secondary: #2c3400;
-  --on-secondary-container: #5d6b00;
-  --on-secondary-fixed: #191e00;
-  --tertiary: #ffb4a2;
-  --tertiary-container: #c72e00;
-  --on-tertiary: #621100;
-  --on-tertiary-container: #ffe4dd;
-  --error: #ffb4ab;
-  --error-container: #93000a;
-  --on-error: #690005;
-  --on-error-container: #ffdad6;
+  color-scheme: light;
+  --carta: #dce9f0;
+  --carta-alta: #f4f8f7;
+  --carta-bassa: #c8dae4;
+  --calce: #132b3a;
+  --nebbia: #465e6a;
+  --vetro: #00666a;
+  --accent-cyan-ink: #00666a;
+  --accent-ball-ink: #596500;
+  --accent-orange-ink: #a83112;
+  --ottico: #ddf23a;
+  --ruggine: #ff6338;
+  --sabbia: #185bff;
+  --game-ink: #07131f;
+  --game-blue: #185bff;
+  --game-cyan: #24d4d1;
+  --game-white: #f5f4ed;
+  --game-orange: #ff6338;
+  --game-ball: #ddf23a;
 
-  /* --- token semantici shadcn, mappati sui ruoli M3 equivalenti --- */
-  --foreground: var(--on-background);
-  --card: var(--surface-container);
-  --card-foreground: var(--on-surface);
-  --popover: var(--surface-container-high);
-  --popover-foreground: var(--on-surface);
-  --primary-foreground: var(--on-primary);
-  --secondary-foreground: var(--on-surface);
-  --muted: var(--surface-container-high);
-  --muted-foreground: var(--on-surface-variant);
-  --accent: var(--surface-bright);
-  --accent-foreground: var(--on-surface);
-  --destructive: var(--error);
-  --border: var(--outline-variant);
-  --input: var(--outline-variant);
-  --ring: var(--primary);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.5rem;
-  --sidebar: var(--surface-container-highest);
-  --sidebar-foreground: var(--on-surface);
-  --sidebar-primary: var(--primary-container);
-  --sidebar-primary-foreground: var(--on-primary-container);
-  --sidebar-accent: var(--surface-bright);
-  --sidebar-accent-foreground: var(--on-surface);
-  --sidebar-border: var(--outline-variant);
-  --sidebar-ring: var(--primary);
-  /* Pallina da padel — giallo neon (= secondary-fixed), colore guida dosato per CTA/stato attivo */
-  --ball: var(--secondary-fixed);
-  --ball-foreground: var(--on-secondary-fixed);
-  /* Fascia "asfalto" — sezioni decorative/hero, la superficie più scura della scala */
-  --court: var(--surface-container-lowest);
-  --court-foreground: var(--on-background);
+  --background: var(--carta);
+  --foreground: var(--calce);
+  --card: var(--carta-alta);
+  --card-foreground: var(--calce);
+  --popover: var(--carta-alta);
+  --popover-foreground: var(--calce);
+  --primary: var(--vetro);
+  --primary-foreground: var(--carta);
+  --secondary: var(--sabbia);
+  --secondary-foreground: var(--carta);
+  --muted: var(--carta-bassa);
+  --muted-foreground: var(--nebbia);
+  --accent: var(--carta-alta);
+  --accent-foreground: var(--calce);
+  --destructive: var(--accent-orange-ink);
+  --border: color-mix(in srgb, var(--nebbia) 30%, transparent);
+  --input: color-mix(in srgb, var(--nebbia) 38%, transparent);
+  --ring: var(--vetro);
+  --radius: 2px;
+}
+
+.dark {
+  color-scheme: dark;
+  --carta: #0b1724;
+  --carta-alta: #102a45;
+  --carta-bassa: #06101b;
+  --calce: #f5f4ed;
+  --nebbia: #a9bac7;
+  --vetro: #24d4d1;
+  --accent-cyan-ink: #24d4d1;
+  --accent-ball-ink: #ddf23a;
+  --accent-orange-ink: #ff6338;
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+  * { @apply border-border outline-ring/50; }
+  html {
+    @apply font-sans;
+    scroll-padding-top: 5rem;
+    background: var(--carta);
   }
   body {
     @apply bg-background text-foreground;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      linear-gradient(90deg, transparent 49.9%, color-mix(in srgb, var(--vetro) 5%, transparent) 50%, transparent 50.1%),
+      linear-gradient(color-mix(in srgb, var(--vetro) 4%, transparent) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 96px;
+    background-attachment: fixed;
   }
-  html {
-    @apply font-sans;
-  }
-  h1,
-  h2,
-  h3 {
+  h1, h2, h3 {
     @apply font-heading;
+    font-weight: 750;
+    letter-spacing: -0.025em;
   }
+  button, a, input, select, textarea { scroll-margin-top: 5rem; }
+  :focus-visible { outline: 2px solid var(--vetro); outline-offset: 3px; }
 }
 
 @layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+  .text-balance { text-wrap: balance; }
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+  .font-mono { font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
 
-  /* Texture "carbon fibre" a puntini — sfondo per fasce/pagine scure (sostituisce
-     l'asset esterno transparenttextures.com usato da Stitch: stesso effetto, self-hosted) */
-  .hex-texture,
-  .hex-tex {
-    background-image: radial-gradient(circle at 1px 1px, rgba(141, 144, 162, 0.12) 1px, transparent 0);
-    background-size: 24px 24px;
+  .paper-grain, .hex-texture, .hex-tex {
+    background-color: var(--carta);
+    background-image:
+      linear-gradient(90deg, transparent 49.85%, color-mix(in srgb, var(--vetro) 8%, transparent) 50%, transparent 50.15%),
+      linear-gradient(color-mix(in srgb, var(--vetro) 6%, transparent) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 88px;
   }
-  /* Alias legacy — pagine non ancora riportate 1:1 su Stitch in questo giro */
-  .cut-cta {
-    clip-path: polygon(0 0, 100% 0, 100% 78%, 92% 100%, 0 100%);
+  .malla-texture {
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--carta-alta) 93%, transparent), color-mix(in srgb, var(--carta-alta) 93%, transparent)),
+      linear-gradient(45deg, transparent 47%, color-mix(in srgb, var(--vetro) 13%, transparent) 48% 52%, transparent 53%),
+      linear-gradient(-45deg, transparent 47%, color-mix(in srgb, var(--vetro) 13%, transparent) 48% 52%, transparent 53%);
+    background-size: auto, 18px 18px, 18px 18px;
+    background-repeat: repeat;
   }
-  .cut-corner {
-    clip-path: polygon(14px 0, 100% 0, 100% 100%, 0 100%);
+  .net-texture {
+    background-image:
+      linear-gradient(rgb(10 24 38 / 0.94), rgb(10 24 38 / 0.94)),
+      linear-gradient(45deg, transparent 46%, rgb(108 229 255 / 0.11) 47% 53%, transparent 54%),
+      linear-gradient(-45deg, transparent 46%, rgb(108 229 255 / 0.11) 47% 53%, transparent 54%);
+    background-size: auto, 22px 22px, 22px 22px;
+    background-repeat: repeat;
   }
-
-  /* Taglio diagonale delle card coach/lezioni (angolo alto-destro smussato) */
+  .glass-panel {
+    border: 1px solid color-mix(in srgb, var(--vetro) 45%, transparent);
+    border-radius: 0;
+    background: color-mix(in srgb, var(--carta-alta) 96%, transparent);
+    box-shadow: 5px 5px 0 color-mix(in srgb, var(--game-ink) 74%, transparent);
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  }
+  .glass-panel:focus-within { border-color: var(--game-ball); }
+  .plate { object-fit: contain; }
+  .game-asset-stage {
+    position: relative;
+    isolation: isolate;
+  }
+  .game-asset-stage::before {
+    position: absolute;
+    inset: 12% 8%;
+    z-index: -1;
+    content: "";
+    background: color-mix(in srgb, var(--game-blue) 22%, transparent);
+    clip-path: polygon(10% 0, 100% 9%, 88% 100%, 0 86%);
+  }
+  .game-asset-stage::after {
+    position: absolute;
+    right: 2%;
+    bottom: 5%;
+    z-index: -1;
+    width: 28%;
+    aspect-ratio: 1;
+    content: "";
+    border: 2px solid color-mix(in srgb, var(--game-cyan) 55%, transparent);
+    transform: rotate(12deg);
+  }
+  .game-empty-state {
+    border: 1px solid color-mix(in srgb, var(--game-cyan) 42%, transparent);
+    background:
+      linear-gradient(145deg, color-mix(in srgb, var(--game-blue) 13%, transparent), transparent 55%),
+      var(--carta-alta);
+    box-shadow: 6px 6px 0 color-mix(in srgb, var(--game-ink) 70%, transparent);
+  }
+  .game-cta {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    box-shadow: 3px 3px 0 color-mix(in srgb, var(--game-ink) 72%, transparent);
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+  .game-cta::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    content: "";
+    background: color-mix(in srgb, var(--game-white) 24%, transparent);
+    transform: translateX(-102%) skewX(-16deg);
+    transition: transform 220ms cubic-bezier(.23,1,.32,1);
+  }
+  .game-cta::after {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    padding: 1px;
+    pointer-events: none;
+    content: "";
+    background: var(--game-cta-border, currentColor);
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+  }
+  .game-cta:active {
+    box-shadow: 1px 1px 0 color-mix(in srgb, var(--game-ink) 72%, transparent);
+  }
+  .game-panel {
+    box-shadow: 4px 4px 0 color-mix(in srgb, var(--game-ink) 58%, transparent);
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  }
+  .game-loader-track {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 3.5rem;
+    height: 2rem;
+  }
+  .game-loader-track::after {
+    position: absolute;
+    right: 0.2rem;
+    bottom: 0;
+    left: 0.2rem;
+    height: 2px;
+    content: "";
+    background: color-mix(in srgb, var(--game-cyan) 45%, transparent);
+    transform: skewX(-22deg);
+  }
+  .game-loader-ball {
+    position: relative;
+    z-index: 1;
+    animation: game-loader-rally 820ms cubic-bezier(.77,0,.175,1) infinite alternate;
+  }
+  .game-skeleton-shape {
+    position: relative;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--nebbia) 17%, transparent);
+  }
+  .game-skeleton-shape::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+    background: linear-gradient(
+      100deg,
+      transparent 15%,
+      color-mix(in srgb, var(--game-cyan) 18%, transparent) 50%,
+      transparent 85%
+    );
+    transform: translateX(-100%);
+    animation: game-skeleton-sweep 1.35s cubic-bezier(.23,1,.32,1) infinite;
+  }
   .card-clip {
-    clip-path: polygon(0 0, 85% 0, 100% 15%, 100% 100%, 0 100%);
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
   }
-  /* Esagono per i badge traguardo */
-  .badge-polygon {
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  .slanted-chip { clip-path: none; border-radius: 999px; }
+  .neo-shadow, .neon-glow-primary, .neon-glow-secondary { box-shadow: none; }
+  .slanted-divider, .un-skew { transform: none; }
+  .badge-polygon { clip-path: none; border-radius: 999px; }
+
+  .editorial-title {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 0.95;
+    text-transform: uppercase;
   }
-  /* Chip "slanted" per i toggle tipo lezione nei filtri */
-  .slanted-chip {
-    clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+  .ui-kicker {
+    color: var(--vetro);
+    font-family: var(--font-heading);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
   }
-  .neon-glow-primary {
-    box-shadow: 0 0 20px rgba(0, 87, 255, 0.3);
+  .ui-kicker.ui-kicker-inverse {
+    color: var(--game-white);
   }
-  .neon-glow-secondary {
-    box-shadow: 0 0 20px rgba(210, 240, 0, 0.4);
+
+  .arena-scroll-rally {
+    position: fixed;
+    top: 63px;
+    right: 0;
+    left: 80px;
+    z-index: 31;
+    height: 3px;
+    pointer-events: none;
+    transform-origin: left center;
   }
-  /* Ombra "hard edge" per la CTA sticky del profilo coach */
-  .neo-shadow {
-    box-shadow: 4px 4px 0px 0px #0057ff;
+  .arena-scroll-rally > span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: var(--game-ball);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--game-ink) 70%, transparent);
+    transform: scaleX(0);
+    transform-origin: left center;
+    animation: arena-scroll-progress linear both;
+    animation-timeline: scroll(root block);
   }
-  /* Fascia inclinata full-bleed con contenuto raddrizzato dentro (sezione "Perché Paideio") */
-  .slanted-divider {
-    transform: skewY(-2deg);
+  .game-impact {
+    position: absolute;
+    z-index: 3;
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+    background: url("/design/game/micro/ball-micro.png") center / contain no-repeat;
+    transform: translate(-50%, -50%) scale(.92);
+    animation: game-impact-pop 280ms cubic-bezier(.23,1,.32,1) both;
   }
-  .un-skew {
-    transform: skewY(2deg);
+  [data-game-tilt] {
+    transition: transform 260ms cubic-bezier(.23,1,.32,1);
+    transform-style: preserve-3d;
+  }
+  .game-hero-rally[data-game-visible="true"]::before {
+    animation: arena-surface-pulse 760ms cubic-bezier(.23,1,.32,1) both;
+  }
+  .training-rally-step {
+    transition: transform 180ms cubic-bezier(.23,1,.32,1), border-color 180ms ease;
+  }
+
+  .theme-toggle {
+    position: relative;
+    display: inline-flex;
+    width: 4.25rem;
+    height: 2.75rem;
+    flex: none;
+    align-items: center;
+    justify-content: space-between;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--game-cyan) 48%, transparent);
+    padding-inline: .65rem;
+    color: var(--game-white);
+    background: color-mix(in srgb, var(--game-blue) 24%, var(--game-ink));
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  }
+  .theme-toggle__sun,
+  .theme-toggle__moon {
+    position: relative;
+    z-index: 1;
+    transition: opacity 160ms ease, transform 200ms cubic-bezier(.23,1,.32,1);
+  }
+  .theme-toggle__sun { color: var(--game-ball); }
+  .theme-toggle__moon { opacity: .42; }
+  .theme-toggle__ball {
+    position: absolute;
+    top: .42rem;
+    left: .47rem;
+    width: 1.55rem;
+    aspect-ratio: 1;
+    border: 2px solid var(--game-ink);
+    border-radius: 50%;
+    background: var(--game-ball);
+    box-shadow: 2px 2px 0 rgb(0 0 0 / .34);
+    transform: translateX(0);
+    transition: transform 220ms cubic-bezier(.23,1,.32,1), background-color 160ms ease;
+  }
+  .dark .theme-toggle__ball {
+    background: var(--game-cyan);
+    transform: translateX(1.72rem) rotate(145deg);
+  }
+  .dark .theme-toggle__sun {
+    opacity: .38;
+    transform: rotate(-30deg);
+  }
+  .dark .theme-toggle__moon {
+    opacity: 1;
+    transform: rotate(8deg);
   }
 }
 
-@keyframes ball-bounce {
-  0%,
+@layer components {
+  [data-slot="button"] {
+    border-radius: 0;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  [data-slot="input"],
+  [data-slot="textarea"],
+  [data-slot="select-trigger"] {
+    min-height: 2.75rem;
+    border-radius: 0;
+    border-color: color-mix(in srgb, var(--game-cyan) 32%, transparent);
+    background: color-mix(in srgb, var(--carta-alta) 86%, transparent);
+  }
+
+  [data-slot="input"]:focus-visible,
+  [data-slot="textarea"]:focus-visible,
+  [data-slot="select-trigger"]:focus-visible {
+    border-color: var(--game-ball);
+    box-shadow: 0 3px 0 color-mix(in srgb, var(--game-ball) 35%, transparent);
+  }
+
+  [data-slot="badge"] {
+    border-radius: 2px;
+    font-family: var(--font-heading);
+    font-weight: 700;
+  }
+}
+
+@keyframes success-pop {
+  0% { transform: scale(0.96); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes game-loader-rally {
+  0% { transform: translateX(0) rotate(-8deg); }
+  100% { transform: translateX(1.55rem) rotate(24deg); }
+}
+
+@keyframes game-skeleton-sweep {
+  100% { transform: translateX(100%); }
+}
+
+@keyframes game-route-enter {
+  0% {
+    opacity: 0.72;
+    transform: translateY(8px);
+    clip-path: inset(0 0 3% 0);
+  }
   100% {
-    transform: translateY(0) scale(1, 1);
-  }
-  45% {
-    transform: translateY(-22%) scale(0.96, 1.04);
-  }
-  55% {
-    transform: translateY(-22%) scale(0.96, 1.04);
-  }
-  85% {
-    transform: translateY(0) scale(1.06, 0.94);
+    opacity: 1;
+    transform: translateY(0);
+    clip-path: inset(0);
   }
 }
 
-@keyframes ball-shadow {
-  0%,
-  100% {
-    transform: scaleX(1);
-    opacity: 0.35;
+@keyframes arena-scroll-progress {
+  to { transform: scaleX(1); }
+}
+
+@keyframes game-impact-pop {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(.92) rotate(-12deg); }
+  70% { opacity: 1; transform: translate(-50%, -135%) scale(1.08) rotate(18deg); }
+  100% { opacity: 0; transform: translate(-50%, -175%) scale(.98) rotate(28deg); }
+}
+
+@keyframes arena-surface-pulse {
+  0% { transform: rotate(-1deg) scale(.98); }
+  100% { transform: rotate(1deg) scale(1.025); }
+}
+
+.game-route-stage {
+  animation: game-route-enter 220ms cubic-bezier(.23,1,.32,1) both;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .glass-panel {
+    transition: transform 180ms cubic-bezier(.23,1,.32,1), border-color 180ms ease;
   }
-  50% {
-    transform: scaleX(0.6);
-    opacity: 0.15;
+  .glass-panel:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--game-cyan) 78%, transparent);
+  }
+  .game-cta:hover::before {
+    transform: translateX(102%) skewX(-16deg);
+  }
+  .training-rally-step:hover {
+    border-color: var(--game-white);
+    transform: translateY(-4px);
   }
 }
 
-@keyframes pop-in {
+/* Route-safe reveal: content remains readable while the observer reconnects after navigation. */
+html[data-motion-ready="true"] [data-game-reveal] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+html[data-motion-ready="true"] [data-game-reveal]:not([data-game-visible="true"]) {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+html[data-motion-ready="true"] [data-game-reveal][data-game-visible="true"] {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 260ms cubic-bezier(.23,1,.32,1) var(--game-reveal-delay, 0ms),
+    transform 280ms cubic-bezier(.23,1,.32,1) var(--game-reveal-delay, 0ms);
+}
+
+.animate-pop-in { animation: success-pop 220ms cubic-bezier(.23,1,.32,1) both; }
+  .animate-ball-bounce, .animate-ball-shadow, .animate-active-ring { animation: none; }
+
+/* Chi siamo: the motion assembles the word and connects the three parts of formation. */
+.paideio-manifesto-hero::after {
+  position: absolute;
+  top: 9%;
+  right: -8%;
+  z-index: -10;
+  width: min(58vw, 760px);
+  aspect-ratio: 1;
+  content: "";
+  border: 1px solid color-mix(in srgb, var(--game-cyan) 28%, transparent);
+  transform: rotate(21deg);
+}
+
+.paideio-word-reveal {
+  transform-origin: left center;
+}
+
+html[data-motion-ready="true"] .paideio-word-reveal {
+  animation: paideio-word-arrive 680ms cubic-bezier(.16,1,.3,1) both;
+}
+
+html[data-motion-ready="true"] .paideio-word-reveal--delay {
+  animation-delay: 70ms;
+}
+
+html[data-motion-ready="true"] .paideio-word-reveal--late {
+  animation-delay: 140ms;
+}
+
+html[data-motion-ready="true"] .paideio-manifesto-player[data-game-visible="true"] {
+  animation: paideio-player-arrive 760ms cubic-bezier(.16,1,.3,1) 90ms both;
+}
+
+.paideio-principles::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 1px;
+  width: 2px;
+  content: "";
+  background: var(--game-ball);
+  transform: scaleY(0);
+  transform-origin: top;
+}
+
+html[data-motion-ready="true"] .paideio-principles:has([data-game-visible="true"])::before {
+  animation: paideio-path-draw 620ms cubic-bezier(.16,1,.3,1) both;
+}
+
+@keyframes paideio-word-arrive {
   from {
-    opacity: 0;
-    transform: scale(0.9) translateY(6px);
+    opacity: .16;
+    transform: translate3d(-3.5%, 0, 0);
+    clip-path: inset(0 100% 0 0);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translate3d(0, 0, 0);
+    clip-path: inset(0);
   }
 }
 
-@keyframes rotate-ring {
+@keyframes paideio-player-arrive {
   from {
-    transform: rotate(0deg);
+    opacity: .35;
+    transform: translate3d(4%, 2%, 0) rotate(1.5deg);
+    clip-path: inset(8% 0 0 12%);
   }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0);
+    clip-path: inset(0);
   }
 }
 
-.animate-ball-bounce {
-  animation: ball-bounce 1.6s cubic-bezier(0.33, 0, 0.2, 1) infinite;
+@keyframes paideio-path-draw {
+  to { transform: scaleY(1); }
 }
 
-.animate-ball-shadow {
-  animation: ball-shadow 1.6s cubic-bezier(0.33, 0, 0.2, 1) infinite;
-}
-
-.animate-pop-in {
-  animation: pop-in 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
-}
-
-.animate-active-ring {
-  animation: rotate-ring 4s linear infinite;
+@media (max-width: 767px) {
+  body { font-size: 16px; }
+  .arena-scroll-rally { left: 0; }
+  .paideio-manifesto-hero::after {
+    top: 38%;
+    right: -42%;
+    width: 120vw;
+  }
+  .paideio-principles {
+    padding-left: 1.25rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-ball-bounce,
-  .animate-ball-shadow,
-  .animate-pop-in,
-  .animate-active-ring {
-    animation: none;
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
+  .game-loader-ball {
+    animation: none !important;
+    transform: translateX(0.75rem);
+  }
+  .game-skeleton-shape::after {
+    animation: none !important;
+    opacity: 0.35;
+    transform: none;
+  }
+  .game-route-stage {
+    animation: none !important;
+  }
+  html[data-motion-ready="true"] [data-game-reveal],
+  html[data-motion-ready="true"] [data-game-reveal][data-game-visible="true"] {
+    opacity: 1;
+    transform: none;
+    transition: opacity 160ms ease;
+  }
+  .arena-scroll-rally,
+  .game-impact {
+    display: none;
+  }
+  .paideio-word-reveal,
+  .paideio-manifesto-player,
+  .paideio-principles::before {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .glass-panel { border: 1px solid CanvasText; }
 }

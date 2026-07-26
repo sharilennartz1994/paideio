@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { bookings, availabilitySlots, coachProfiles } from "@/lib/db/schema";
+import { bookings, availabilitySlots, coachProfiles, notifications, users } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/session";
 import { parseJsonArray, toLocalDateString } from "@/lib/constants";
 import { type ActionResult, ok, err } from "@/lib/action-result";
@@ -94,19 +94,45 @@ export async function createBooking(input: {
   }
 
   try {
-    await db.insert(bookings).values({
-      id: randomUUID(),
-      playerId: user.id,
-      coachId: input.coachId,
-      locationId: input.locationId,
-      date: input.date,
-      startTime: input.startTime,
-      endTime: input.endTime,
-      type: input.type,
-      level: input.level,
-      notes,
-      status: "richiesta",
-      createdAt: new Date().toISOString(),
+    const bookingId = randomUUID();
+    const createdAt = new Date().toISOString();
+    await db.transaction(async (tx) => {
+      await tx.insert(bookings).values({
+        id: bookingId,
+        playerId: user.id,
+        coachId: input.coachId,
+        locationId: input.locationId,
+        date: input.date,
+        startTime: input.startTime,
+        endTime: input.endTime,
+        type: input.type,
+        level: input.level,
+        notes,
+        status: "richiesta",
+        createdAt,
+      });
+      await tx.insert(notifications).values([
+        {
+          id: randomUUID(),
+          userId: user.id,
+          bookingId,
+          type: "booking_created",
+          title: "Richiesta inviata",
+          message: `La tua lezione del ${input.date} alle ${input.startTime} è stata inviata al coach.`,
+          href: "/prenotazioni",
+          createdAt,
+        },
+        {
+          id: randomUUID(),
+          userId: input.coachId,
+          bookingId,
+          type: "booking_created",
+          title: "Nuova richiesta di lezione",
+          message: `${user.name} vuole allenarsi il ${input.date} alle ${input.startTime}.`,
+          href: "/coach-admin/richieste",
+          createdAt,
+        },
+      ]);
     });
   } catch (error) {
     // L'indice unico parziale (bookings_active_slot_idx) intercetta le
@@ -120,6 +146,8 @@ export async function createBooking(input: {
   revalidatePath("/prenotazioni");
   revalidatePath(`/coach/${input.coachId}`);
   revalidatePath("/coach-admin/richieste");
+  revalidatePath("/notifiche");
+  revalidatePath("/", "layout");
   return ok(undefined);
 }
 
@@ -160,9 +188,46 @@ export async function updateBookingStatus(
     return err("Non puoi confermare una prenotazione con data già passata.");
   }
 
-  await db.update(bookings).set({ status }).where(eq(bookings.id, bookingId));
+  if (status === "annullata") {
+    const [player, coach] = await Promise.all([
+      db.query.users.findFirst({ where: eq(users.id, booking.playerId) }),
+      db.query.users.findFirst({ where: eq(users.id, booking.coachId) }),
+    ]);
+    const createdAt = new Date().toISOString();
+    const actorName = isOwnerPlayer ? player?.name ?? "Il giocatore" : coach?.name ?? "Il coach";
+
+    await db.transaction(async (tx) => {
+      await tx.update(bookings).set({ status }).where(eq(bookings.id, bookingId));
+      await tx.insert(notifications).values([
+        {
+          id: randomUUID(),
+          userId: booking.playerId,
+          bookingId,
+          type: "booking_cancelled",
+          title: "Lezione annullata",
+          message: `La lezione del ${booking.date} alle ${booking.startTime} è stata annullata da ${actorName}.`,
+          href: "/prenotazioni",
+          createdAt,
+        },
+        {
+          id: randomUUID(),
+          userId: booking.coachId,
+          bookingId,
+          type: "booking_cancelled",
+          title: "Lezione annullata",
+          message: `La lezione con ${player?.name ?? "il giocatore"} del ${booking.date} alle ${booking.startTime} è stata annullata.`,
+          href: "/coach-admin/richieste",
+          createdAt,
+        },
+      ]);
+    });
+  } else {
+    await db.update(bookings).set({ status }).where(eq(bookings.id, bookingId));
+  }
 
   revalidatePath("/prenotazioni");
   revalidatePath("/coach-admin/richieste");
+  revalidatePath("/notifiche");
+  revalidatePath("/", "layout");
   return ok(undefined);
 }

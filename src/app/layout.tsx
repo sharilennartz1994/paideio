@@ -2,12 +2,14 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { itIT } from "@clerk/localizations";
 import { shadcn } from "@clerk/ui/themes";
 import type { Metadata } from "next";
-import { Anybody, Hanken_Grotesk, Space_Mono } from "next/font/google";
+import { Suspense } from "react";
+import { Hanken_Grotesk, Oxanium } from "next/font/google";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
 import { AppBottomNav } from "@/components/app-bottom-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { Toaster } from "@/components/ui/sonner";
+import { ArenaMotionDirector, GameRouteStage } from "@/components/design";
 import "./globals.css";
 
 const hankenGrotesk = Hanken_Grotesk({
@@ -15,16 +17,9 @@ const hankenGrotesk = Hanken_Grotesk({
   subsets: ["latin"],
 });
 
-const spaceMono = Space_Mono({
-  variable: "--font-space-mono",
+const oxanium = Oxanium({
+  variable: "--font-oxanium",
   subsets: ["latin"],
-  weight: ["400", "700"],
-});
-
-const anybody = Anybody({
-  variable: "--font-anybody",
-  subsets: ["latin"],
-  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -40,13 +35,37 @@ export default function RootLayout({
   return (
     <html
       lang="it"
-      className={`dark ${hankenGrotesk.variable} ${spaceMono.variable} ${anybody.variable} h-full antialiased`}
+      data-theme="light"
+      suppressHydrationWarning
+      className={`${hankenGrotesk.variable} ${oxanium.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem("paideio-theme");var d=t==="dark";document.documentElement.classList.toggle("dark",d);document.documentElement.dataset.theme=d?"dark":"light"}catch(e){}`,
+          }}
+        />
+      </head>
       <body className="min-h-full bg-background">
         <ClerkProvider appearance={{ theme: shadcn }} localization={itIT}>
+          <a
+            href="#contenuto-principale"
+            className="fixed top-2 left-2 z-[100] -translate-y-20 bg-game-ball px-4 py-3 font-heading font-bold text-game-ink transition-transform focus:translate-y-0"
+          >
+            Vai al contenuto principale
+          </a>
           <AppTopbar />
           <AppSidebar />
-          <main className="min-h-screen pt-16 pb-24 md:pb-0 md:pl-20">{children}</main>
+          <ArenaMotionDirector />
+          <main
+            id="contenuto-principale"
+            tabIndex={-1}
+            className="min-h-screen pt-16 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0 md:pl-20"
+          >
+            <Suspense fallback={children}>
+              <GameRouteStage>{children}</GameRouteStage>
+            </Suspense>
+          </main>
           <SiteFooter />
           <AppBottomNav />
           <Toaster position="top-center" />

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, integer, real, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, real, index, uniqueIndex } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
@@ -120,4 +120,46 @@ export const favorites = pgTable(
     createdAt: text("created_at").notNull(),
   },
   (table) => [uniqueIndex("favorites_player_coach_idx").on(table.playerId, table.coachId)]
+);
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    bookingId: text("booking_id").references(() => bookings.id, { onDelete: "cascade" }),
+    type: text("type", { enum: ["booking_created", "booking_cancelled"] }).notNull(),
+    title: text("title").notNull(),
+    message: text("message").notNull(),
+    href: text("href").notNull(),
+    readAt: text("read_at"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    index("notifications_user_created_idx").on(table.userId, table.createdAt),
+    index("notifications_user_read_idx").on(table.userId, table.readAt),
+  ]
+);
+
+export const productFeedback = pgTable(
+  "product_feedback",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    category: text("category", {
+      enum: ["nuova_feature", "miglioramento", "bug", "altro"],
+    }).notNull(),
+    message: text("message").notNull(),
+    status: text("status", { enum: ["nuovo", "valutato", "pianificato", "chiuso"] })
+      .notNull()
+      .default("nuovo"),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    index("product_feedback_email_created_idx").on(table.email, table.createdAt),
+    index("product_feedback_status_idx").on(table.status),
+  ]
 );

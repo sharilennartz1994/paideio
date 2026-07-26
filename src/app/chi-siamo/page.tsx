@@ -1,105 +1,223 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import { ScrollText, Swords, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { CourtLines } from "@/components/court-lines";
-import { PadelBallMark } from "@/components/padel-ball-mark";
+import Link from "next/link";
+import {
+  ArrowRight,
+  BookOpen,
+  GraduationCap,
+  Target,
+  Users,
+} from "@/components/icons/paideio-icons";
+import { GameAsset, GameCta, GameDivider } from "@/components/design";
 
 export const metadata: Metadata = {
-  title: "Il concept — Paideio",
-  description: "Perché si chiama Paideio: dal greco antico παιδεία alla formazione del giocatore di padel di oggi.",
+  title: "Paideio — Il gioco si impara insieme",
+  description:
+    "Paideio nasce dalla paideia: formazione attraverso pratica, guida e comunità. Oggi rende più semplice trovare un coach di padel.",
 };
 
-const CHAPTERS = [
+const PRINCIPLES = [
   {
-    icon: ScrollText,
-    title: "Nella Grecia antica",
-    body: "Παιδεία non significava semplicemente \"istruzione\". Era il percorso attraverso cui un giovane diventava una persona compiuta — non solo sui libri, ma nel ginnasio, sotto la guida di un maestro che insegnava tecnica, disciplina e rispetto per l'avversario. Il corpo e il carattere si allenavano insieme.",
+    number: "01",
+    icon: GraduationCap,
+    title: "Una guida",
+    body: "Un coach osserva ciò che da soli è difficile vedere e trasforma una correzione in un gesto allenabile.",
   },
   {
-    icon: Swords,
-    title: "Nel padel di oggi",
-    body: "Sul campo succede la stessa cosa. Non migliori da solo: ti serve qualcuno che corregga il tuo colpo, che ti spinga oltre il tuo limite, che ti insegni a leggere il gioco prima ancora dei fondamentali. Ogni lezione è una piccola paideia — un pezzo di formazione che si aggiunge al prossimo.",
+    number: "02",
+    icon: Target,
+    title: "Una pratica",
+    body: "Il miglioramento non è astratto: vive negli appoggi, nelle scelte e nella palla successiva.",
   },
   {
-    icon: Sparkles,
-    title: "Perché un'app",
-    body: "Paideio esiste per rendere più facile trovare quella guida. Per chi inizia, per chi vuole migliorare, per chi cerca solo un motivo in più per scendere in campo questa settimana. Il nome è un promemoria: non stai solo prenotando una lezione, stai continuando una tradizione lunga più di duemila anni.",
+    number: "03",
+    icon: Users,
+    title: "Una relazione",
+    body: "Il padel è un gioco di coppia. Si cresce imparando a leggere anche compagno, avversari e spazio.",
   },
-];
+] as const;
 
 export default function ChiSiamoPage() {
   return (
-    <div>
-      <section className="hex-tex relative overflow-hidden bg-court text-court-foreground">
-        <CourtLines className="pointer-events-none absolute -bottom-10 -right-14 h-[70%] w-[55%] text-primary/20" />
-        <div className="relative mx-auto max-w-2xl px-4 py-20 text-center sm:py-28">
-          <div className="mx-auto flex w-fit items-center gap-2 border border-court-foreground/20 bg-white/5 px-3.5 py-1.5 font-mono text-xs tracking-widest text-ball uppercase">
-            <PadelBallMark className="size-4" />
-            Il nome, la storia
+    <div className="overflow-hidden">
+      {/* THESIS: Paideio rende contemporanea la paideia attraverso il gesto reale del padel. STORY: parola → metodo → servizio. MOTION: la parola si compone e la linea collega guida, pratica e relazione. */}
+      <header className="paideio-manifesto-hero relative isolate overflow-hidden bg-game-ink text-game-white">
+        <div
+          aria-hidden
+          className="malla-texture absolute inset-0 -z-20 opacity-55"
+        />
+        <div className="relative mx-auto grid min-h-[calc(100dvh-4rem)] max-w-[1440px] items-center gap-8 px-5 py-14 md:px-10 lg:grid-cols-12 lg:px-16">
+          <div className="relative z-10 lg:col-span-7" data-game-reveal>
+            <p className="ui-kicker">Paideio · dal greco παιδεία</p>
+            <h1
+              aria-label="Il gioco si impara insieme."
+              className="mt-5 max-w-5xl font-heading text-[clamp(3.7rem,9vw,8.8rem)] leading-[0.82] font-extrabold tracking-[-0.065em] uppercase"
+            >
+              <span className="paideio-word-reveal block">Il gioco</span>
+              <span className="paideio-word-reveal paideio-word-reveal--delay block text-game-ball">
+                si impara
+              </span>
+              <span className="paideio-word-reveal paideio-word-reveal--late block">
+                insieme.
+              </span>
+            </h1>
+            <p className="mt-8 max-w-xl text-lg leading-relaxed text-game-white/76 md:text-xl">
+              Paideio mette in contatto giocatori e coach di padel. Il nome
+              racconta il perché: migliorare significa unire pratica, guida e
+              relazione.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <GameCta href="/cerca" tone="ball" showBall arrow>
+                Trova un coach
+              </GameCta>
+              <GameCta href="/academy" tone="outline">
+                Entra in Academy
+              </GameCta>
+            </div>
           </div>
-          <h1 className="mt-6 text-balance font-heading text-4xl font-semibold tracking-tight sm:text-5xl">
-            Perché Paideio?
-          </h1>
-          <p className="mx-auto mt-5 max-w-lg text-lg text-court-foreground/75">
-            Non è un nome a caso. È un&apos;idea antica quanto lo sport, applicata al modo in cui oggi
-            impariamo a giocare.
-          </p>
+
+          <div
+            className="game-asset-stage paideio-manifesto-player mx-auto flex min-h-[330px] w-full max-w-[480px] items-end justify-center lg:col-span-5 lg:min-h-[650px]"
+            data-game-reveal
+          >
+            <GameAsset
+              name="playerSmash"
+              decorative
+              preload
+              loading="eager"
+              sizes="(max-width: 767px) 82vw, 460px"
+              className="max-h-[430px] w-auto lg:max-h-[680px]"
+            />
+          </div>
         </div>
-      </section>
+        <div
+          aria-hidden
+          className="absolute right-0 bottom-0 left-0 h-1 bg-game-ball"
+        />
+      </header>
 
-      <section className="mx-auto max-w-2xl px-4 py-16 text-center">
-        <p className="font-heading text-6xl font-black tracking-tight text-ball sm:text-7xl">παιδεία</p>
-        <p className="mt-3 font-mono text-xs tracking-wide text-muted-foreground uppercase">
-          paideia — sostantivo, greco antico
-        </p>
-        <p className="mx-auto mt-2 max-w-sm text-muted-foreground">
-          La formazione della persona nel suo insieme: corpo, carattere, comunità.
-        </p>
-      </section>
+      <div>
+        <section className="px-5 py-20 md:px-10 md:py-28 lg:px-16">
+          <div className="mx-auto grid max-w-[1240px] gap-14 lg:grid-cols-12 lg:items-start">
+            <div className="lg:sticky lg:top-28 lg:col-span-5" data-game-reveal>
+              <p className="font-heading text-[clamp(4.5rem,10vw,8rem)] leading-none font-black tracking-[-0.06em] text-accent-ball-ink">
+                παιδεία
+              </p>
+              <p className="mt-4 font-heading text-sm font-bold tracking-[0.1em] text-accent-cyan-ink uppercase">
+                paideia · formazione
+              </p>
+            </div>
+            <div className="space-y-10 lg:col-span-6 lg:col-start-7">
+              <h2
+                className="editorial-title text-[40px] text-calce md:text-[58px]"
+                data-game-reveal
+              >
+                Non soltanto sapere. Diventare.
+              </h2>
+              <div
+                className="space-y-6 text-lg leading-relaxed text-nebbia"
+                data-game-reveal
+              >
+                <p>
+                  Nell’idea greca di paideia, educare significava formare la
+                  persona attraverso conoscenza, esercizio e partecipazione
+                  alla comunità.
+                </p>
+                <p>
+                  Paideio porta questa intuizione nel padel contemporaneo:
+                  nessuna promessa di scorciatoie, ma la possibilità concreta
+                  di trovare una guida e trasformare l’intenzione in una
+                  lezione sul campo.
+                </p>
+              </div>
+              <blockquote
+                className="border-y border-game-ball/55 py-6 font-heading text-2xl leading-tight font-bold text-calce md:text-3xl"
+                data-game-reveal
+              >
+                Il risultato conta. Il percorso costruisce il giocatore.
+              </blockquote>
+            </div>
+          </div>
+        </section>
 
-      <section className="mx-auto max-w-2xl px-4 pb-16">
-        <div className="flex flex-col gap-10">
-          {CHAPTERS.map((chapter, i) => (
-            <div key={chapter.title} className="flex gap-5 border-l-2 border-border pl-5">
-              <chapter.icon className="mt-1 size-5 shrink-0 text-primary" />
-              <div>
-                <p className="font-mono text-xs tracking-widest text-primary">0{i + 1}</p>
-                <h2 className="mt-1 font-heading text-xl font-bold">{chapter.title}</h2>
-                <p className="mt-2 text-muted-foreground">{chapter.body}</p>
+        <GameDivider />
+
+        <section className="bg-carta-bassa px-5 py-20 md:px-10 md:py-28 lg:px-16">
+          <div className="mx-auto max-w-[1240px]">
+            <div className="max-w-3xl" data-game-reveal>
+              <h2 className="editorial-title text-[40px] text-calce md:text-[58px]">
+                La formazione entra in campo
+              </h2>
+              <p className="mt-5 max-w-2xl text-lg leading-relaxed text-nebbia">
+                Tre elementi si sostengono a vicenda. Se ne togli uno, il
+                miglioramento diventa più difficile da leggere e ripetere.
+              </p>
+            </div>
+
+            <ol className="paideio-principles relative mt-14 grid gap-10 lg:grid-cols-3">
+              {PRINCIPLES.map((principle) => (
+                <li
+                  key={principle.number}
+                  className="paideio-principle relative border-t border-vetro/55 pt-6"
+                  data-game-reveal
+                >
+                  <span className="font-heading text-sm font-bold text-accent-cyan-ink">
+                    {principle.number}
+                  </span>
+                  <principle.icon
+                    className="mt-9 size-8 text-accent-ball-ink"
+                    aria-hidden
+                  />
+                  <h3 className="mt-5 font-heading text-3xl font-bold text-calce">
+                    {principle.title}
+                  </h3>
+                  <p className="mt-3 max-w-sm leading-relaxed text-nebbia">
+                    {principle.body}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        <section className="relative overflow-hidden bg-game-blue px-5 py-20 text-game-white md:px-10 md:py-28 lg:px-16">
+          <div
+            aria-hidden
+            className="malla-texture absolute inset-0 opacity-20"
+          />
+          <div className="relative mx-auto grid max-w-[1240px] gap-12 lg:grid-cols-12 lg:items-center">
+            <div className="lg:col-span-7" data-game-reveal>
+              <p className="font-heading text-sm font-bold tracking-[0.1em] text-game-white uppercase">
+                Dall’idea al servizio
+              </p>
+              <h2 className="mt-4 max-w-3xl font-heading text-[clamp(2.8rem,6vw,5.8rem)] leading-[0.9] font-extrabold tracking-[-0.05em] uppercase">
+                Paideia diventa Paideio quando trovi la persona con cui
+                allenarti.
+              </h2>
+            </div>
+            <div className="lg:col-span-4 lg:col-start-9" data-game-reveal>
+              <div className="border-l border-game-cyan/55 pl-6">
+                <BookOpen className="size-8 text-game-ball" aria-hidden />
+                <p className="mt-5 text-lg leading-relaxed text-game-white">
+                  Esplora l’Academy per capire cosa allenare. Cerca un coach
+                  per trasformarlo in lavoro sul campo.
+                </p>
+                <div className="mt-7 flex flex-col items-start gap-3">
+                  <GameCta href="/cerca" tone="ball" showBall arrow>
+                    Cerca il tuo coach
+                  </GameCta>
+                  <Link
+                    href="/diventa-coach"
+                    className="inline-flex min-h-11 items-center gap-2 font-heading text-sm font-bold text-game-white underline decoration-game-cyan/60 underline-offset-4 hover:decoration-game-white"
+                  >
+                    Porta la tua esperienza su Paideio
+                    <ArrowRight className="size-4" aria-hidden />
+                  </Link>
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="hex-tex border-t border-border bg-court text-court-foreground">
-        <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-          <h2 className="font-heading text-2xl font-semibold tracking-tight">
-            Il tuo <span className="text-ball">paidotribes</span> ti aspetta.
-          </h2>
-          <p className="mt-3 text-court-foreground/70">
-            Trova un coach vicino a te e inizia la tua paideia da padel.
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Button
-              nativeButton={false}
-              render={<Link href="/cerca" />}
-              className="cut-cta bg-ball font-mono text-xs font-bold tracking-wider text-ball-foreground uppercase hover:bg-ball/90"
-            >
-              Trova un coach
-            </Button>
-            <Button
-              variant="outline"
-              nativeButton={false}
-              render={<Link href="/diventa-coach" />}
-              className="border-court-foreground/25 bg-white/5 font-mono text-xs tracking-wider text-court-foreground uppercase hover:bg-white/10 hover:text-court-foreground"
-            >
-              Diventa coach
-            </Button>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 }

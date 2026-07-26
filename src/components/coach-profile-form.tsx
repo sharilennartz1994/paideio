@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FullScreenGameLoader } from "@/components/design";
 
 export function CoachProfileForm({
   initialBio,
@@ -59,18 +60,26 @@ export function CoachProfileForm({
 
   return (
     <div className="flex flex-col gap-6">
+      {isPending && <FullScreenGameLoader label="Salviamo il profilo" />}
       <div>
-        <Label htmlFor="bio" className="mb-2 block font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+        <Label htmlFor="bio" className="mb-2 block font-mono text-label-caps text-on-surface-variant uppercase">
           Bio
         </Label>
-        <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} rows={4} />
+        <Textarea
+          id="bio"
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
+          rows={5}
+          placeholder="Racconta come alleni, quale esperienza porti in campo e cosa può aspettarsi un giocatore."
+        />
+        <p className="mt-1.5 text-xs text-nebbia">Scrivi in modo concreto: metodo, specialità e tipo di giocatore che segui meglio.</p>
       </div>
 
       <div>
-        <Label className="mb-2 block font-mono text-[11px] tracking-wider text-muted-foreground uppercase">Tipo di allenamento offerto</Label>
-        <div className="flex gap-4">
+        <Label className="mb-2 block font-mono text-label-caps text-on-surface-variant uppercase">Tipo di allenamento offerto</Label>
+        <div className="grid gap-2 sm:grid-cols-2">
           {TRAINING_TYPES.map((t) => (
-            <div key={t} className="flex items-center gap-2">
+            <div key={t} className="flex min-h-11 items-center gap-3 border border-nebbia/25 bg-carta-bassa px-3">
               <Checkbox
                 id={`tt-${t}`}
                 checked={trainingTypes.has(t)}
@@ -85,10 +94,10 @@ export function CoachProfileForm({
       </div>
 
       <div>
-        <Label className="mb-2 block font-mono text-[11px] tracking-wider text-muted-foreground uppercase">Livelli che segui</Label>
-        <div className="flex gap-4">
+        <Label className="mb-2 block font-mono text-label-caps text-on-surface-variant uppercase">Livelli che segui</Label>
+        <div className="grid gap-2 sm:grid-cols-3">
           {LEVELS.map((l) => (
-            <div key={l} className="flex items-center gap-2">
+            <div key={l} className="flex min-h-11 items-center gap-3 border border-nebbia/25 bg-carta-bassa px-3">
               <Checkbox id={`lv-${l}`} checked={levels.has(l)} onCheckedChange={() => toggle(levels, setLevels, l)} />
               <Label htmlFor={`lv-${l}`} className="font-normal capitalize">
                 {l}
@@ -99,7 +108,7 @@ export function CoachProfileForm({
       </div>
 
       <div>
-        <Label htmlFor="price" className="mb-2 block font-mono text-[11px] tracking-wider text-muted-foreground uppercase">
+        <Label htmlFor="price" className="mb-2 block font-mono text-label-caps text-on-surface-variant uppercase">
           Prezzo per lezione (€)
         </Label>
         <Input
@@ -113,23 +122,24 @@ export function CoachProfileForm({
           onChange={(e) => setPrice(e.target.value)}
           className="max-w-32"
         />
-        <p className="mt-1.5 text-xs text-muted-foreground">
+        <p className="mt-1.5 font-sans text-xs text-on-surface-variant">
           In euro interi. Lascia vuoto se preferisci non indicarlo.
         </p>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="sticky bottom-4 z-10 flex items-center justify-between gap-3 border border-nebbia/25 bg-carta-alta/95 p-3 shadow-lg backdrop-blur">
+        <p className="hidden text-sm text-nebbia sm:block">Le modifiche saranno subito visibili nel profilo pubblico.</p>
         <Button
           onClick={handleSave}
           disabled={isPending}
-          className="cut-cta bg-ball font-mono text-xs font-bold tracking-wider text-ball-foreground uppercase hover:bg-ball/90"
+          className="neo-shadow bg-secondary-fixed font-mono text-label-caps text-on-secondary-fixed uppercase hover:bg-secondary-fixed/90"
         >
-          {isPending ? "Salvataggio…" : "Salva profilo"}
+          Salva profilo
         </Button>
       </div>
 
       {(trainingTypes.size === 0 || levels.size === 0) && (
-        <Alert>
+        <Alert role="status">
           <AlertDescription>
             Senza almeno un tipo di allenamento e un livello selezionati, il tuo profilo non
             comparirà nei risultati di ricerca dei giocatori.

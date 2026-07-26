@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Heart } from "lucide-react";
+import { Heart } from "@/components/icons/paideio-icons";
 import { toast } from "sonner";
 import { toggleFavorite } from "@/lib/actions/favorites";
+import { FullScreenGameLoader } from "@/components/design";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -39,15 +40,18 @@ export function FavoriteButton({
   }
 
   return (
-    <Button
-      variant="outline"
-      size="icon"
-      disabled={isPending}
-      onClick={handleClick}
-      aria-label={isFavorite ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
-      className={cn("shrink-0", className)}
-    >
-      <Heart className={cn("size-4 transition-all", isFavorite && "scale-110 fill-red-500 text-red-500")} />
-    </Button>
+    <>
+      {isPending && <FullScreenGameLoader label="Aggiorniamo i preferiti" />}
+      <Button
+        variant="outline"
+        size="icon"
+        disabled={isPending}
+        onClick={handleClick}
+        aria-label={isFavorite ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
+        className={cn("shrink-0", className)}
+      >
+        <Heart className={cn("size-4 transition-[transform,color,fill] duration-150", isFavorite && "scale-110 fill-red-500 text-red-500")} />
+      </Button>
+    </>
   );
 }

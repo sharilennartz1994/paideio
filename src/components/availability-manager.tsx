@@ -6,8 +6,15 @@ import { addAvailabilitySlot, removeAvailabilitySlot } from "@/lib/actions/coach
 import { dayName } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { FullScreenGameLoader, GameCta, GameEmptyState } from "@/components/design";
 
 type Location = { id: string; name: string };
 type Slot = { id: string; locationId: string; dayOfWeek: number; startTime: string; endTime: string };
@@ -25,6 +32,20 @@ export function AvailabilityManager({
   const [error, setError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const locationById = new Map(locations.map((l) => [l.id, l]));
+  const visibleSlots = Array.from(
+    new Map(
+      initialSlots.map((slot) => [
+        `${slot.locationId}|${slot.dayOfWeek}|${slot.startTime}|${slot.endTime}`,
+        slot,
+      ])
+    ).values()
+  );
+  const slotsByDay = DAYS.map((day) => ({
+    day,
+    slots: visibleSlots
+      .filter((slot) => slot.dayOfWeek === day)
+      .sort((a, b) => a.startTime.localeCompare(b.startTime)),
+  })).filter((group) => group.slots.length > 0);
 
   function handleAdd(formData: FormData) {
     setError(null);
@@ -54,6 +75,7 @@ export function AvailabilityManager({
   }
 
   function handleRemove(id: string) {
+    if (!window.confirm("Rimuovere questo turno dalla disponibilità settimanale?")) return;
     startTransition(async () => {
       const result = await removeAvailabilitySlot(id);
       if (result.ok) {
@@ -66,7 +88,7 @@ export function AvailabilityManager({
 
   if (locations.length === 0) {
     return (
-      <Alert>
+      <Alert role="status">
         <AlertDescription>Aggiungi prima almeno un campo nella scheda &quot;Campi&quot;.</AlertDescription>
       </Alert>
     );
@@ -74,83 +96,114 @@ export function AvailabilityManager({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-3">
-        {initialSlots.length === 0 && <p className="text-muted-foreground">Non hai ancora impostato orari.</p>}
-        {initialSlots.map((slot) => (
-          <Card key={slot.id} className="border-l-2 border-l-primary py-4">
-            <CardContent className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">
-                  {dayName(slot.dayOfWeek)}, {slot.startTime}–{slot.endTime}
-                </p>
-                <p className="text-sm text-muted-foreground">{locationById.get(slot.locationId)?.name}</p>
-              </div>
-              <Button size="sm" variant="outline" disabled={isPending} onClick={() => handleRemove(slot.id)}>
-                Rimuovi
-              </Button>
-            </CardContent>
-          </Card>
+      {isPending && <FullScreenGameLoader label="Aggiorniamo gli orari" />}
+      <div className="flex flex-col gap-4">
+        {visibleSlots.length === 0 && (
+          <GameEmptyState
+            asset="pickupTube"
+            title="Calendario da caricare"
+            description="Aggiungi il primo turno e prepara il campo per i prossimi giocatori."
+          />
+        )}
+        {slotsByDay.map((group) => (
+          <section key={group.day} className="grid gap-3 border-t border-nebbia/20 pt-4 sm:grid-cols-[120px_1fr]">
+            <h3 className="font-heading text-lg capitalize text-calce">{dayName(group.day)}</h3>
+            <div className="grid gap-2">
+              {group.slots.map((slot) => (
+                <div key={slot.id} className="flex min-h-14 items-center justify-between gap-3 border border-nebbia/25 bg-carta-bassa px-4 py-2">
+                  <div>
+                    <p className="font-heading text-calce">{slot.startTime}–{slot.endTime}</p>
+                    <p className="text-xs text-nebbia">{locationById.get(slot.locationId)?.name}</p>
+                  </div>
+                  <Button size="sm" variant="ghost" disabled={isPending} onClick={() => handleRemove(slot.id)}>
+                    Rimuovi
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </section>
         ))}
       </div>
 
-      <form ref={formRef} action={handleAdd} className="grid gap-3 sm:grid-cols-4">
+      <form ref={formRef} action={handleAdd} className="grid gap-4 border-t border-nebbia/20 pt-6 sm:grid-cols-4">
+        <div className="sm:col-span-4">
+          <h3 className="font-heading text-lg text-calce">Pubblica un turno ricorrente</h3>
+          <p className="mt-1 text-sm text-nebbia">Esempio: ogni martedì dalle 18:00 alle 19:00 al tuo club.</p>
+        </div>
         <div>
-          <Label htmlFor="locationId" className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">Campo</Label>
-          <select
-            id="locationId"
+          <Label htmlFor="locationId" className="font-mono text-label-caps text-on-surface-variant uppercase">Campo</Label>
+          <Select
             name="locationId"
-            className="mt-1.5 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+            defaultValue={locations[0]?.id}
+            items={locations.map((location) => ({
+              value: location.id,
+              label: location.name,
+            }))}
           >
-            {locations.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger id="locationId" className="mt-1.5 w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="start">
+              {locations.map((l) => (
+                <SelectItem key={l.id} value={l.id}>
+                  {l.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
-          <Label htmlFor="dayOfWeek" className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">Giorno</Label>
-          <select
-            id="dayOfWeek"
+          <Label htmlFor="dayOfWeek" className="font-mono text-label-caps text-on-surface-variant uppercase">Giorno</Label>
+          <Select
             name="dayOfWeek"
-            className="mt-1.5 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+            defaultValue={DAYS[0]}
+            items={DAYS.map((day) => ({
+              value: day,
+              label: dayName(day),
+            }))}
           >
-            {DAYS.map((d) => (
-              <option key={d} value={d}>
-                {dayName(d)}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger id="dayOfWeek" className="mt-1.5 w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="start">
+              {DAYS.map((d) => (
+                <SelectItem key={d} value={d}>
+                  {dayName(d)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
-          <Label htmlFor="startTime" className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">Dalle</Label>
+          <Label htmlFor="startTime" className="font-mono text-label-caps text-on-surface-variant uppercase">Dalle</Label>
           <input
             id="startTime"
             name="startTime"
             type="time"
             defaultValue="09:00"
-            className="mt-1.5 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+            className="mt-1.5 flex h-11 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
           />
         </div>
         <div>
-          <Label htmlFor="endTime" className="font-mono text-[11px] tracking-wider text-muted-foreground uppercase">Alle</Label>
+          <Label htmlFor="endTime" className="font-mono text-label-caps text-on-surface-variant uppercase">Alle</Label>
           <input
             id="endTime"
             name="endTime"
             type="time"
             defaultValue="12:00"
-            className="mt-1.5 flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+            className="mt-1.5 flex h-11 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
           />
         </div>
         <div className="sm:col-span-4">
-          {error && <p className="mb-2 text-sm text-destructive">{error}</p>}
-          <Button
+          {error && <p role="alert" className="mb-2 font-sans text-sm text-destructive">{error}</p>}
+          <GameCta
             type="submit"
             disabled={isPending}
-            className="cut-cta bg-ball font-mono text-xs font-bold tracking-wider text-ball-foreground uppercase hover:bg-ball/90"
+            tone="ball"
+            showBall
           >
-            {isPending ? "Aggiunta…" : "Aggiungi orario"}
-          </Button>
+            Aggiungi orario
+          </GameCta>
         </div>
       </form>
     </div>

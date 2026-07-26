@@ -39,7 +39,7 @@ allenamento, livelli, richieste).
 ## Struttura
 
 - `src/lib/db/schema.ts` — schema Drizzle (users, coachProfiles, locations,
-  availabilitySlots, bookings)
+  availabilitySlots, bookings, notifications, productFeedback)
 - `src/lib/db/seed.ts` — dati demo (`npm run db:seed`)
 - `src/lib/queries.ts` — query lato server, marcato `"server-only"`: **non
   importarlo da client component** (trascinerebbe il driver `pg` nel bundle
@@ -63,7 +63,71 @@ allenamento, livelli, richieste).
 - `src/app/coach-admin/` — area riservata coach (layout con guard sul ruolo)
 - `src/app/coach/[id]` — profilo pubblico coach + calendario/prenotazione
 
-## Design system "Agonistic Pulse" (dark-only, replica esatta export Stitch)
+## Design system attuale "Game Arena" (dal 26 luglio 2026)
+
+L’intero prodotto adotta l’interfaccia di un moderno gioco online di padel:
+energico e divertente, ma senza punti, livelli o progressi finti. La
+prenotazione reale è il loop principale (`trova → configura → invia → gioca`).
+Il registro illustrativo corrente è comic/cel-shaded, con master in
+`design/assets-comic/`, copie runtime in `public/design/game/` e registry
+tipizzato in `src/components/design/field-assets.tsx`. Le illustrazioni sono
+momenti editoriali controllati: massimo un asset dominante per viewport;
+icone funzionali e navigazione usano il set PNG proprietario Paideio.
+`GameAsset`, `GameDivider` e
+`GameEmptyState` sono le primitive asset canoniche; CTA, loader, badge,
+pannelli, statistiche e skeleton sono in
+`src/components/design/game-ui.tsx`, esportati da
+`src/components/design/index.ts`. Il catalogo visuale è disponibile su
+`/design-system` e la documentazione in
+`design/GAME-MODE-COMPONENTS.md`. I PNG
+`architecture/court-topdown.png` e `architecture/court-isometric.png` sono
+esplicitamente esclusi dal runtime finché non vengono ricostruiti a partire
+da una pianta FIP 20×10 m verificata.
+
+Tutti i 26 PNG runtime sono registrati in `GAME_ASSETS` e mostrati nel
+catalogo `/design-system`; le varianti superate restano archiviate in
+`design/assets-comic/_archive-unused-runtime/`, non in `public/`. Il divider
+non usa più l’overgrip: `GameDivider` è una marcatura di campo modulare
+ripetuta in CSS, mentre il grip compare come contenuto nella pagina Academy
+sull’attrezzatura.
+
+Il sistema "Agonistic Pulse"/Stitch documentato sotto è archiviato. La fonte
+normativa attuale è `design/SYSTEM.md`, con istruzioni d'implementazione in
+`design/IMPLEMENTATION-BRIEF.md`.
+
+- Tema giorno/notte: `Court Daylight` è il default; `.dark` abilita l’arena
+  notturna. I token semantici cambiano insieme e devono rispettare AA in
+  entrambe le modalità.
+- Font: `Oxanium` per display, CTA, navigazione e label HUD; Hanken Grotesk
+  per corpo e dati con `tabular-nums`. Niente serif o corsivi decorativi.
+- Colori guida: `--vetro` ciano per focus/azioni, `--ottico` giallo-pallina
+  per la CTA decisiva, `--sabbia` blu elettrico per pannelli ad alto impatto.
+  Angoli tagliati e bordi netti sostituiscono pill e card SaaS.
+- Asset canonici in `design/assets`; copie runtime ottimizzate in
+  `public/design`. Le primitive condivise sono in
+  `src/components/design/field-assets.tsx`.
+- Marchio Paideio: wordmark raster PNG trasparente minimalista
+  `public/brand/paideio-wordmark-2026.png`. La `P` blu ha un taglio interno che
+  richiama la `O` finale neon, costruendo una relazione inizio/percorso/esito
+  senza illustrazioni letterali. `public/brand/paideio-mark-2026.png` isola la
+  `P` per sidebar chiusa e favicon (`src/app/icon.png`,
+  `src/app/apple-icon.png`). Non convertirli in SVG e non sostituirli con
+  `PadelBallMark`.
+- Motion rapida e causale: press, hover, ingresso route e loader-pallina;
+  niente attese teatrali o loop ornamentali. Tutto si disattiva con
+  `prefers-reduced-motion`. I reveal non possono mai portare il contenuto a
+  `opacity: 0`: `ArenaMotionDirector` si riallinea a ogni pathname. Le route
+  `loading.tsx` e le attese delle azioni interattive usano
+  `FullScreenGameLoader`. La ricerca mobile usa uno Sheet Base UI accessibile.
+- Accessibilità WCAG 2.2 AA anche in modalità giorno: testo normale ≥4.5:1,
+  testo grande e contorni UI ≥3:1, focus sempre visibile e target interattivi
+  minimi 44px. `GameRouteStage` riporta le navigazioni normali al top ma
+  preserva gli hash; il layout contiene l’unico landmark `<main>`. L’hero
+  dichiara senza metafore la ricerca e prenotazione di coach; `/chi-siamo`
+  racconta paideia, metodo e servizio in tre atti con un solo motion
+  esplicativo e fallback statico reduced-motion.
+
+## Sistema archiviato "Agonistic Pulse" (dark-only, replica esatta export Stitch)
 
 Terzo giro di design, storia completa perché è rilevante per capire perché il
 sistema è fatto così:
@@ -84,10 +148,14 @@ sistema è fatto così:
    riusato: il font `Anybody` corsivo/maiuscolo per i titoli — Stitch lo
    usa a sua volta, quindi coincide.
 
-- **Dark-only per scelta**, non variante di un tema chiaro/scuro. `<html>`
-  porta la classe `dark` in modo permanente (`layout.tsx`); **non esiste più
-  `next-themes`/`ThemeProvider`**. `ui/sonner.tsx` passa `theme="dark"`
-  hardcoded (unica modifica accettata a un file vendored shadcn).
+- **Tema giorno/notte** senza dipendenze: il giorno è il default
+  `Court Daylight` azzurro ghiaccio; `.dark` attiva l’arena notturna.
+  `theme-toggle.tsx` salva la preferenza in `localStorage` e lo script inline
+  in `layout.tsx` la applica prima del paint. `ui/sonner.tsx` segue il tema.
+  Sul tema giorno, per testo e icone su superfici chiare usare
+  `text-accent-cyan-ink`, `text-accent-ball-ink` e
+  `text-accent-orange-ink`; i corrispondenti `text-game-*` brillanti sono
+  riservati alle superfici scure.
 - **Font**, esattamente come nell'export Stitch (`next/font/google` in
   `layout.tsx`, nomi letterali in `@theme inline` — mai `var()` diretto,
   stesso pattern del bug Geist):
@@ -153,14 +221,11 @@ sistema è fatto così:
     contenuto raddrizzato dentro (sezione "Perché Paideio" in home, footer).
   - `.animate-active-ring` → rotazione continua (ring intorno all'avatar nel
     profilo coach).
-  - `.cut-cta` / `.cut-corner` → **legacy**, dal tentativo 2. Rimasti solo
-    per le pagine non ancora riportate 1:1 su Stitch in questo giro
-    (`prenotazioni`, `preferiti`, `chi-siamo`, `diventa-coach`, i form in
-    `coach-admin/campi|orari|profilo`, `not-found`/`error`) — ereditano
-    comunque palette/font nuovi perché sono token globali, solo le
-    decorazioni più specifiche di Stitch (card-clip, date-stamp, ecc.) non
-    sono ancora state applicate lì. Se le riporti su Stitch, migra a
-    `.card-clip`/niente e rimuovi l'uso locale, non aggiungerne di nuovi.
+  - `.cut-cta` / `.cut-corner` → **rimossi** (erano gli alias del tentativo
+    2). Tutte le pagine sono state riportate 1:1 su Stitch (vedi "Round
+    completamento design system" più sotto); non reintrodurli — per i
+    bottoni CTA usare `.neo-shadow bg-secondary-fixed` (o `bg-ball`/alias),
+    per i contenitori `.card-clip`.
 - **Shell dell'app cambiata**: non più header in cima soltanto. Ora
   `src/components/app-topbar.tsx` (barra fissa in alto, solo logo + notifica
   + profilo) + `src/components/app-sidebar.tsx` (sidebar fissa a sinistra,
@@ -189,6 +254,16 @@ sistema è fatto così:
   `className="bg-secondary-fixed font-mono text-label-caps text-on-secondary-fixed uppercase"`
   (o l'alias `bg-ball`/`text-ball-foreground`, stesso colore) — nessuna
   variant dedicata in `button.tsx`, per non toccare il file vendored shadcn.
+- **Icone proprietarie Paideio**: Lucide è stato rimosso. Le 56 forme
+  originali sono PNG trasparenti in `public/design/icons`, generate in modo
+  deterministico da `scripts/generate-paideio-icons.mjs`. Il runtime
+  `components/icons/paideio-icons.tsx` le applica come CSS mask, così
+  ereditano `currentColor`, dimensioni e stati hover/focus senza introdurre
+  SVG nel markup. I nomi canonici stanno in `paideio-icon-names.ts`; gli
+  alias semantici compatibili con i componenti esistenti nel runtime. Non
+  reintrodurre `lucide-react`: per una nuova icona aggiungere il glifo al
+  generatore, rigenerare i PNG e registrare nome/alias. Catalogo completo in
+  `/design-system`.
 
 ## Micro-interazioni e tono "vissuto" (playful pass)
 
@@ -204,15 +279,104 @@ sistema è fatto così:
   statici per il feedback di successo su: prenotazione richiesta
   (`booking-calendar.tsx`), conferma/rifiuto prenotazione
   (`booking-request-actions.tsx`), annullamento (`cancel-booking-button.tsx`),
-  aggiunta campo/orario e salvataggio profilo coach. `Toaster` passa
-  `theme="dark"` hardcoded (sito dark-only, vedi sezione Design system) —
-  niente più `next-themes`.
+  aggiunta campo/orario e salvataggio profilo coach. `Toaster` segue il tema
+  attivo; il cambio giorno/notte è gestito senza `next-themes`.
 - Copy a tema padel nei messaggi di feedback e negli stati vuoti (es. "Palla
   a rete!" quando la ricerca non trova risultati, "Fuori campo!" nella 404
   in `not-found.tsx`, messaggi di successo prenotazione randomizzati in
   `SUCCESS_MESSAGES` in `booking-calendar.tsx`) — mantenere questo tono
   quando si aggiungono nuovi stati vuoti/di successo, non tornare a un tono
   neutro "di sistema".
+
+## Notifiche prenotazioni
+
+- `notifications` conserva notifiche in-app per giocatore e coach, collegate
+  opzionalmente a una prenotazione. La campanella in `AppTopbar` mostra il
+  contatore non letto e porta a `/notifiche`.
+- `createBooking` crea atomicamente la prenotazione e due notifiche
+  `booking_created`, una per ruolo. L’annullamento crea due notifiche
+  `booking_cancelled` nella stessa transazione che aggiorna lo stato.
+- L’annullamento dal lato giocatore passa sempre da un `AlertDialog` Base UI
+  esplicito; nessuna cancellazione può partire dal primo click.
+- Le mutazioni notifiche invalidano il root layout con
+  `revalidatePath("/", "layout")`, così il contatore della campanella si
+  aggiorna immediatamente.
+
+## Riepilogo prenotazioni giocatore
+
+- `/prenotazioni` delega la parte interattiva a
+  `src/components/player-bookings-overview.tsx`. I dati restano caricati nel
+  Server Component e vengono passati al client come sommario serializzabile.
+- Filtri disponibili: periodo (`prossime`, `passate`, `tutte`), stato e formato
+  (`singolo`/`gruppo`). Le lezioni passate sono ordinate dalla più recente.
+- Tre viste condividono lo stesso dataset filtrato: `Lista` per gestione,
+  `Calendario` mensile per orientamento temporale e `Agenda` raggruppata per
+  giorno. Annullamento e recensione restano disponibili nelle viste operative;
+  il calendario è deliberatamente compatto e solo informativo.
+
+## Roadmap e feedback prodotto
+
+- `/prossime-release` presenta le evoluzioni previste senza date o promesse
+  inventate e raccoglie proposte/bug tramite `ReleaseFeedbackForm`.
+- `submitProductFeedback` valida, limita a 5 invii giornalieri per email,
+  applica un honeypot e salva sempre in `product_feedback`.
+- L’email è best-effort e parte solo con `RESEND_API_KEY` e
+  `FEEDBACK_RECIPIENT_EMAIL`; il mittente previsto è
+  `feedback@playpaideio.com`. La casella istituzionale corretta è
+  `info@playpaideio.com` perché `paideio.com` non appartiene al progetto.
+  Setup completo in `docs/EMAIL-SETUP.md`.
+
+## Flussi operativi player e coach
+
+- `src/components/booking-calendar.tsx` è un flusso guidato in tre momenti:
+  giorno/orario, dettagli dell’allenamento, riepilogo e invio. Mostra soltanto
+  disponibilità reali, chiarisce che non avviene alcun pagamento e che il coach
+  deve confermare. Mantenere il riepilogo prima dell’azione finale, i controlli
+  accessibili e il limite note a 500 caratteri.
+- Le card di `/cerca` sono righe comparative con prezzo e CTA `Prenota` diretta
+  a `/coach/[id]#prenota`. Sul profilo il booking è una sezione centrale
+  full-width immediatamente dopo l’hero, non una sidebar. Il target hash usa
+  `BookingHashScroll` perché il contenuto server può arrivare dopo il tentativo
+  di scroll nativo. Per visitatori anonimi il passo finale apre Clerk con
+  “Accedi e prenota”; per i player mostra “Invia richiesta”.
+- `/coach-admin` è la control room del coach: calcola dal database la reale
+  completezza di profilo, campi e disponibilità, propone il prossimo passo e
+  consente di aprire il profilo pubblico. Le schermate di configurazione
+  spiegano l’effetto delle modifiche, raggruppano gli orari per giorno e
+  chiedono conferma prima di rimuovere campi o turni.
+- La sidebar desktop resta una rail compatta da 80px e non si espande sopra i
+  contenuti; le etichette appaiono come tooltip. I `devIndicators` Next sono
+  disabilitati per non sovrapporre il pulsante dev alla rail durante i test.
+
+## Academy didattica e asset
+
+- `/academy` e le sottopagine usano moduli didattici riutilizzabili da
+  `src/components/academy/academy-ui.tsx`: obiettivo, principio, esercizio,
+  verifica, progressione e CTA al passo successivo. Evitare pagine composte
+  soltanto da liste.
+- Semantica cromatica: ciano per informazione, giallo pallina per suggerimenti,
+  arancio/rosso esclusivamente per errori, rischi o indicazioni di stop.
+- La famiglia PNG RGBA `/public/design/game/academy/` comprende split step,
+  cinesini, elastici, cambio di direzione, borraccia, lavagnetta tattica,
+  forme delle racchette e posizioni in campo. Sono registrati in
+  `src/components/design/field-assets.tsx`; sorgenti e prompt sono in
+  `design/assets-comic/`.
+
+## Academy e circuito editoriale
+
+- `/academy` è l’hub “Read” del prodotto, con sezioni navigabili
+  `/academy/tecnica`, `/strategia`, `/regole`, `/training`,
+  `/attrezzatura`, `/storia-cultura`. I contenuti portano sempre dal capire
+  al campo e poi alla ricerca coach, senza sembrare un blog separato.
+- `/circuito` raccoglie `/classifiche`, `/calendario` e
+  `/come-funziona-il-ranking`. La dicitura corretta è “Classifica mondiale
+  FIP”: Premier Padel e CUPRA FIP Tour contribuiscono allo stesso ranking.
+- Dati dinamici e normativa mostrano sempre fonte e data di verifica. Le
+  regole base usano FIP 2026; i regolamenti FITP delle manifestazioni sono
+  distinti. Le classifiche correnti sono snapshot editoriali, non feed live.
+- Componenti condivisi in `src/components/editorial-layout.tsx`; tassonomia
+  in `src/lib/editorial-content.ts`. Academy e Circuito sono presenti nella
+  sidebar e lo stato attivo comprende le sottorotte.
 
 ## Convenzioni
 
@@ -235,10 +399,10 @@ sistema è fatto così:
 
 ## Dati demo
 
-Il seed crea tre coach pubblici, navigabili senza autenticazione: Elena
-Ferraro (Milano), Davide Conti (Milano), Giulia Romano (Torino). Non sono
-collegati a nessun account Clerk (`clerkId` null) — servono solo come annunci
-di esempio nella ricerca. Per provare il flusso giocatore/coach vero,
+Il seed crea tre coach pubblici (Elena Ferraro, Davide Conti, Giulia Romano),
+due giocatori sintetici e scenari completi: richiesta pendente, confermata
+futura, completata con recensione, annullata e preferito. Nessuno è collegato
+a Clerk (`clerkId` null). Per provare il flusso giocatore/coach vero,
 registrati con Clerk (bottone "Registrati") e usa "Diventa coach" da
 `/diventa-coach` per passare al ruolo coach.
 
@@ -255,6 +419,16 @@ nuovo "live" per davvero, oppure crea un branch Neon dedicato allo sviluppo
 durante i test. In passato faceva `db.delete(users)` su tutta la tabella —
 corretto perché avrebbe cancellato anche gli utenti reali ad ogni reseed. Se
 tocchi `seed.ts`, mantieni il filtro `isNull(users.clerkId)`.
+
+**Stato produzione al 26 luglio 2026**: pulizia completata. Restano 0 utenti
+demo (`clerkId` nullo), 1 account Clerk reale e 0 booking, recensioni,
+preferiti, notifiche o feedback di test. Runbook:
+`docs/PRODUCTION-HANDOFF.md`.
+
+Nel reset QA del 26 luglio 2026 l’account coach Clerk corrente è stato
+eliminato dalla sola tabella locale e riprovisionato automaticamente come
+`player`; l’identità Clerk non è stata cancellata. Questo consente di ripetere
+il percorso reale `/diventa-coach`.
 
 ## Deploy in produzione
 
@@ -339,10 +513,22 @@ bloccato) per un banner "Deployment Blocked" / "Fix Git Configuration".
       action in `lib/actions/*` e i relativi client caller. `becomeCoach()`
       passato a `useActionState` (vedi `become-coach-form.tsx`) perché è
       legato a un `<form action={...}>` diretto.
-- [ ] Decisione su integrazione pagamenti (al momento assente)
+- [ ] Decisione su integrazione pagamenti (al momento assente). Prerequisito:
+      branch Neon dedicato (punto sotto), per non far transitare pagamenti
+      reali sul DB condiviso con lo sviluppo locale.
 - [ ] Branch Neon dedicato allo sviluppo locale, separato dalla produzione
       (oggi condividono lo stesso database — vedi "Dati demo" e "Deploy in
       produzione")
+- [ ] Capienza reale per le lezioni di gruppo: oggi `bookings.type` è solo
+      un'etichetta, una prenotazione `gruppo` occupa comunque l'intero slot
+      in esclusiva (stesso indice unico anti-race di `singolo`) — nessun
+      concetto di posti/capienza condivisa. Richiede di ripensare lo schema
+      `bookings`/`availabilitySlots` (campo capacità o tabella ponte
+      `booking_participants`), la validazione in `createBooking`, e la UI
+      di `booking-calendar.tsx`.
+- [ ] Policy di cancellazione: oggi un giocatore può annullare una
+      prenotazione `confermata` in qualsiasi momento, senza finestra minima
+      né conseguenze per il coach che ha bloccato lo slot.
 - [ ] Collegare il repo GitHub a Vercel per il deploy automatico su push a
       `main` (oggi richiede `vercel --prod` manuale — vedi "Deploy in
       produzione" per il motivo)
@@ -376,16 +562,13 @@ bloccato) per un banner "Deployment Blocked" / "Fix Git Configuration".
       `**.public.blob.vercel-storage.com` whitelistato in `next.config.ts`
       per `next/image`.
 - [x] Redesign "Agonistic Pulse" — vedi sezione Design system per la storia
-      completa (3 tentativi) e i dettagli tecnici. Stato finale: replica il
-      più fedelmente possibile l'export di Google Stitch (palette M3, font
-      Anybody/Hanken Grotesk/Space Mono, shell con sidebar fissa) sulle
-      pagine esplicitamente indicate dall'utente — home, `/cerca`,
-      `/coach/[id]` (+ `booking-calendar.tsx`), dashboard `/coach-admin`.
-      Le altre pagine (`prenotazioni`, `preferiti`, `chi-siamo`,
-      `diventa-coach`, i form in `coach-admin/campi|orari|profilo`,
-      `not-found`/`error`) ereditano i nuovi token globali (palette, font,
-      radius) ma non hanno ancora le decorazioni specifiche di Stitch
-      (`card-clip`, date-stamp, ecc.) — prossimo passo naturale se richiesto.
+      completa (3 tentativi) e i dettagli tecnici. Replica il più
+      fedelmente possibile l'export di Google Stitch (palette M3, font
+      Anybody/Hanken Grotesk/Space Mono, shell con sidebar fissa). Portato
+      su **tutte** le pagine, incluso il completamento successivo
+      (`prenotazioni`, `preferiti`, `chi-siamo`, `diventa-coach`, i form in
+      `coach-admin/campi|orari|profilo`, `coach-admin/richieste`,
+      `not-found`/`error`) — nessuna pagina usa più `.cut-cta`/`.cut-corner`.
 - [ ] PWA: manifest + icone + installabilità (non ancora affrontato)
 
 ## Round "squadra di agenti" (audit sicurezza + backend + frontend/design)

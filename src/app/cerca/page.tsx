@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { MapPin, Users, User, Star, ArrowRight, Zap } from "lucide-react";
+import { MapPin, Users, User, Star, Euro, GraduationCap } from "@/components/icons/paideio-icons";
 import {
   searchCoaches,
   LEVELS,
@@ -13,6 +13,8 @@ import { getCurrentUser } from "@/lib/session";
 import { UseMyLocationButton } from "@/components/use-my-location-button";
 import { CoachAvatar } from "@/components/coach-avatar";
 import { FavoriteButton } from "@/components/favorite-button";
+import { GameCta, GameEmptyState } from "@/components/design";
+import { MobileFilterSheet } from "@/components/mobile-filter-sheet";
 
 const LEVEL_LABELS: Record<Level, string> = {
   principiante: "Principiante",
@@ -28,6 +30,79 @@ type SearchParams = Promise<{
   lng?: string;
   maxPrice?: string;
 }>;
+
+function FiltersForm({
+  city,
+  type,
+  level,
+  near,
+  lat,
+  lng,
+  maxPrice,
+}: {
+  city?: string;
+  type?: TrainingType;
+  level?: Level;
+  near?: { lat: number; lng: number };
+  lat?: number;
+  lng?: number;
+  maxPrice: number;
+}) {
+  return (
+    <form method="get" className="space-y-6">
+      <div className="flex items-center justify-between border-b border-nebbia/20 pb-4">
+        <h3 className="font-heading text-[26px] text-calce">Filtri</h3>
+        <Link href="/cerca" className="inline-flex min-h-11 min-w-11 items-center justify-center text-sm text-nebbia underline hover:text-vetro">
+          Azzera
+        </Link>
+      </div>
+      <label className="block text-sm text-nebbia">
+        Città
+        <span className="relative mt-2 flex min-h-11 items-center border-b border-nebbia/40">
+          <input
+            name="city"
+            type="text"
+            defaultValue={city}
+            disabled={!!near}
+            placeholder="es. Milano"
+            className="min-h-11 w-full bg-transparent py-2 pr-7 text-calce placeholder:text-nebbia/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vetro"
+          />
+          <MapPin className="absolute right-1 size-4 text-vetro" />
+        </span>
+      </label>
+      <fieldset>
+        <legend className="mb-3 text-sm text-nebbia">Livello</legend>
+        <div className="space-y-2">
+          {LEVELS.map((l) => (
+            <label key={l} className="flex min-h-11 cursor-pointer items-center gap-3">
+              <input type="radio" name="level" value={l} defaultChecked={level === l} className="size-4 accent-vetro" />
+              <span className="text-calce">{LEVEL_LABELS[l]}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend className="mb-3 text-sm text-nebbia">Tipo di lezione</legend>
+        <div className="flex gap-2">
+          {(["singolo", "gruppo"] as const).map((value) => (
+            <label key={value} className="flex-1">
+              <input type="radio" name="type" value={value} defaultChecked={type === value} className="peer sr-only" />
+              <span className="flex min-h-11 items-center justify-center rounded-full border border-nebbia/40 px-3 text-sm text-nebbia peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-vetro peer-checked:border-vetro peer-checked:bg-vetro peer-checked:text-carta">
+                {value === "singolo" ? "Singola" : "Gruppo"}
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <label className="block text-sm text-nebbia">
+        Prezzo massimo: <span className="tabular-nums text-calce">{maxPrice}€</span>
+        <input name="maxPrice" type="range" min={20} max={150} defaultValue={maxPrice} className="mt-3 h-11 w-full cursor-pointer accent-vetro" />
+      </label>
+      {near && <><input type="hidden" name="lat" value={lat} /><input type="hidden" name="lng" value={lng} /></>}
+      <GameCta type="submit" className="w-full">Applica filtri</GameCta>
+    </form>
+  );
+}
 
 export default async function CercaPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
@@ -47,208 +122,116 @@ export default async function CercaPage({ searchParams }: { searchParams: Search
   ]);
 
   return (
-    <div className="hex-texture min-h-screen bg-background px-4 py-12 md:px-16">
+    <div className="paper-grain min-h-screen bg-carta px-4 py-12 md:px-16">
       <div className="mb-8 flex flex-col justify-between gap-6 md:flex-row md:items-end">
         <div>
-          <h1 className="mb-2 font-heading text-headline-lg-mobile leading-none text-primary uppercase italic md:text-headline-lg">
+          <h1 className="mb-3 font-heading text-headline-lg-mobile leading-none text-calce md:text-headline-lg">
             {city ? `Risultati per ${city}` : near ? "Coach vicino a te" : "Tutti i coach"}
           </h1>
           <div className="flex items-center gap-2">
-            <span className="h-1 w-8 bg-secondary-fixed" />
-            <p className="font-mono text-label-caps text-on-surface-variant uppercase">
+            <span className="h-px w-8 bg-vetro" />
+            <p className="text-sm text-nebbia">
               {results.length === 1 ? "1 coach disponibile trovato" : `${results.length} coach disponibili trovati`}
             </p>
           </div>
         </div>
-        <Suspense fallback={null}>
-          <UseMyLocationButton />
-        </Suspense>
+        <div className="flex flex-wrap items-center gap-3">
+          <MobileFilterSheet summary={`${[city, type, level].filter(Boolean).length} filtri applicati`}>
+            <FiltersForm city={city} type={type} level={level} near={near} lat={lat} lng={lng} maxPrice={maxPrice} />
+          </MobileFilterSheet>
+          <Suspense fallback={null}><UseMyLocationButton /></Suspense>
+        </div>
       </div>
 
       <div className="flex flex-col gap-8 lg:flex-row">
-        {/* Filters */}
-        <aside className="h-fit w-full space-y-8 border border-outline-variant/20 bg-surface-container/50 p-6 backdrop-blur-md lg:sticky lg:top-24 lg:w-72">
-          <form method="get" className="space-y-8">
-            <div className="flex items-center justify-between border-b border-outline-variant/20 pb-4">
-              <h3 className="font-mono text-label-caps text-secondary-fixed uppercase italic">Filtri</h3>
-              <Link href="/cerca" className="font-mono text-[10px] text-on-surface-variant underline hover:text-primary">
-                Resetta
-              </Link>
-            </div>
-
-            <div>
-              <label className="mb-4 block font-mono text-[10px] tracking-widest text-on-surface-variant uppercase">
-                Città
-              </label>
-              <div className="relative">
-                <input
-                  name="city"
-                  type="text"
-                  defaultValue={city}
-                  disabled={!!near}
-                  placeholder="es. Milano"
-                  className="w-full border-b-2 border-primary-container bg-transparent py-2 font-sans text-on-surface placeholder:text-outline-variant focus:border-secondary-fixed focus:outline-none"
-                />
-                <MapPin className="absolute top-2 right-0 size-4 text-outline" />
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-4 block font-mono text-[10px] tracking-widest text-on-surface-variant uppercase">
-                Livello
-              </label>
-              <div className="space-y-3">
-                {LEVELS.map((l) => (
-                  <label key={l} className="group flex cursor-pointer items-center gap-3">
-                    <input type="radio" name="level" value={l} defaultChecked={level === l} className="peer hidden" />
-                    <div className="size-4 border-2 border-outline transition-all peer-checked:border-secondary-fixed peer-checked:bg-secondary-fixed" />
-                    <span className="font-sans text-on-surface-variant transition-colors group-hover:text-on-surface peer-checked:text-on-surface">
-                      {LEVEL_LABELS[l]}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-4 block font-mono text-[10px] tracking-widest text-on-surface-variant uppercase">
-                Tipo lezione
-              </label>
-              <div className="flex gap-2">
-                <label className="group flex-1">
-                  <input type="radio" name="type" value="singolo" defaultChecked={type === "singolo"} className="peer hidden" />
-                  <div className="slanted-chip border border-outline-variant bg-surface-container-highest px-1 py-2 text-center font-mono text-[10px] text-on-surface-variant peer-checked:bg-secondary-fixed peer-checked:text-on-secondary-fixed">
-                    SINGOLA
-                  </div>
-                </label>
-                <label className="group flex-1">
-                  <input type="radio" name="type" value="gruppo" defaultChecked={type === "gruppo"} className="peer hidden" />
-                  <div className="slanted-chip border border-outline-variant bg-surface-container-highest px-1 py-2 text-center font-mono text-[10px] text-on-surface-variant peer-checked:bg-secondary-fixed peer-checked:text-on-secondary-fixed">
-                    GRUPPO
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-4 block font-mono text-[10px] tracking-widest text-on-surface-variant uppercase">
-                Prezzo orario
-              </label>
-              <input
-                name="maxPrice"
-                type="range"
-                min={20}
-                max={150}
-                defaultValue={maxPrice}
-                className="h-1 w-full cursor-pointer appearance-none rounded-full bg-surface-container-highest accent-secondary-fixed"
-              />
-              <div className="mt-2 flex justify-between font-mono text-[10px] text-on-surface-variant">
-                <span>20€</span>
-                <span className="font-bold text-secondary-fixed">Max: {maxPrice}€</span>
-                <span>150€</span>
-              </div>
-            </div>
-
-            {near && (
-              <>
-                <input type="hidden" name="lat" value={lat} />
-                <input type="hidden" name="lng" value={lng} />
-              </>
-            )}
-
-            <button
-              type="submit"
-              className="w-full bg-primary py-4 font-mono text-label-caps text-on-primary uppercase italic tracking-wider transition-all hover:bg-secondary-fixed hover:text-on-secondary-fixed active:scale-95"
-            >
-              Applica Filtri
-            </button>
-          </form>
+        <aside className="glass-panel hidden h-fit w-72 shrink-0 p-6 lg:sticky lg:top-24 lg:block">
+          <FiltersForm city={city} type={type} level={level} near={near} lat={lat} lng={lng} maxPrice={maxPrice} />
         </aside>
 
         {/* Results grid */}
-        <div className="grid flex-1 grid-cols-1 gap-8 md:grid-cols-2 2xl:grid-cols-3">
+        <div className="flex flex-1 flex-col gap-4">
           {results.length === 0 && (
-            <div className="col-span-full flex flex-col items-center gap-2 py-16 text-center">
-              <span className="text-3xl">🎾</span>
-              <p className="font-heading text-headline-md text-on-surface">Palla a rete!</p>
-              <p className="max-w-xs text-sm text-on-surface-variant">
-                {near
+            <GameEmptyState
+              asset="bandejaTrail"
+              title="Palla a rete!"
+              description={
+                near
                   ? "Nessun coach entro 50 km dalla tua posizione. Prova ad allargare la ricerca per città."
-                  : "Nessun coach trovato con questi filtri. Prova ad allargare il campo di ricerca."}
-              </p>
-            </div>
+                  : "Nessun coach trovato con questi filtri. Prova ad allargare il campo di ricerca."
+              }
+              className="col-span-full"
+            />
           )}
           {results.map(({ coach, profile, locations, rating }) => (
-            <div
+            <article
               key={coach.id}
-              className="card-clip group relative overflow-hidden border-l-2 border-secondary-fixed bg-surface-container-low shadow-xl transition-all duration-300 hover:border-l-8"
+              className="group grid overflow-hidden border border-nebbia/25 bg-carta-alta transition-[border-color,transform] duration-150 hover:-translate-y-0.5 hover:border-vetro md:grid-cols-[150px_1fr_auto]"
             >
-              {profile.pricePerLesson != null && (
-                <div className="absolute top-0 right-0 flex size-24 -translate-y-12 translate-x-12 rotate-45 items-center justify-center bg-secondary-fixed shadow-lg transition-transform group-hover:scale-110">
-                  <div className="mt-8 mr-2 -rotate-45 font-mono text-label-caps font-bold text-on-secondary-fixed">
-                    {profile.pricePerLesson}€
-                  </div>
+              <div className="flex items-center justify-center bg-game-ink p-5">
+                <div className="size-24 overflow-hidden rounded-full border-2 border-game-cyan p-1">
+                  <CoachAvatar name={coach.name} src={profile.avatarUrl} className="size-full text-2xl" />
                 </div>
-              )}
-              <div className="p-6">
-                <div className="mb-6 flex gap-4">
-                  <div className="relative">
-                    <div className="size-20 overflow-hidden rounded-full border-2 border-secondary-fixed p-1 transition-transform group-hover:rotate-12">
-                      <CoachAvatar name={coach.name} src={profile.avatarUrl} className="size-full text-xl" />
-                    </div>
-                    {profile.pricePerLesson != null && profile.pricePerLesson >= 60 && (
-                      <div className="absolute -right-1 -bottom-1 flex size-6 items-center justify-center rounded-full border-2 border-background bg-tertiary-container">
-                        <Zap className="size-3.5 fill-current text-white" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <div className="mb-1 flex items-center gap-1">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`size-4 ${
-                            rating.average != null && i < Math.round(rating.average)
-                              ? "fill-secondary-fixed text-secondary-fixed"
-                              : "text-outline"
-                          }`}
-                        />
-                      ))}
-                      <span className="ml-1 font-mono text-[10px] text-on-surface-variant">({rating.count})</span>
-                    </div>
-                    <h3 className="font-heading text-headline-md text-on-surface uppercase italic transition-colors group-hover:text-primary">
-                      {coach.name}
-                    </h3>
-                    <p className="font-mono text-[10px] text-secondary-fixed-dim">
-                      {locations.map((l) => l.city).join(", ") || "Paideio"}
+              </div>
+              <div className="p-5 md:p-6">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="font-heading text-2xl">
+                      <Link
+                        href={`/coach/${coach.id}`}
+                        className="inline-flex min-h-11 items-center text-calce transition-colors hover:text-vetro focus-visible:text-vetro"
+                      >
+                        {coach.name}
+                      </Link>
+                    </h2>
+                    <p className="mt-1 flex items-center gap-1.5 text-sm text-nebbia">
+                      <MapPin className="size-4 text-vetro" />
+                      {locations.map((location) => location.city).join(", ") || "Paideio"}
                     </p>
                   </div>
+                  <div className="flex items-center gap-1" aria-label={rating.average ? `Valutazione ${rating.average.toFixed(1)} su 5` : "Nessuna valutazione"}>
+                    <Star className={rating.average ? "size-4 fill-vetro text-vetro" : "size-4 text-nebbia"} aria-hidden />
+                    <strong className="text-sm text-calce">{rating.average?.toFixed(1) ?? "Nuovo"}</strong>
+                    <span className="text-xs text-nebbia">({rating.count})</span>
+                  </div>
                 </div>
-                <p className="mb-8 line-clamp-3 font-sans text-on-surface-variant">{profile.bio}</p>
-                <div className="flex items-center justify-between">
+                <p className="mt-4 line-clamp-2 max-w-2xl text-sm leading-relaxed text-nebbia">{profile.bio}</p>
+                <div className="mt-5 flex flex-wrap items-center gap-2">
+                  {parseJsonArray(profile.levels).slice(0, 3).map((coachLevel) => (
+                    <span key={coachLevel} className="flex min-h-7 items-center gap-1 border border-nebbia/25 px-2 text-xs text-nebbia capitalize">
+                      <GraduationCap className="size-3.5" aria-hidden /> {coachLevel}
+                    </span>
+                  ))}
                   <div className="flex gap-2">
                     {parseJsonArray(profile.trainingTypes)
                       .slice(0, 2)
                       .map((t) => (
                         <span
                           key={t}
-                          className="flex items-center gap-1 border border-outline-variant/30 bg-surface-container-highest px-2 py-1 font-mono text-[10px] text-outline"
+                          className="flex min-h-7 items-center gap-1 border border-nebbia/25 px-2 text-xs text-nebbia"
                         >
-                          {t === "singolo" ? <User className="size-3" /> : <Users className="size-3" />}
-                          {t === "singolo" ? "SINGOLA" : "GRUPPO"}
+                          {t === "singolo" ? <User className="size-3" aria-hidden /> : <Users className="size-3" aria-hidden />}
+                          {t === "singolo" ? "Singola" : "Gruppo"}
                         </span>
                       ))}
                   </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-4 border-t border-nebbia/20 bg-carta-bassa p-5 md:w-52 md:flex-col md:items-stretch md:justify-center md:border-t-0 md:border-l">
+                <div>
+                  <p className="text-xs text-nebbia">Lezione da</p>
+                  <p className="mt-1 flex items-center gap-1 font-heading text-2xl text-calce">
+                    <Euro className="size-4 text-vetro" aria-hidden />
+                    {profile.pricePerLesson ?? "—"}
+                  </p>
+                </div>
+                <GameCta href={`/coach/${coach.id}#prenota`} tone="ball" showBall arrow className="flex-1 md:flex-none">
+                  Prenota
+                </GameCta>
+                <div className="flex items-center justify-end">
                   <FavoriteButton coachId={coach.id} initialFavorite={favoriteIds.has(coach.id)} isPlayer={isPlayer} />
                 </div>
-                <Link
-                  href={`/coach/${coach.id}`}
-                  className="group/btn mt-4 flex items-center gap-2 font-mono text-label-caps font-bold text-secondary-fixed uppercase italic transition-all hover:gap-4"
-                >
-                  Vedi Profilo <ArrowRight className="size-4" />
-                </Link>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </div>

@@ -1,42 +1,139 @@
 import Link from "next/link";
-import { Inbox, CalendarCheck, Star, ArrowRight, User, Clock } from "lucide-react";
-import { getCurrentUser } from "@/lib/session";
-import { getCoachAdminStats, getBookingsForCoach } from "@/lib/queries";
+import { eq } from "drizzle-orm";
+import { Inbox, CalendarCheck, Star, ArrowRight, User, Clock, Check, Circle, Eye, Sparkles } from "@/components/icons/paideio-icons";
+import { getCurrentCoach } from "@/lib/session";
+import { getCoachAdminStats, getBookingsForCoach, parseJsonArray } from "@/lib/queries";
+import { db } from "@/lib/db";
+import { availabilitySlots, locations } from "@/lib/db/schema";
 import { BookingRequestActions } from "@/components/booking-request-actions";
 import { CoachAvatar } from "@/components/coach-avatar";
+import { GameAsset, GameEmptyState } from "@/components/design/field-assets";
 
 export default async function CoachAdminDashboard() {
-  const user = await getCurrentUser();
-  if (!user) return null;
+  const current = await getCurrentCoach();
+  if (!current?.profile) return null;
+  const { user, profile } = current;
 
-  const [stats, bookings] = await Promise.all([getCoachAdminStats(user.id), getBookingsForCoach(user.id)]);
+  const [stats, bookings, coachLocations, slots] = await Promise.all([
+    getCoachAdminStats(user.id),
+    getBookingsForCoach(user.id),
+    db.query.locations.findMany({ where: eq(locations.coachId, user.id) }),
+    db.query.availabilitySlots.findMany({ where: eq(availabilitySlots.coachId, user.id) }),
+  ]);
   const pending = bookings.filter(({ booking }) => booking.status === "richiesta").slice(0, 3);
+  const setup = [
+    {
+      label: "Profilo pubblico",
+      detail: "Foto, presentazione, livelli e tariffa",
+      href: "/coach-admin/profilo",
+      done:
+        Boolean(profile.avatarUrl && profile.bio.trim() && profile.pricePerLesson) &&
+        parseJsonArray(profile.levels).length > 0 &&
+        parseJsonArray(profile.trainingTypes).length > 0,
+    },
+    {
+      label: "Campi di allenamento",
+      detail: "Almeno un club dove ricevere giocatori",
+      href: "/coach-admin/campi",
+      done: coachLocations.length > 0,
+    },
+    {
+      label: "Disponibilità",
+      detail: "Pubblica almeno un turno settimanale",
+      href: "/coach-admin/orari",
+      done: slots.length > 0,
+    },
+  ];
+  const completedSetup = setup.filter((item) => item.done).length;
+  const setupPercent = Math.round((completedSetup / setup.length) * 100);
+  const nextSetup = setup.find((item) => !item.done);
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="font-heading text-headline-lg-mobile text-secondary-fixed uppercase italic md:text-headline-lg">
-          Bentornato, {user.name.split(" ")[0]}
-        </h1>
-        <p className="font-sans text-body-lg text-on-surface-variant">
-          {stats.pendingRequests > 0
-            ? "Ci sono giocatori in attesa della tua risposta."
-            : "Nessuna richiesta in sospeso: campo libero."}
-        </p>
+      <div className="paper-grain mb-10 grid overflow-hidden border border-nebbia/20 bg-carta-bassa px-6 pt-7 md:grid-cols-[1fr_220px] md:items-end md:px-9">
+        <div className="pb-8">
+          <p className="ui-kicker mb-3">Il tuo lato del campo</p>
+          <h1 className="font-heading text-headline-lg-mobile text-calce md:text-headline-lg">
+            Bentornato, {user.name.split(" ")[0]}
+          </h1>
+          <p className="mt-2 font-sans text-body-lg text-on-surface-variant">
+            {stats.pendingRequests > 0
+              ? "Ci sono giocatori in attesa della tua risposta."
+              : "Nessuna richiesta in sospeso: campo libero."}
+          </p>
+        </div>
+        <GameAsset
+          name="playerSmash"
+          decorative
+          sizes="220px"
+          className="hidden max-h-64 w-auto justify-self-center md:block"
+        />
       </div>
 
-      <div className="mb-12 grid grid-cols-1 gap-6 md:grid-cols-3">
-        <div className="group relative overflow-hidden border-l-4 border-primary bg-surface-container-high p-6 shadow-xl">
+      <section className="mb-8 grid gap-5 border border-nebbia/25 bg-carta-alta p-5 md:grid-cols-[1fr_1.25fr] md:p-7">
+        <div>
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-5 text-accent-ball-ink" />
+            <h2 className="font-heading text-xl text-calce">Il tuo profilo è pronto al {setupPercent}%</h2>
+          </div>
+          <p className="mt-2 max-w-md text-sm leading-relaxed text-nebbia">
+            Completa questi passaggi perché i giocatori possano trovarti, capire la tua proposta e scegliere un orario.
+          </p>
+          <div
+            className="mt-5 h-2 overflow-hidden bg-nebbia/15"
+            role="progressbar"
+            aria-label="Completamento configurazione"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={setupPercent}
+          >
+            <div className="h-full bg-game-ball transition-[width] duration-300" style={{ width: `${setupPercent}%` }} />
+          </div>
+          {nextSetup ? (
+            <Link
+              href={nextSetup.href}
+              className="mt-5 inline-flex min-h-11 items-center gap-2 border border-game-ball bg-game-ball px-4 text-sm font-semibold text-game-ink hover:bg-game-white"
+            >
+              Continua da “{nextSetup.label}” <ArrowRight className="size-4" />
+            </Link>
+          ) : (
+            <Link href={`/coach/${user.id}`} className="mt-5 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-vetro hover:text-calce">
+              <Eye className="size-4" /> Guarda il profilo come giocatore
+            </Link>
+          )}
+        </div>
+        <ol className="divide-y divide-nebbia/20 border-y border-nebbia/20">
+          {setup.map((item) => (
+            <li key={item.label}>
+              <Link href={item.href} className="flex min-h-16 items-center gap-3 py-3 hover:text-vetro">
+                {item.done ? (
+                  <span className="flex size-7 shrink-0 items-center justify-center bg-vetro text-carta"><Check className="size-4" /></span>
+                ) : (
+                  <span className="flex size-7 shrink-0 items-center justify-center border border-nebbia/40"><Circle className="size-3 text-nebbia" /></span>
+                )}
+                <span className="flex-1">
+                  <strong className="block text-sm text-calce">{item.label}</strong>
+                  <span className="text-xs text-nebbia">{item.detail}</span>
+                </span>
+                <ArrowRight className="size-4 text-nebbia" />
+              </Link>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <div className="mb-12 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="group relative overflow-hidden border-t border-primary bg-surface-container-high p-6">
           <Inbox className="absolute -right-4 -bottom-4 size-32 text-on-surface opacity-5 transition-transform duration-500 group-hover:scale-110" />
           <p className="mb-2 font-mono text-label-caps text-on-surface-variant uppercase">Richieste in attesa</p>
           <p className="font-heading text-headline-lg text-on-surface">{stats.pendingRequests}</p>
         </div>
-        <div className="group relative overflow-hidden border-l-4 border-secondary-fixed bg-surface-container-high p-6 shadow-xl">
+        <div className="group relative overflow-hidden border-t border-secondary-fixed bg-surface-container-high p-6">
           <CalendarCheck className="absolute -right-4 -bottom-4 size-32 text-on-surface opacity-5 transition-transform duration-500 group-hover:scale-110" />
           <p className="mb-2 font-mono text-label-caps text-on-surface-variant uppercase">Confermate questa settimana</p>
           <p className="font-heading text-headline-lg text-on-surface">{stats.confirmedThisWeek}</p>
         </div>
-        <div className="group relative overflow-hidden border-l-4 border-tertiary bg-surface-container-high p-6 shadow-xl">
+        <div className="group relative overflow-hidden border-t border-tertiary bg-surface-container-high p-6">
           <Star className="absolute -right-4 -bottom-4 size-32 text-on-surface opacity-5 transition-transform duration-500 group-hover:scale-110" />
           <p className="mb-2 font-mono text-label-caps text-on-surface-variant uppercase">Valutazione media</p>
           <p className="font-heading text-headline-lg text-on-surface">
@@ -51,7 +148,7 @@ export default async function CoachAdminDashboard() {
       <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
         <div className="space-y-6 lg:col-span-8">
           <div className="flex items-center justify-between border-b border-outline-variant/30 pb-4">
-            <h2 className="flex items-center gap-3 font-heading text-headline-md uppercase italic">
+            <h2 className="flex items-center gap-3 font-heading text-headline-md">
               <Clock className="size-5 text-primary" />
               Richieste Pendenti
             </h2>
@@ -60,12 +157,14 @@ export default async function CoachAdminDashboard() {
             </Link>
           </div>
           {pending.length === 0 && (
-            <p className="py-8 text-center text-sm text-on-surface-variant">
-              Nessuna richiesta in sospeso al momento.
-            </p>
+            <GameEmptyState
+              asset="ballBasket"
+              title="Cesta pronta"
+              description="Nessuna richiesta in sospeso. Usa questo momento per preparare i prossimi allenamenti."
+            />
           )}
           {pending.map(({ booking, player, location }) => (
-            <div key={booking.id} className="card-clip flex flex-col gap-6 bg-surface-container-high p-6 transition-all hover:bg-surface-bright md:flex-row">
+            <div key={booking.id} className="card-clip flex flex-col gap-6 bg-surface-container-high p-6 transition-colors duration-150 hover:bg-surface-bright md:flex-row">
               {player ? (
                 <CoachAvatar name={player.name} className="size-20 shrink-0 border-2 border-secondary-fixed text-xl" />
               ) : (
@@ -90,7 +189,7 @@ export default async function CoachAdminDashboard() {
                   </div>
                 </div>
                 {booking.notes && (
-                  <div className="mt-2 border-l-2 border-primary bg-surface-container-lowest p-3">
+                  <div className="mt-2 border-t-2 border-primary bg-surface-container-lowest p-3">
                     <p className="font-sans text-sm text-on-surface italic">&ldquo;{booking.notes}&rdquo;</p>
                   </div>
                 )}
@@ -104,7 +203,8 @@ export default async function CoachAdminDashboard() {
 
         <div className="space-y-6 lg:col-span-4">
           <div className="border border-outline-variant/20 bg-surface-container p-6 shadow-2xl">
-            <h2 className="mb-6 font-heading text-headline-md uppercase italic">Gestione Rapida</h2>
+            <h2 className="font-heading text-headline-md">Gestione rapida</h2>
+            <p className="mt-2 mb-6 text-sm text-nebbia">Aggiorna ciò che i giocatori vedono prima di prenotare.</p>
             <div className="space-y-3">
               <Link
                 href="/coach-admin/profilo"

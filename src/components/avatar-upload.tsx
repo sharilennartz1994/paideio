@@ -4,6 +4,7 @@ import { useRef, useState, useTransition, type ChangeEvent } from "react";
 import { toast } from "sonner";
 import { updateCoachAvatar } from "@/lib/actions/coach-admin";
 import { CoachAvatar } from "@/components/coach-avatar";
+import { FullScreenGameLoader } from "@/components/design";
 import { Button } from "@/components/ui/button";
 
 export function AvatarUpload({ name, currentUrl }: { name: string; currentUrl: string | null }) {
@@ -34,27 +35,31 @@ export function AvatarUpload({ name, currentUrl }: { name: string; currentUrl: s
   }
 
   return (
-    <div className="flex items-center gap-4">
-      <CoachAvatar name={name} src={preview} className="size-16 text-xl" />
-      <div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={isPending}
-          onClick={() => inputRef.current?.click()}
-        >
-          {isPending ? "Caricamento…" : "Cambia foto"}
-        </Button>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          className="hidden"
-          onChange={handleFileChange}
-        />
-        <p className="mt-1 text-xs text-muted-foreground">JPG, PNG o WebP, max 4 MB.</p>
+    <>
+      {isPending && <FullScreenGameLoader label="Carichiamo la nuova foto" />}
+      <div className="flex items-center gap-4">
+        <CoachAvatar name={name} src={preview} className="size-16 text-xl" />
+        <div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isPending}
+            onClick={() => inputRef.current?.click()}
+          >
+            Cambia foto
+          </Button>
+          <input
+            ref={inputRef}
+            type="file"
+            aria-label="Carica una nuova foto profilo"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">JPG, PNG o WebP, max 4 MB.</p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

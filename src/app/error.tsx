@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { PadelBallMark } from "@/components/padel-ball-mark";
+import { GameAsset, GameCta } from "@/components/design";
 
 export default function ErrorPage({
   error,
@@ -16,20 +15,21 @@ export default function ErrorPage({
   }, [error]);
 
   return (
-    <div className="mx-auto flex max-w-md flex-col items-center px-4 py-24 text-center">
-      <PadelBallMark className="animate-ball-bounce size-14" />
-      <div className="mx-auto mt-1 h-2.5 w-9 animate-ball-shadow rounded-full bg-foreground/20 blur-[2px]" />
-      <p className="mt-6 font-mono text-xs tracking-widest text-destructive uppercase">Errore</p>
-      <h1 className="mt-2 font-heading text-4xl font-semibold tracking-tight">Siamo finiti in rete!</h1>
-      <p className="mt-3 text-muted-foreground">
+    <div className="hex-texture mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center px-4 py-24 text-center">
+      <GameAsset
+        name="net"
+        decorative
+        sizes="260px"
+        className="max-h-40 w-auto"
+      />
+      <p className="mt-6 font-mono text-label-caps text-destructive uppercase">Errore</p>
+      <h1 className="mt-2 font-heading text-headline-lg-mobile text-on-surface">Siamo finiti in rete!</h1>
+      <p className="mt-3 font-sans text-on-surface-variant">
         Qualcosa è andato storto durante lo scambio. Riprova il colpo: di solito basta.
       </p>
-      <Button
-        className="cut-cta mt-6 bg-ball font-mono text-xs font-bold tracking-wider text-ball-foreground uppercase hover:bg-ball/90"
-        onClick={reset}
-      >
+      <GameCta tone="ball" showBall className="mt-6" onClick={reset}>
         Riprova
-      </Button>
+      </GameCta>
     </div>
   );
 }

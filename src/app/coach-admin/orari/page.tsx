@@ -13,5 +13,15 @@ export default async function OrariPage() {
     db.query.availabilitySlots.findMany({ where: eq(availabilitySlots.coachId, user.id) }),
   ]);
 
-  return <AvailabilityManager locations={coachLocations} initialSlots={slots} />;
+  return (
+    <div>
+      <div className="mb-5">
+        <h2 className="font-heading text-2xl text-calce">Quando sei disponibile</h2>
+        <p className="mt-1 text-sm text-nebbia">Crea turni settimanali ricorrenti. Le richieste già attive bloccano automaticamente lo slot.</p>
+      </div>
+      <div className="border border-outline-variant/20 bg-surface-container p-6 shadow-2xl">
+      <AvailabilityManager locations={coachLocations} initialSlots={slots} />
+      </div>
+    </div>
+  );
 }
