@@ -34,6 +34,7 @@ async function seed() {
       levels: ["intermedio", "avanzato"],
       trainingTypes: ["singolo", "gruppo"],
       pricePerLesson: 52,
+      groupCapacity: 4,
       city: "Milano",
       locations: [
         { name: "Padel Club Milano Nord", address: "Via dei Platani 12, Milano", lat: 45.5145, lng: 9.1755 },
@@ -52,6 +53,8 @@ async function seed() {
       levels: ["principiante", "intermedio"],
       trainingTypes: ["gruppo"],
       pricePerLesson: 35,
+      // Capienza bassa apposta: rende facile verificare il "gruppo al completo".
+      groupCapacity: 2,
       city: "Milano",
       locations: [
         { name: "Smash Padel Arena", address: "Viale Certosa 88, Milano", lat: 45.495, lng: 9.15 },
@@ -69,6 +72,7 @@ async function seed() {
       levels: ["principiante", "intermedio", "avanzato"],
       trainingTypes: ["singolo"],
       pricePerLesson: 45,
+      groupCapacity: 4,
       city: "Torino",
       locations: [
         { name: "Padel Center Torino", address: "Corso Francia 200, Torino", lat: 45.08, lng: 7.63 },
@@ -90,6 +94,7 @@ async function seed() {
       levels: JSON.stringify(c.levels),
       trainingTypes: JSON.stringify(c.trainingTypes),
       pricePerLesson: c.pricePerLesson,
+      groupCapacity: c.groupCapacity,
     });
 
     for (const loc of c.locations) {

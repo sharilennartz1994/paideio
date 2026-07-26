@@ -5,7 +5,9 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="net-texture relative w-full overflow-hidden border-t border-game-cyan/25 py-12 md:pl-20">
+    // Ultimo elemento del flusso: è il footer, non `main`, a dover liberare lo
+    // spazio della bottom nav fissa (5rem + safe area) su mobile.
+    <footer className="net-texture relative w-full overflow-hidden border-t border-game-cyan/25 pt-12 pb-[calc(8rem+env(safe-area-inset-bottom))] md:pl-20 md:pb-12">
       <GameAsset name="net" decorative sizes="360px" className="pointer-events-none absolute -right-16 bottom-0 hidden max-h-44 w-auto opacity-25 lg:block" />
       <div className="relative flex flex-col items-center justify-between gap-8 px-4 md:flex-row md:px-16">
         <div className="flex flex-col items-center gap-2 md:items-start">

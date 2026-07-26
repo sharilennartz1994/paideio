@@ -57,20 +57,48 @@ giocatore a coach dopo la registrazione.
 Il tema giorno `Court Daylight` è predefinito; `.dark` attiva l’arena
 notturna. La preferenza `paideio-theme` viene applicata prima del paint senza
 `next-themes`. Oxanium è il font display/UI sportivo; Hanken Grotesk è il
-font di lettura. Gli accenti testuali sul tema giorno usano i token
-`accent-*-ink`: non usare i colori neon puri per testo piccolo.
+font di lettura. Gli accenti sul tema giorno usano i token `accent-*-ink`
+(`accent-cyan-ink`, `accent-ball-ink`, `accent-orange-ink`) — **non solo per il
+testo ma anche per bordi, pallini, barre e riempimenti**. I token `game-*`
+(ink, blue, cyan, ball, white) sono fissi e valgono soltanto dove la superficie
+è a sua volta fissa: topbar, sidebar, bottom nav, sheet di navigazione, hero
+`bg-game-ink`, sezioni `bg-game-blue`, `.net-texture`, `.malla-texture`. Su
+`carta`/`carta-alta`/`carta-bassa` il giallo pallina puro dà 1,15:1 e il ciano
+1,8:1: gli indicatori spariscono in modalità giorno. Focus sempre su `--vetro`.
+Un componente che compare su entrambi i tipi di superficie (es. `GameBadge`)
+deve avere fondo opaco.
 
 Le illustrazioni comic/cel-shaded vivono in `public/design/game`, le icone
 PNG proprietarie in `public/design/icons` e le primitive in
 `src/components/design`. Logo e favicon sono raster in `public/brand` e
 `src/app/icon.png`/`apple-icon.png`; non convertirli in SVG. La shell usa
-sidebar desktop, topbar e bottom navigation mobile.
+sidebar desktop, topbar e bottom navigation mobile. La bottom nav
+(`mobile-nav.tsx`, guscio server in `app-bottom-nav.tsx`) ha quattro schede più
+uno sheet "Altro": nessuna rotta deve essere raggiungibile solo dalla sidebar
+desktop, quindi ogni voce nuova va aggiunta in entrambi i posti.
 
 La metafora del gioco non deve oscurare il servizio: l’hero esplicita sempre
 ricerca del coach e prenotazione. Contrasto WCAG AA in entrambi i temi,
 target minimi 44×44 px, focus visibile e fallback statico per
 `prefers-reduced-motion`. Fonti normative: `DESIGN.md`,
 `design/HANDOFF.md`, `design/SYSTEM.md` e `AGENTS.md`.
+
+## Capienza slot
+
+Uno slot-istanza è *giorno + campo + fascia oraria*. La regola sta in un solo
+posto, `computeSlotOccupancy()` in `src/lib/constants.ts`, condivisa da
+`getCoachCalendar()` e `createBooking()`: se divergono, il calendario offre
+qualcosa che l'action rifiuta. Una lezione singola prende il campo in
+esclusiva; le lezioni di gruppo condividono lo slot fino a
+`coachProfiles.groupCapacity` (configurabile dal coach in
+`/coach-admin/profilo`); raggiunta la capienza lo slot sparisce. Uno slot già
+aperto come gruppo resta di gruppo. La capienza non è esprimibile come indice
+unico: `createBooking()` usa `pg_advisory_xact_lock` per serializzare gli
+scrittori sullo stesso slot — non sostituirlo con un `count(*)` nudo.
+
+Test: `npm run test:capienza`, da lanciare **solo** contro un Postgres locale
+usa-e-getta (lo script rifiuta URL non locali). Istruzioni complete
+nell'intestazione di `scripts/e2e-capienza.mts`.
 
 ## Micro-interazioni e tono playful
 

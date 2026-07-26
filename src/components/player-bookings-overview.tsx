@@ -106,7 +106,7 @@ function LessonCard({ item }: { item: PlayerBookingSummary }) {
     <article
       className={cn(
         "card-clip border-t-2 bg-carta-alta p-5 md:p-6",
-        item.status === "confermata" ? "border-game-ball" : "border-game-cyan/65"
+        item.status === "confermata" ? "border-accent-ball-ink" : "border-accent-cyan-ink/65"
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -219,13 +219,13 @@ function CalendarView({
                 className={cn(
                   "min-h-32 border-r border-b border-nebbia/16 p-2",
                   !day && "bg-carta/45",
-                  isToday && "bg-game-cyan/7"
+                  isToday && "bg-accent-cyan-ink/7"
                 )}
               >
                 {day && (
                   <span className={cn(
                     "flex size-7 items-center justify-center font-heading text-xs font-bold text-nebbia",
-                    isToday && "bg-game-cyan text-game-ink"
+                    isToday && "bg-accent-cyan-ink text-carta"
                   )}>
                     {day}
                   </span>
@@ -236,7 +236,7 @@ function CalendarView({
                       key={lesson.id}
                       className={cn(
                         "border-l-2 bg-carta-alta px-2 py-1.5 text-left",
-                        lesson.status === "confermata" ? "border-game-ball" : "border-game-cyan"
+                        lesson.status === "confermata" ? "border-accent-ball-ink" : "border-accent-cyan-ink"
                       )}
                     >
                       <p className="font-heading text-[10px] font-bold text-calce">{lesson.startTime} · {lesson.coachName}</p>
@@ -275,10 +275,10 @@ function AgendaView({ items }: { items: PlayerBookingSummary[] }) {
               {formatDate(date, { day: "2-digit", month: "short" })}
             </p>
           </div>
-          <div className="relative grid gap-3 border-l border-game-cyan/35 pl-5">
+          <div className="relative grid gap-3 border-l border-accent-cyan-ink/35 pl-5">
             {lessons.map((item) => (
               <article key={item.id} className="relative border border-nebbia/20 bg-carta-alta p-4">
-                <span className="absolute top-5 -left-[25px] size-2.5 bg-game-ball" aria-hidden />
+                <span className="absolute top-5 -left-[25px] size-2.5 bg-accent-ball-ink" aria-hidden />
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <p className="font-heading text-lg font-bold text-calce">{item.startTime} · {item.coachName}</p>
@@ -419,7 +419,7 @@ export function PlayerBookingsOverview({ items }: { items: PlayerBookingSummary[
                 aria-pressed={view === value}
                 onClick={() => setView(value)}
                 className={cn(
-                  "flex min-h-10 items-center gap-2 px-3 font-heading text-[10px] font-bold uppercase transition-colors focus-visible:outline-2 focus-visible:outline-game-cyan",
+                  "flex min-h-10 items-center gap-2 px-3 font-heading text-[10px] font-bold uppercase transition-colors focus-visible:outline-2 focus-visible:outline-vetro",
                   view === value ? "bg-game-blue text-game-white" : "text-nebbia hover:text-calce"
                 )}
               >

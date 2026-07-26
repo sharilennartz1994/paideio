@@ -7,7 +7,14 @@ import { put } from "@vercel/blob";
 import { db } from "@/lib/db";
 import { locations, availabilitySlots, coachProfiles, bookings } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/session";
-import { LEVELS, TRAINING_TYPES, toLocalDateString } from "@/lib/constants";
+import {
+  LEVELS,
+  TRAINING_TYPES,
+  toLocalDateString,
+  DEFAULT_GROUP_CAPACITY,
+  MIN_GROUP_CAPACITY,
+  MAX_GROUP_CAPACITY,
+} from "@/lib/constants";
 import { type ActionResult, ok, err } from "@/lib/action-result";
 
 const MAX_AVATAR_BYTES = 4 * 1024 * 1024;
@@ -171,6 +178,7 @@ export async function updateCoachProfile(input: {
   levels: string[];
   trainingTypes: string[];
   pricePerLesson?: number | null;
+  groupCapacity?: number;
 }): Promise<ActionResult> {
   const coachResult = await requireCoach();
   if (!coachResult.ok) return coachResult;
@@ -187,6 +195,17 @@ export async function updateCoachProfile(input: {
     return err("Il prezzo per lezione deve essere un numero intero positivo.");
   }
 
+  const groupCapacity = input.groupCapacity ?? DEFAULT_GROUP_CAPACITY;
+  if (
+    !Number.isInteger(groupCapacity) ||
+    groupCapacity < MIN_GROUP_CAPACITY ||
+    groupCapacity > MAX_GROUP_CAPACITY
+  ) {
+    return err(
+      `I posti per lezione di gruppo devono essere un numero tra ${MIN_GROUP_CAPACITY} e ${MAX_GROUP_CAPACITY}.`
+    );
+  }
+
   await db
     .update(coachProfiles)
     .set({
@@ -194,6 +213,7 @@ export async function updateCoachProfile(input: {
       levels: JSON.stringify(levels),
       trainingTypes: JSON.stringify(trainingTypes),
       pricePerLesson,
+      groupCapacity,
     })
     .where(eq(coachProfiles.userId, coach.id));
   revalidatePath("/coach-admin/profilo");

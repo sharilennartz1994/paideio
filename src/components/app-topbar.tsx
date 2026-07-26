@@ -26,11 +26,9 @@ export async function AppTopbar() {
           className="h-12 w-auto object-contain"
         />
       </Link>
-      <div className="hidden items-center gap-2 font-heading text-[10px] font-bold tracking-[0.12em] text-game-white/65 uppercase md:flex">
-        <span className="size-1.5 bg-game-ball" />
-        Trova · Prenota · Gioca
-      </div>
-      <div className="flex items-center gap-4">
+      {/* `ml-auto`: su desktop il logo qui sopra è nascosto e senza questo le
+          azioni scivolerebbero a sinistra. */}
+      <div className="ml-auto flex items-center gap-4">
         <ThemeToggle />
         {user && (
           <Link

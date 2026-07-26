@@ -24,6 +24,9 @@ export const coachProfiles = pgTable("coach_profiles", {
   avatarUrl: text("avatar_url"),
   // Prezzo per lezione in euro interi; null = non indicato
   pricePerLesson: integer("price_per_lesson"),
+  // Posti totali di una lezione di gruppo, configurato dal coach. Le lezioni
+  // singole prendono il campo in esclusiva e ignorano questo valore.
+  groupCapacity: integer("group_capacity").notNull().default(4),
 });
 
 export const locations = pgTable("locations", {
@@ -81,10 +84,16 @@ export const bookings = pgTable(
     createdAt: text("created_at").notNull(),
   },
   (table) => [
-    // Impedisce doppie prenotazioni attive sullo stesso slot (indice parziale:
-    // le prenotazioni rifiutate/annullate non bloccano lo slot)
-    uniqueIndex("bookings_active_slot_idx")
+    // Una lezione singola occupa il campo in esclusiva: al massimo una attiva
+    // per slot. Indice parziale, quindi rifiutate/annullate non bloccano nulla.
+    uniqueIndex("bookings_active_single_slot_idx")
       .on(table.coachId, table.locationId, table.date, table.startTime)
+      .where(sql`status IN ('richiesta', 'confermata') AND type = 'singolo'`),
+    // Le lezioni di gruppo condividono lo slot, ma un giocatore non può
+    // occupare due posti nella stessa lezione. La capienza massima non è
+    // esprimibile come indice: la impone `createBooking` sotto advisory lock.
+    uniqueIndex("bookings_active_player_slot_idx")
+      .on(table.coachId, table.locationId, table.date, table.startTime, table.playerId)
       .where(sql`status IN ('richiesta', 'confermata')`),
   ]
 );

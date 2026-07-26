@@ -96,11 +96,13 @@ const gameBadgeVariants = cva(
   {
     variants: {
       tone: {
+        // Fondo opaco: il badge compare sia su superfici chiare sia sull'header
+        // arena scuro, quindi non può dipendere dal colore che sta sotto.
         neutral: "border-nebbia/35 bg-carta-bassa text-nebbia",
-        info: "border-game-cyan/55 bg-game-cyan/10 text-accent-cyan-ink",
-        success: "border-vetro/55 bg-vetro/10 text-vetro",
-        pending: "border-game-ball/55 bg-game-ball/10 text-accent-ball-ink",
-        danger: "border-ruggine/55 bg-ruggine/10 text-accent-orange-ink",
+        info: "border-accent-cyan-ink/55 bg-carta-alta text-accent-cyan-ink",
+        success: "border-vetro/55 bg-carta-alta text-vetro",
+        pending: "border-accent-ball-ink/55 bg-carta-alta text-accent-ball-ink",
+        danger: "border-accent-orange-ink/55 bg-carta-alta text-accent-orange-ink",
       },
     },
     defaultVariants: { tone: "neutral" },
@@ -204,8 +206,8 @@ export function GamePanel({
         "game-panel border bg-carta-alta",
         tone === "default" && "border-nebbia/30",
         tone === "quiet" && "border-nebbia/18 bg-carta-bassa",
-        tone === "cyan" && "border-game-cyan/50 bg-game-cyan/7",
-        tone === "ball" && "border-game-ball/45 bg-game-ball/6",
+        tone === "cyan" && "border-accent-cyan-ink/50 bg-accent-cyan-ink/7",
+        tone === "ball" && "border-accent-ball-ink/45 bg-accent-ball-ink/6",
         className
       )}
     >
@@ -229,9 +231,9 @@ export function GameStat({
     <div
       className={cn(
         "border-t bg-carta-alta p-5",
-        accent === "cyan" && "border-game-cyan",
-        accent === "ball" && "border-game-ball",
-        accent === "orange" && "border-game-orange"
+        accent === "cyan" && "border-accent-cyan-ink",
+        accent === "ball" && "border-accent-ball-ink",
+        accent === "orange" && "border-accent-orange-ink"
       )}
     >
       <p className="text-sm text-nebbia">{label}</p>

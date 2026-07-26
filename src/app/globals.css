@@ -218,11 +218,14 @@
       linear-gradient(color-mix(in srgb, var(--vetro) 6%, transparent) 1px, transparent 1px);
     background-size: 100% 100%, 100% 88px;
   }
+  /* Si applica solo sopra superfici arena fisse (game-ink, game-blue): usa token
+     non tematizzati, altrimenti in modalità giorno stende un velo chiaro sul
+     fondo scuro e il testo bianco scende sotto AA. */
   .malla-texture {
     background-image:
-      linear-gradient(color-mix(in srgb, var(--carta-alta) 93%, transparent), color-mix(in srgb, var(--carta-alta) 93%, transparent)),
-      linear-gradient(45deg, transparent 47%, color-mix(in srgb, var(--vetro) 13%, transparent) 48% 52%, transparent 53%),
-      linear-gradient(-45deg, transparent 47%, color-mix(in srgb, var(--vetro) 13%, transparent) 48% 52%, transparent 53%);
+      linear-gradient(color-mix(in srgb, var(--game-ink) 93%, transparent), color-mix(in srgb, var(--game-ink) 93%, transparent)),
+      linear-gradient(45deg, transparent 47%, color-mix(in srgb, var(--game-cyan) 13%, transparent) 48% 52%, transparent 53%),
+      linear-gradient(-45deg, transparent 47%, color-mix(in srgb, var(--game-cyan) 13%, transparent) 48% 52%, transparent 53%);
     background-size: auto, 18px 18px, 18px 18px;
     background-repeat: repeat;
   }
@@ -625,13 +628,14 @@ html[data-motion-ready="true"] .paideio-manifesto-player[data-game-visible="true
 .paideio-principles::before {
   position: absolute;
   top: 0;
-  bottom: 0;
-  left: 1px;
-  width: 2px;
+  right: 0;
+  left: 0;
+  height: 2px;
   content: "";
-  background: var(--game-ball);
-  transform: scaleY(0);
-  transform-origin: top;
+  /* Sfondo chiaro in modalità giorno: il giallo pallina puro sparisce (1,15:1). */
+  background: var(--accent-ball-ink);
+  transform: scaleX(0);
+  transform-origin: left;
 }
 
 html[data-motion-ready="true"] .paideio-principles:has([data-game-visible="true"])::before {
@@ -665,7 +669,7 @@ html[data-motion-ready="true"] .paideio-principles:has([data-game-visible="true"
 }
 
 @keyframes paideio-path-draw {
-  to { transform: scaleY(1); }
+  to { transform: scaleX(1); }
 }
 
 @media (max-width: 767px) {
@@ -675,9 +679,6 @@ html[data-motion-ready="true"] .paideio-principles:has([data-game-visible="true"
     top: 38%;
     right: -42%;
     width: 120vw;
-  }
-  .paideio-principles {
-    padding-left: 1.25rem;
   }
 }
 

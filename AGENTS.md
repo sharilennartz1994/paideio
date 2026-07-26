@@ -127,6 +127,60 @@ normativa attuale è `design/SYSTEM.md`, con istruzioni d'implementazione in
   racconta paideia, metodo e servizio in tre atti con un solo motion
   esplicativo e fallback statico reduced-motion.
 
+### Regola token: accenti su superfici che cambiano con il tema
+
+I token `--game-ink`, `--game-blue`, `--game-cyan`, `--game-ball`, `--game-white`
+sono **fissi**: non cambiano tra giorno e notte. Vanno usati **solo dove la
+superficie è a sua volta fissa** (topbar, sidebar, bottom nav, sheet di
+navigazione, hero `bg-game-ink`, sezioni `bg-game-blue`, `.net-texture`).
+
+Su qualunque superficie tematizzata (`carta`, `carta-alta`, `carta-bassa`) usare
+gli accenti *theme-aware* `accent-cyan-ink` / `accent-ball-ink` /
+`accent-orange-ink`, **anche per bordi, pallini, barre e riempimenti**, non solo
+per il testo. In modalità giorno il giallo pallina puro su fondo chiaro dà
+1,15:1 e il ciano 1,8:1: bordi e indicatori di stato spariscono. Per il focus
+usare `--vetro` (`focus-visible:outline-vetro`), mai `game-cyan`.
+
+Corollari già applicati:
+- `.malla-texture` è pensata per stare sopra superfici arena scure, quindi usa
+  `--game-ink`/`--game-cyan` e non i token di tema. Con `--carta-alta` stendeva
+  un velo chiaro sull’hero scuro in modalità giorno e il testo scendeva a
+  3,45:1.
+- I componenti usati su **entrambi** i tipi di superficie devono avere un fondo
+  opaco: `GameBadge` usa `bg-carta-alta`/`bg-carta-bassa` con bordo e testo
+  negli accenti ink, così regge sia sulle card chiare sia sull’header
+  `bg-game-ink` di `booking-calendar`.
+- Un riempimento pieno `bg-game-ball` su fondo chiaro ha bisogno di un contorno
+  proprio: `.game-cta` lo risolve con l’ombra netta, altrove serve
+  `border-game-ink` esplicito.
+
+### Navigazione mobile
+
+`app-bottom-nav.tsx` è solo il guscio server (ruolo + contatore notifiche);
+l’interfaccia sta in `mobile-nav.tsx` (client). Quattro schede — Home, Cerca,
+una terza che cambia con il ruolo (Lezioni / Coach / Academy per gli anonimi) e
+**Altro**, che apre uno Sheet Base UI con il resto della navigazione (Academy,
+Circuito, Preferiti, Notifiche, Diventa coach, Il concept, Prossime release).
+La regola è che **nessuna rotta sia raggiungibile solo dalla sidebar desktop**:
+quando aggiungi una voce alla sidebar, aggiungila anche allo sheet. Lo stato
+attivo è calcolato con `usePathname` e comprende le sottorotte; la scheda
+"Altro" si accende quando la pagina corrente vive dentro lo sheet. Le voci dello
+sheet sono `SheetClose` con `render={<Link/>}` e `nativeButton={false}`, così la
+navigazione chiude il pannello.
+
+Lo spazio per la barra fissa lo libera il **footer**, non `<main>`: in
+`layout.tsx` il `<SiteFooter />` sta fuori da `<main>`, quindi è lui l'ultimo
+elemento del flusso. `site-footer.tsx` usa
+`pb-[calc(8rem+env(safe-area-inset-bottom))] md:pb-12` (3rem visivi + i 5rem
+della barra); `<main>` ha solo `pt-16 md:pl-20`. Metterlo su `<main>` lasciava
+il footer coperto per ~30px e in più apriva un vuoto tra contenuto e footer.
+Se un giorno il footer diventa condizionale, la spaziatura va spostata su
+qualunque elemento chiuda il flusso.
+
+La topbar desktop non ha più il pay-off "Trova · Prenota · Gioca": restano solo
+il logo (mobile) e le azioni. Le azioni usano `ml-auto` perché su desktop il
+logo è nascosto e `justify-between` da solo le manderebbe a sinistra.
+
 ## Sistema archiviato "Agonistic Pulse" (dark-only, replica esatta export Stitch)
 
 Terzo giro di design, storia completa perché è rilevante per capire perché il
@@ -234,7 +288,9 @@ sistema è fatto così:
   app-bottom-nav.tsx` (barra fissa in basso, mobile, 4 icone). `layout.tsx`
   applica `md:pl-64 pt-16 pb-24 md:pb-0` al `<main>` per lo spazio della
   sidebar/barre fisse. `site-header.tsx` e `mobile-nav.tsx` **rimossi**,
-  sostituiti da questi tre. `site-footer.tsx` ha la fascia inclinata
+  sostituiti da questi tre. (Nota: `mobile-nav.tsx` esiste di nuovo oggi, ma è
+  un file diverso — vedi "Navigazione mobile" nel design system corrente.)
+  `site-footer.tsx` ha la fascia inclinata
   `-skew-y-1` con `md:pl-64` per allinearsi alla sidebar.
 - `src/components/coach-avatar.tsx` → **tornato circolare** (`rounded-full`,
   non più parallelogramma): Stitch usa cerchi ovunque per gli avatar
@@ -287,6 +343,43 @@ sistema è fatto così:
   `SUCCESS_MESSAGES` in `booking-calendar.tsx`) — mantenere questo tono
   quando si aggiungono nuovi stati vuoti/di successo, non tornare a un tono
   neutro "di sistema".
+
+## Capienza slot e prenotabilità
+
+Uno slot-istanza è la terna concreta *giorno + campo + fascia oraria*. La regola
+che decide cosa è ancora prenotabile sta in **un solo posto**,
+`computeSlotOccupancy()` in `src/lib/constants.ts`, usata sia da
+`getCoachCalendar()` (per disegnare il calendario) sia da `createBooking()` (per
+validare). Se le due divergono, il calendario mostra prenotabile qualcosa che
+l'action poi rifiuta: tenerle sulla stessa funzione è il punto.
+
+- Una lezione **singola** occupa il campo in esclusiva: nessun altro entra,
+  nemmeno come gruppo.
+- Le lezioni di **gruppo** condividono lo slot fino a
+  `coachProfiles.groupCapacity` (configurato dal coach in
+  `/coach-admin/profilo`, default 4, limiti `MIN_GROUP_CAPACITY`/
+  `MAX_GROUP_CAPACITY`). Raggiunta la capienza lo slot sparisce dalle
+  disponibilità.
+- Uno slot già aperto come gruppo **resta** di gruppo: non ci si può mettere
+  sopra una singola.
+- Rifiutate e annullate non occupano posto: annullare libera immediatamente.
+
+Difese, dal più esterno al più interno:
+1. `booking-calendar.tsx` disabilita gli slot pieni e restringe il selettore
+   "tipo di lezione" a `slot.availableTypes`;
+2. `createBooking()` ricontrolla dentro una transazione — la UI può essere
+   stantia;
+3. due indici unici parziali su `bookings`: `bookings_active_single_slot_idx`
+   (una sola singola attiva per slot) e `bookings_active_player_slot_idx` (un
+   giocatore non prende due posti nella stessa lezione).
+
+**La capienza di gruppo non è esprimibile come indice unico.** Due richieste
+concorrenti leggerebbero entrambe "3 di 4" e inserirebbero, arrivando a 5. Per
+questo `createBooking()` apre la transazione con
+`pg_advisory_xact_lock(hashtextextended(<chiave slot>, 0))`: serializza tutti
+gli scrittori su quello slot e si rilascia da solo a commit o rollback. Non
+sostituirlo con un semplice `SELECT count(*)`: il lock è ciò che rende corretto
+il conteggio.
 
 ## Notifiche prenotazioni
 
@@ -523,13 +616,10 @@ bloccato) per un banner "Deployment Blocked" / "Fix Git Configuration".
 - [ ] Branch Neon dedicato allo sviluppo locale, separato dalla produzione
       (oggi condividono lo stesso database — vedi "Dati demo" e "Deploy in
       produzione")
-- [ ] Capienza reale per le lezioni di gruppo: oggi `bookings.type` è solo
-      un'etichetta, una prenotazione `gruppo` occupa comunque l'intero slot
-      in esclusiva (stesso indice unico anti-race di `singolo`) — nessun
-      concetto di posti/capienza condivisa. Richiede di ripensare lo schema
-      `bookings`/`availabilitySlots` (campo capacità o tabella ponte
-      `booking_participants`), la validazione in `createBooking`, e la UI
-      di `booking-calendar.tsx`.
+- [x] Capienza reale per le lezioni di gruppo — vedi la sezione "Capienza slot
+      e prenotabilità". `coachProfiles.groupCapacity` configurabile dal
+      coach, regola condivisa in `computeSlotOccupancy()`, indici parziali
+      rifatti e advisory lock in `createBooking`. Test: `npm run test:capienza`.
 - [ ] Policy di cancellazione: oggi un giocatore può annullare una
       prenotazione `confermata` in qualsiasi momento, senza finestra minima
       né conseguenze per il coach che ha bloccato lo slot.

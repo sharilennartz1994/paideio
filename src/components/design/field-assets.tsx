@@ -211,7 +211,7 @@ export function GameDivider({
         className
       )}
     >
-      <span className="h-px flex-1 bg-game-cyan/35" />
+      <span className="h-px flex-1 bg-accent-cyan-ink/35" />
       <span className="mx-3 flex items-center gap-2">
         {Array.from({ length: compact ? 5 : 9 }).map((_, index) => (
           <span
@@ -219,13 +219,13 @@ export function GameDivider({
             className={cn(
               "block size-2 rotate-45 border",
               index === Math.floor((compact ? 5 : 9) / 2)
-                ? "scale-125 border-game-ball bg-game-ball"
-                : "border-game-cyan/55 bg-carta"
+                ? "scale-125 border-accent-ball-ink bg-accent-ball-ink"
+                : "border-accent-cyan-ink/55 bg-carta"
             )}
           />
         ))}
       </span>
-      <span className="h-px flex-1 bg-game-cyan/35" />
+      <span className="h-px flex-1 bg-accent-cyan-ink/35" />
     </div>
   );
 }

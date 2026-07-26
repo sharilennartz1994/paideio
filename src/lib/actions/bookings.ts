@@ -2,11 +2,16 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { bookings, availabilitySlots, coachProfiles, notifications, users } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/session";
-import { parseJsonArray, toLocalDateString } from "@/lib/constants";
+import {
+  parseJsonArray,
+  toLocalDateString,
+  computeSlotOccupancy,
+  DEFAULT_GROUP_CAPACITY,
+} from "@/lib/constants";
 import { type ActionResult, ok, err } from "@/lib/action-result";
 
 const MAX_NOTES_LENGTH = 500;
@@ -80,23 +85,55 @@ export async function createBooking(input: {
     return err("Hai troppe richieste in attesa, aspetta una risposta prima di prenotarne altre.");
   }
 
-  const conflict = await db.query.bookings.findFirst({
-    where: and(
-      eq(bookings.coachId, input.coachId),
-      eq(bookings.date, input.date),
-      eq(bookings.locationId, input.locationId),
-      eq(bookings.startTime, input.startTime),
-      inArray(bookings.status, ["richiesta", "confermata"])
-    ),
-  });
-  if (conflict) {
-    return err("Questo slot non è più disponibile.");
-  }
+  const groupCapacity = profile.groupCapacity ?? DEFAULT_GROUP_CAPACITY;
+  const coachTrainingTypes = parseJsonArray(profile.trainingTypes);
 
   try {
     const bookingId = randomUUID();
     const createdAt = new Date().toISOString();
-    await db.transaction(async (tx) => {
+    // La transazione ritorna il motivo del rifiuto (o null se ha inserito):
+    // così il narrowing non dipende da una variabile assegnata in closure.
+    const rejection = await db.transaction(async (tx): Promise<string | null> => {
+      // La capienza di gruppo non è esprimibile come vincolo unico: due
+      // richieste concorrenti leggerebbero entrambe "3 di 4" e inserirebbero,
+      // arrivando a 5. L'advisory lock serializza tutti gli scrittori sullo
+      // stesso slot per la durata della transazione; si rilascia da solo al
+      // commit o al rollback.
+      const lockKey = `paideio:slot:${input.coachId}|${input.locationId}|${input.date}|${input.startTime}`;
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`);
+
+      const active = await tx.query.bookings.findMany({
+        where: and(
+          eq(bookings.coachId, input.coachId),
+          eq(bookings.date, input.date),
+          eq(bookings.locationId, input.locationId),
+          eq(bookings.startTime, input.startTime),
+          inArray(bookings.status, ["richiesta", "confermata"])
+        ),
+      });
+
+      if (active.some((b) => b.playerId === user.id)) {
+        return "Hai già una prenotazione per questo orario.";
+      }
+
+      const occupancy = computeSlotOccupancy(
+        active.map((b) => b.type),
+        groupCapacity,
+        coachTrainingTypes
+      );
+      if (!occupancy.availableTypes.includes(input.type)) {
+        if (occupancy.bookedType === "singolo") {
+          return "Questo orario è già occupato da una lezione singola.";
+        }
+        if (occupancy.full) {
+          return "La lezione di gruppo di questo orario è al completo.";
+        }
+        if (occupancy.bookedType === "gruppo") {
+          return "Su questo orario è già aperta una lezione di gruppo: puoi unirti a quella.";
+        }
+        return "Questo orario non è più disponibile.";
+      }
+
       await tx.insert(bookings).values({
         id: bookingId,
         playerId: user.id,
@@ -133,12 +170,15 @@ export async function createBooking(input: {
           createdAt,
         },
       ]);
+      return null;
     });
+
+    if (rejection) return err(rejection);
   } catch (error) {
-    // L'indice unico parziale (bookings_active_slot_idx) intercetta le
-    // prenotazioni concorrenti sullo stesso slot sfuggite al check sopra.
+    // Backstop agli indici parziali: una singola già attiva sullo slot o lo
+    // stesso giocatore due volte sulla stessa lezione.
     if (isUniqueViolation(error)) {
-      return err("Questo slot non è più disponibile.");
+      return err("Questo orario non è più disponibile.");
     }
     throw error;
   }

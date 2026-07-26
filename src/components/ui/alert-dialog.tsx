@@ -34,7 +34,7 @@ function AlertDialogContent({ className, ...props }: AlertDialogPrimitive.Popup.
       <AlertDialogOverlay />
       <AlertDialogPrimitive.Popup
         className={cn(
-          "fixed top-1/2 left-1/2 z-[220] w-[calc(100%_-_2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 border border-game-cyan/45 bg-carta-alta p-6 text-calce shadow-[8px_8px_0_var(--game-blue)] outline-none transition duration-150 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0",
+          "fixed top-1/2 left-1/2 z-[220] w-[calc(100%_-_2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 border border-accent-cyan-ink/45 bg-carta-alta p-6 text-calce shadow-[8px_8px_0_var(--game-blue)] outline-none transition duration-150 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0",
           className
         )}
         {...props}

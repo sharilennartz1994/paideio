@@ -214,7 +214,7 @@ export default async function Home() {
           </div>
           <div className="grid gap-8 md:grid-cols-3 lg:col-span-8">
             {REASONS.map(([title, description], index) => (
-              <article key={title} className="training-rally-step border-t border-game-ball/55 pt-5" data-game-reveal>
+              <article key={title} className="training-rally-step border-t border-accent-ball-ink/70 pt-5" data-game-reveal>
                 <span className="font-heading text-xs font-bold tracking-[0.1em] text-accent-ball-ink">STEP 0{index + 1}</span>
                 <h3 className="mt-4 font-heading text-[26px] text-calce">{title}</h3>
                 <p className="mt-3 text-nebbia">{description}</p>

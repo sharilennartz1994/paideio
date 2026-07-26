@@ -1,5 +1,6 @@
 import { getCurrentCoach } from "@/lib/session";
 import { parseJsonArray } from "@/lib/queries";
+import { DEFAULT_GROUP_CAPACITY } from "@/lib/constants";
 import { CoachProfileForm } from "@/components/coach-profile-form";
 import { AvatarUpload } from "@/components/avatar-upload";
 
@@ -9,7 +10,7 @@ export default async function CoachProfiloPage() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-      <aside className="h-fit border border-game-cyan/30 bg-game-cyan/7 p-5">
+      <aside className="h-fit border border-accent-cyan-ink/30 bg-accent-cyan-ink/7 p-5">
         <p className="font-heading text-lg text-calce">La tua scheda giocatore</p>
         <p className="mt-2 text-sm leading-relaxed text-nebbia">Foto, proposta e prezzo sono le informazioni che aiutano un giocatore a capire se sei il coach giusto.</p>
       </aside>
@@ -20,6 +21,7 @@ export default async function CoachProfiloPage() {
         initialLevels={parseJsonArray(current.profile.levels)}
         initialTrainingTypes={parseJsonArray(current.profile.trainingTypes)}
         initialPricePerLesson={current.profile.pricePerLesson}
+        initialGroupCapacity={current.profile.groupCapacity ?? DEFAULT_GROUP_CAPACITY}
       />
       </div>
     </div>

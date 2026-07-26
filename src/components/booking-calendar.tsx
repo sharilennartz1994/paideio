@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { createBooking } from "@/lib/actions/bookings";
 import { celebrate } from "@/lib/confetti";
 import type { CalendarSlot } from "@/lib/queries";
+import type { TrainingType } from "@/lib/constants";
 import { Textarea } from "@/components/ui/textarea";
 import { FullScreenGameLoader, GameBadge, GameCta, GameEmptyState } from "@/components/design";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,20 @@ function formatDate(dateStr: string) {
     day: "numeric",
     month: "long",
   });
+}
+
+/** Etichetta che spiega perché uno slot è (o non è) prenotabile. */
+function slotStatus(slot: CalendarSlot): { label: string } {
+  if (slot.bookedType === "singolo") return { label: "Occupato · lezione singola" };
+  if (slot.bookedType === "gruppo") {
+    return slot.booked
+      ? { label: `Gruppo al completo · ${slot.seatsTaken}/${slot.capacity}` }
+      : { label: `Gruppo aperto · ${slot.seatsTaken}/${slot.capacity} posti` };
+  }
+  if (slot.booked) return { label: "Non disponibile" };
+  return slot.availableTypes.includes("gruppo") && !slot.availableTypes.includes("singolo")
+    ? { label: `Libero · gruppo fino a ${slot.capacity}` }
+    : { label: "Libero" };
 }
 
 function dateStamp(dateStr: string) {
@@ -55,13 +70,27 @@ export function BookingCalendar({
   );
   const [activeDate, setActiveDate] = useState(dates.find((date) => slots.some((slot) => slot.date === date && !slot.booked)) ?? dates[0] ?? "");
   const [selected, setSelected] = useState<CalendarSlot | null>(null);
-  const [type, setType] = useState(trainingTypes[0] ?? "singolo");
+  const [type, setType] = useState<string>(trainingTypes[0] ?? "singolo");
   const [level, setLevel] = useState(levels[0] ?? "");
   const [notes, setNotes] = useState("");
   const [isPending, startTransition] = useTransition();
 
   const daySlots = slots.filter((slot) => slot.date === activeDate);
   const step = selected ? 2 : 1;
+
+  // Su uno slot già aperto come gruppo si può solo entrare nel gruppo: i tipi
+  // offerti dal coach vanno intersecati con quelli ancora possibili lì.
+  const selectableTypes: TrainingType[] = selected
+    ? selected.availableTypes.filter((t) => trainingTypes.includes(t))
+    : (trainingTypes.filter((t) => t === "singolo" || t === "gruppo") as TrainingType[]);
+
+  function selectSlot(slot: CalendarSlot) {
+    setSelected(slot);
+    // Se il tipo scelto prima non è più possibile su questo slot, ricade sul
+    // primo ammesso: così il riepilogo non promette mai qualcosa di rifiutabile.
+    const allowed = slot.availableTypes.filter((t) => trainingTypes.includes(t));
+    if (!allowed.includes(type as TrainingType)) setType(allowed[0] ?? "");
+  }
 
   function handleSubmit() {
     if (!selected || !level) return;
@@ -200,12 +229,14 @@ export function BookingCalendar({
                   selected?.date === slot.date &&
                   selected?.locationId === slot.locationId &&
                   selected?.startTime === slot.startTime;
+                const status = slotStatus(slot);
                 return (
                   <button
                     key={`${slot.locationId}-${slot.startTime}-${slot.endTime}`}
                     disabled={slot.booked}
-                    onClick={() => setSelected(slot)}
+                    onClick={() => selectSlot(slot)}
                     aria-pressed={isSelected}
+                    aria-label={`${slot.startTime}–${slot.endTime}, ${slot.locationName}, ${status.label}`}
                     className={cn(
                       "min-h-16 border p-3 text-left transition-[background-color,color,border-color,transform] duration-150 disabled:cursor-not-allowed disabled:opacity-40",
                       isSelected
@@ -219,6 +250,14 @@ export function BookingCalendar({
                     </span>
                     <span className="mt-1 flex items-center gap-1.5 text-xs text-nebbia">
                       <MapPin className="size-3.5" /> {slot.locationName}
+                    </span>
+                    <span
+                      className={cn(
+                        "mt-1.5 block font-heading text-[11px] font-bold tracking-[0.04em] uppercase",
+                        slot.booked ? "text-nebbia" : "text-accent-cyan-ink"
+                      )}
+                    >
+                      {status.label}
                     </span>
                   </button>
                 );
@@ -246,11 +285,11 @@ export function BookingCalendar({
             </div>
           ) : (
             <div className="mt-6 space-y-6">
-              {trainingTypes.length > 0 && (
+              {selectableTypes.length > 0 && (
                 <fieldset>
                   <legend className="mb-2 text-xs font-semibold text-nebbia">Tipo di lezione</legend>
                   <div className="grid grid-cols-2 gap-2">
-                    {trainingTypes.map((trainingType) => (
+                    {selectableTypes.map((trainingType) => (
                       <button
                         key={trainingType}
                         type="button"
@@ -267,6 +306,22 @@ export function BookingCalendar({
                       </button>
                     ))}
                   </div>
+                  {selected.bookedType === "gruppo" ? (
+                    <p className="mt-2 text-xs text-nebbia">
+                      Su questo orario è già aperta una lezione di gruppo: restano{" "}
+                      {selected.capacity - selected.seatsTaken} posti su {selected.capacity}.
+                    </p>
+                  ) : type === "gruppo" ? (
+                    <p className="mt-2 text-xs text-nebbia">
+                      Apri una lezione di gruppo: altri giocatori potranno unirsi fino a{" "}
+                      {selected.capacity} partecipanti.
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-xs text-nebbia">
+                      La lezione singola occupa il campo in esclusiva: nessun altro potrà
+                      prenotare questo orario.
+                    </p>
+                  )}
                 </fieldset>
               )}
 
@@ -280,8 +335,8 @@ export function BookingCalendar({
                         className={cn(
                           "flex min-h-11 cursor-pointer items-center justify-center border px-3 text-sm capitalize",
                           level === item
-                            ? "border-game-cyan bg-game-cyan/10 text-calce"
-                            : "border-nebbia/30 text-nebbia hover:border-game-cyan"
+                            ? "border-accent-cyan-ink bg-accent-cyan-ink/10 text-calce"
+                            : "border-nebbia/30 text-nebbia hover:border-accent-cyan-ink"
                         )}
                       >
                         <input
@@ -330,7 +385,7 @@ export function BookingCalendar({
               </div>
 
               {viewerRole !== "player" && (
-                <p className="border border-game-cyan/35 bg-game-cyan/7 p-3 text-sm text-nebbia">
+                <p className="border border-accent-cyan-ink/35 bg-accent-cyan-ink/7 p-3 text-sm text-nebbia">
                   {viewerRole === "coach"
                     ? "Un account coach non può prenotare una lezione."
                     : "Accedi come giocatore per inviare la richiesta al coach."}
