@@ -6,7 +6,13 @@ import { users, coachProfiles, locations, availabilitySlots, bookings, reviews, 
 export { LEVELS, TRAINING_TYPES, dayName, parseJsonArray, levelBadgeClass, BOOKING_STATUS_CONFIG } from "./constants";
 export type { Level, TrainingType } from "./constants";
 import type { Level, TrainingType } from "./constants";
-import { parseJsonArray, toLocalDateString, haversineDistanceKm } from "./constants";
+import {
+  parseJsonArray,
+  toLocalDateString,
+  haversineDistanceKm,
+  computeSlotOccupancy,
+  DEFAULT_GROUP_CAPACITY,
+} from "./constants";
 
 const DEFAULT_SEARCH_RADIUS_KM = 50;
 
@@ -180,8 +186,18 @@ export type CalendarSlot = {
   endTime: string;
   locationId: string;
   locationName: string;
+  /** Non prenotabile: singola in esclusiva, gruppo al completo o niente offerto. */
   booked: boolean;
+  bookedType: TrainingType | null;
+  seatsTaken: number;
+  capacity: number;
+  availableTypes: TrainingType[];
 };
+
+/** Chiave di uno slot-istanza: giorno concreto + campo + fascia oraria. */
+export function slotKey(date: string, locationId: string | null, startTime: string, endTime: string) {
+  return `${date}|${locationId}|${startTime}|${endTime}`;
+}
 
 export async function getCoachCalendar(coachId: string, daysAhead = 21): Promise<CalendarSlot[]> {
   const coachLocations = await db.query.locations.findMany({
@@ -193,12 +209,24 @@ export async function getCoachCalendar(coachId: string, daysAhead = 21): Promise
     where: eq(availabilitySlots.coachId, coachId),
   });
 
+  const profile = await db.query.coachProfiles.findFirst({
+    where: eq(coachProfiles.userId, coachId),
+  });
+  const groupCapacity = profile?.groupCapacity ?? DEFAULT_GROUP_CAPACITY;
+  const coachTrainingTypes = parseJsonArray(profile?.trainingTypes ?? "[]");
+
   const existingBookings = await db.query.bookings.findMany({
     where: and(eq(bookings.coachId, coachId), inArray(bookings.status, ["richiesta", "confermata"])),
   });
-  const bookedKeys = new Set(
-    existingBookings.map((b) => `${b.date}|${b.locationId}|${b.startTime}|${b.endTime}`)
-  );
+  // Uno slot può ospitare più prenotazioni (gruppo), quindi non basta un Set di
+  // chiavi occupate: serve la lista dei tipi attivi per calcolare i posti.
+  const activeTypesByKey = new Map<string, string[]>();
+  for (const booking of existingBookings) {
+    const key = slotKey(booking.date, booking.locationId, booking.startTime, booking.endTime);
+    const current = activeTypesByKey.get(key);
+    if (current) current.push(booking.type);
+    else activeTypesByKey.set(key, [booking.type]);
+  }
 
   const result: CalendarSlot[] = [];
   // Dati storici o richieste concorrenti possono aver prodotto turni
@@ -219,9 +247,15 @@ export async function getCoachCalendar(coachId: string, daysAhead = 21): Promise
       const location = locationById.get(slot.locationId);
       if (!location) continue;
 
-      const key = `${dateStr}|${slot.locationId}|${slot.startTime}|${slot.endTime}`;
+      const key = slotKey(dateStr, slot.locationId, slot.startTime, slot.endTime);
       if (generatedKeys.has(key)) continue;
       generatedKeys.add(key);
+
+      const occupancy = computeSlotOccupancy(
+        activeTypesByKey.get(key) ?? [],
+        groupCapacity,
+        coachTrainingTypes
+      );
       result.push({
         date: dateStr,
         dayOfWeek,
@@ -229,7 +263,11 @@ export async function getCoachCalendar(coachId: string, daysAhead = 21): Promise
         endTime: slot.endTime,
         locationId: slot.locationId,
         locationName: location.name,
-        booked: bookedKeys.has(key),
+        booked: occupancy.full,
+        bookedType: occupancy.bookedType,
+        seatsTaken: occupancy.seatsTaken,
+        capacity: occupancy.capacity,
+        availableTypes: occupancy.availableTypes,
       });
     }
   }

@@ -47,15 +47,15 @@ export default async function NotifichePage() {
             <Link
               key={item.id}
               href={item.href}
-              className="group grid grid-cols-[44px_1fr_auto] gap-4 border border-nebbia/22 bg-carta-alta p-4 transition-colors hover:border-game-cyan/55 hover:bg-game-cyan/6"
+              className="group grid grid-cols-[44px_1fr_auto] gap-4 border border-nebbia/22 bg-carta-alta p-4 transition-colors hover:border-accent-cyan-ink/55 hover:bg-accent-cyan-ink/6"
             >
-              <span className="flex size-11 items-center justify-center border border-game-cyan/35 text-game-cyan">
+              <span className="flex size-11 items-center justify-center border border-accent-cyan-ink/35 text-accent-cyan-ink">
                 <Icon className="size-5" aria-hidden />
               </span>
               <span>
                 <span className="flex items-center gap-2 font-heading font-bold text-calce">
                   {item.title}
-                  {!item.readAt && <span className="size-2 bg-game-ball" aria-label="Non letta" />}
+                  {!item.readAt && <span className="size-2 bg-accent-ball-ink" aria-label="Non letta" />}
                 </span>
                 <span className="mt-1 block text-sm leading-relaxed text-nebbia">{item.message}</span>
               </span>

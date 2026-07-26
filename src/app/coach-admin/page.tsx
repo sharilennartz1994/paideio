@@ -87,12 +87,12 @@ export default async function CoachAdminDashboard() {
             aria-valuemax={100}
             aria-valuenow={setupPercent}
           >
-            <div className="h-full bg-game-ball transition-[width] duration-300" style={{ width: `${setupPercent}%` }} />
+            <div className="h-full bg-accent-ball-ink transition-[width] duration-300" style={{ width: `${setupPercent}%` }} />
           </div>
           {nextSetup ? (
             <Link
               href={nextSetup.href}
-              className="mt-5 inline-flex min-h-11 items-center gap-2 border border-game-ball bg-game-ball px-4 text-sm font-semibold text-game-ink hover:bg-game-white"
+              className="mt-5 inline-flex min-h-11 items-center gap-2 border border-game-ink bg-game-ball px-4 text-sm font-semibold text-game-ink hover:bg-game-white"
             >
               Continua da “{nextSetup.label}” <ArrowRight className="size-4" />
             </Link>

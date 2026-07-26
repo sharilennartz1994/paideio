@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { updateCoachProfile } from "@/lib/actions/coach-admin";
-import { LEVELS, TRAINING_TYPES } from "@/lib/constants";
+import { LEVELS, TRAINING_TYPES, MIN_GROUP_CAPACITY, MAX_GROUP_CAPACITY } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,16 +17,19 @@ export function CoachProfileForm({
   initialLevels,
   initialTrainingTypes,
   initialPricePerLesson,
+  initialGroupCapacity,
 }: {
   initialBio: string;
   initialLevels: string[];
   initialTrainingTypes: string[];
   initialPricePerLesson: number | null;
+  initialGroupCapacity: number;
 }) {
   const [bio, setBio] = useState(initialBio);
   const [levels, setLevels] = useState(new Set(initialLevels));
   const [trainingTypes, setTrainingTypes] = useState(new Set(initialTrainingTypes));
   const [price, setPrice] = useState(initialPricePerLesson != null ? String(initialPricePerLesson) : "");
+  const [groupCapacity, setGroupCapacity] = useState(String(initialGroupCapacity));
   const [isPending, startTransition] = useTransition();
 
   function toggle(set: Set<string>, setSet: (s: Set<string>) => void, value: string) {
@@ -43,12 +46,24 @@ export function CoachProfileForm({
       toast.error("Il prezzo per lezione deve essere un numero intero positivo.");
       return;
     }
+    const parsedCapacity = Number(groupCapacity.trim());
+    if (
+      !Number.isInteger(parsedCapacity) ||
+      parsedCapacity < MIN_GROUP_CAPACITY ||
+      parsedCapacity > MAX_GROUP_CAPACITY
+    ) {
+      toast.error(
+        `I posti per lezione di gruppo devono essere un numero tra ${MIN_GROUP_CAPACITY} e ${MAX_GROUP_CAPACITY}.`
+      );
+      return;
+    }
     startTransition(async () => {
       const result = await updateCoachProfile({
         bio,
         levels: Array.from(levels),
         trainingTypes: Array.from(trainingTypes),
         pricePerLesson: parsedPrice,
+        groupCapacity: parsedCapacity,
       });
       if (result.ok) {
         toast.success("Profilo aggiornato!");
@@ -126,6 +141,34 @@ export function CoachProfileForm({
           In euro interi. Lascia vuoto se preferisci non indicarlo.
         </p>
       </div>
+
+      {trainingTypes.has("gruppo") && (
+        <div>
+          <Label
+            htmlFor="group-capacity"
+            className="mb-2 block font-mono text-label-caps text-on-surface-variant uppercase"
+          >
+            Posti per lezione di gruppo
+          </Label>
+          <Input
+            id="group-capacity"
+            type="number"
+            inputMode="numeric"
+            min={MIN_GROUP_CAPACITY}
+            max={MAX_GROUP_CAPACITY}
+            step={1}
+            value={groupCapacity}
+            onChange={(e) => setGroupCapacity(e.target.value)}
+            className="max-w-32"
+            aria-describedby="group-capacity-help"
+          />
+          <p id="group-capacity-help" className="mt-1.5 font-sans text-xs text-on-surface-variant">
+            Da {MIN_GROUP_CAPACITY} a {MAX_GROUP_CAPACITY} giocatori. Quando i posti di un orario
+            si esauriscono, quell’orario sparisce dalle disponibilità. Una lezione singola occupa
+            invece il campo da sola.
+          </p>
+        </div>
+      )}
 
       <div className="sticky bottom-4 z-10 flex items-center justify-between gap-3 border border-nebbia/25 bg-carta-alta/95 p-3 shadow-lg backdrop-blur">
         <p className="hidden text-sm text-nebbia sm:block">Le modifiche saranno subito visibili nel profilo pubblico.</p>

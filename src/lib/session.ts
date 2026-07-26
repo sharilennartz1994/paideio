@@ -22,6 +22,10 @@ export async function getCurrentUser() {
 
   // onConflictDoNothing + ri-select: se due richieste concorrenti provano a
   // creare lo stesso utente, una sola inserisce e entrambe rileggono la riga.
+  // Senza `target` di proposito: le due richieste generano `id` diversi ma la
+  // stessa email, quindi il conflitto arriva su `users_email_unique` e non su
+  // `clerk_id`. Con un target mirato il secondo insert diventava un 500 al
+  // primo accesso di ogni nuovo utente.
   await db
     .insert(users)
     .values({
@@ -32,7 +36,7 @@ export async function getCurrentUser() {
       role: "player" as const,
       createdAt: new Date().toISOString(),
     })
-    .onConflictDoNothing({ target: users.clerkId });
+    .onConflictDoNothing();
   return (await db.query.users.findFirst({ where: eq(users.clerkId, userId) })) ?? null;
 }
 

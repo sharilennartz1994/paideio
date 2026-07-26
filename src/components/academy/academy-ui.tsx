@@ -182,8 +182,8 @@ export function Callout({
       className={cn(
         "border p-5",
         tone === "warning" && "border-ruggine/55 bg-ruggine/8",
-        tone === "tip" && "border-game-ball/45 bg-game-ball/6",
-        tone === "info" && "border-game-cyan/45 bg-game-cyan/6"
+        tone === "tip" && "border-accent-ball-ink/45 bg-accent-ball-ink/6",
+        tone === "info" && "border-accent-cyan-ink/45 bg-accent-cyan-ink/6"
       )}
     >
       <div className="flex gap-3">

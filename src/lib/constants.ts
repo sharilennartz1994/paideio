@@ -4,6 +4,67 @@ export type Level = (typeof LEVELS)[number];
 export const TRAINING_TYPES = ["singolo", "gruppo"] as const;
 export type TrainingType = (typeof TRAINING_TYPES)[number];
 
+export const DEFAULT_GROUP_CAPACITY = 4;
+export const MIN_GROUP_CAPACITY = 2;
+export const MAX_GROUP_CAPACITY = 12;
+
+export type SlotOccupancy = {
+  /** Posti già occupati sullo slot. Una singola vale sempre 1. */
+  seatsTaken: number;
+  /** Posti totali: 1 se lo slot è (o diventerà) una lezione singola. */
+  capacity: number;
+  /** Cosa occupa lo slot adesso; null se è ancora libero. */
+  bookedType: TrainingType | null;
+  /** Non più prenotabile da nessuno. */
+  full: boolean;
+  /** Cosa si può ancora prenotare su questo slot. */
+  availableTypes: TrainingType[];
+};
+
+/**
+ * Regola unica di occupazione di uno slot, condivisa da `getCoachCalendar`
+ * (per disegnare il calendario) e da `createBooking` (per validare). Tenerle
+ * allineate è il punto: se divergono, il calendario mostra prenotabile
+ * qualcosa che poi l'action rifiuta.
+ *
+ * - una lezione **singola** prende il campo in esclusiva: nessun altro entra;
+ * - le lezioni di **gruppo** condividono lo slot fino a `groupCapacity`;
+ * - uno slot già aperto come gruppo resta di gruppo (niente singola sopra).
+ */
+export function computeSlotOccupancy(
+  activeBookingTypes: readonly string[],
+  groupCapacity: number,
+  coachTrainingTypes: readonly string[]
+): SlotOccupancy {
+  const offered = coachTrainingTypes.filter((t): t is TrainingType =>
+    (TRAINING_TYPES as readonly string[]).includes(t)
+  );
+
+  if (activeBookingTypes.includes("singolo")) {
+    return { seatsTaken: 1, capacity: 1, bookedType: "singolo", full: true, availableTypes: [] };
+  }
+
+  const seatsTaken = activeBookingTypes.filter((t) => t === "gruppo").length;
+  if (seatsTaken > 0) {
+    const full = seatsTaken >= groupCapacity;
+    return {
+      seatsTaken,
+      capacity: groupCapacity,
+      bookedType: "gruppo",
+      full,
+      availableTypes: full || !offered.includes("gruppo") ? [] : ["gruppo"],
+    };
+  }
+
+  return {
+    seatsTaken: 0,
+    capacity: offered.includes("gruppo") ? groupCapacity : 1,
+    bookedType: null,
+    full: offered.length === 0,
+    availableTypes: offered,
+  };
+}
+
 const LEVEL_BADGE_CLASSES: Record<string, string> = {
   principiante: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300",
   intermedio: "bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300",

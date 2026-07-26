@@ -2,7 +2,6 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { itIT } from "@clerk/localizations";
 import { shadcn } from "@clerk/ui/themes";
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { Hanken_Grotesk, Oxanium } from "next/font/google";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
@@ -50,7 +49,7 @@ export default function RootLayout({
         <ClerkProvider appearance={{ theme: shadcn }} localization={itIT}>
           <a
             href="#contenuto-principale"
-            className="fixed top-2 left-2 z-[100] -translate-y-20 bg-game-ball px-4 py-3 font-heading font-bold text-game-ink transition-transform focus:translate-y-0"
+            className="fixed top-2 left-2 z-[100] -translate-y-20 border border-game-ink bg-game-ball px-4 py-3 font-heading font-bold text-game-ink transition-transform focus:translate-y-0"
           >
             Vai al contenuto principale
           </a>
@@ -60,11 +59,9 @@ export default function RootLayout({
           <main
             id="contenuto-principale"
             tabIndex={-1}
-            className="min-h-screen pt-16 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0 md:pl-20"
+            className="min-h-screen pt-16 md:pl-20"
           >
-            <Suspense fallback={children}>
-              <GameRouteStage>{children}</GameRouteStage>
-            </Suspense>
+            <GameRouteStage>{children}</GameRouteStage>
           </main>
           <SiteFooter />
           <AppBottomNav />

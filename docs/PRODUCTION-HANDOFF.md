@@ -104,11 +104,32 @@ Database:
 1. Separare Neon sviluppo/preview dalla produzione.
 2. Collegare definitivamente GitHub a Vercel per deploy automatici.
 3. Definire pagamenti, rimborsi e policy di cancellazione.
-4. Implementare capienza reale per lezioni di gruppo.
-5. Completare configurazione email istituzionale e notifiche evolute.
-6. Implementare PWA e installabilità.
-7. Aggiungere magic-byte validation e pulizia del blob avatar precedente.
-8. Aggiungere constraint DB (`rating`, giorni, intervalli orari).
+4. Completare configurazione email istituzionale e notifiche evolute.
+5. Implementare PWA e installabilità.
+6. Aggiungere magic-byte validation e pulizia del blob avatar precedente.
+7. Aggiungere constraint DB (`rating`, giorni, intervalli orari).
+
+## Schema: capienza lezioni di gruppo
+
+Applicata a Neon il 26 luglio 2026 con `npm run db:push`, a database vuoto
+(1 account Clerk reale, 0 prenotazioni, 0 profili coach). Verificata dopo
+l'esecuzione:
+
+- `coach_profiles.group_capacity` — integer, `NOT NULL`, default `4`;
+- `bookings_active_slot_idx` eliminato, sostituito da
+  `bookings_active_single_slot_idx` (una sola lezione singola attiva per slot)
+  e `bookings_active_player_slot_idx` (un giocatore, un posto per lezione).
+
+La capienza di gruppo non è imposta da un indice: la serializza
+`pg_advisory_xact_lock` dentro `createBooking`. Vedi AGENTS.md, sezione
+"Capienza slot e prenotabilità".
+
+Controllo di integrità riutilizzabile, in sola lettura:
+
+```bash
+npx dotenv -e .env.local -- npx tsx --tsconfig tsconfig.scripts.json \
+  scripts/check-integrita-slot.mts
+```
 
 ## Warning infrastrutturale noto
 
@@ -125,6 +146,11 @@ errore di connessione.
 - Date giorno con `toLocalDateString()`, mai tramite slicing ISO.
 - Componenti Base UI polimorfici: `render={<Link />}` e
   `nativeButton={false}`, non `asChild`.
+- Token `game-*` solo su superfici fisse (chrome e sezioni arena); su
+  `carta`/`carta-alta`/`carta-bassa` usare `accent-*-ink` anche per bordi,
+  indicatori e riempimenti. Verificare ogni nuova pagina in entrambi i temi.
+- Ogni voce aggiunta alla sidebar desktop va aggiunta anche allo sheet
+  "Altro" della bottom nav mobile.
 - Non importare `src/lib/queries.ts` nei Client Component.
 - Aggiornare insieme `AGENTS.md`,
   `.claude/skills/paideio-dev/SKILL.md` e questo documento quando cambia

@@ -50,12 +50,12 @@ export function AcademyPreview() {
             Entra nell’Academy
           </GameCta>
 
-          <div className="game-asset-stage mt-8 hidden min-h-[300px] items-end justify-center lg:flex">
+          <div className="game-asset-stage mt-8 hidden min-h-[300px] items-center justify-center lg:flex">
             <GameAsset
-              name="playerSmash"
+              name="tacticsBoard"
               decorative
-              sizes="360px"
-              className="max-h-[370px] w-auto"
+              sizes="420px"
+              className="w-full max-w-[420px] rotate-[-5deg]"
             />
           </div>
         </div>

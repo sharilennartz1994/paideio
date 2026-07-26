@@ -47,7 +47,7 @@ export default function ChiSiamoPage() {
         />
         <div className="relative mx-auto grid min-h-[calc(100dvh-4rem)] max-w-[1440px] items-center gap-8 px-5 py-14 md:px-10 lg:grid-cols-12 lg:px-16">
           <div className="relative z-10 lg:col-span-7" data-game-reveal>
-            <p className="ui-kicker">Paideio · dal greco παιδεία</p>
+            <p className="ui-kicker ui-kicker-inverse">Paideio · dal greco παιδεία</p>
             <h1
               aria-label="Il gioco si impara insieme."
               className="mt-5 max-w-5xl font-heading text-[clamp(3.7rem,9vw,8.8rem)] leading-[0.82] font-extrabold tracking-[-0.065em] uppercase"
@@ -80,12 +80,12 @@ export default function ChiSiamoPage() {
             data-game-reveal
           >
             <GameAsset
-              name="playerSmash"
+              name="crossedRackets"
               decorative
               preload
               loading="eager"
               sizes="(max-width: 767px) 82vw, 460px"
-              className="max-h-[430px] w-auto lg:max-h-[680px]"
+              className="w-full max-w-[360px] rotate-[-7deg] lg:max-w-[500px]"
             />
           </div>
         </div>
@@ -130,7 +130,7 @@ export default function ChiSiamoPage() {
                 </p>
               </div>
               <blockquote
-                className="border-y border-game-ball/55 py-6 font-heading text-2xl leading-tight font-bold text-calce md:text-3xl"
+                className="border-y border-accent-ball-ink/70 py-6 font-heading text-2xl leading-tight font-bold text-calce md:text-3xl"
                 data-game-reveal
               >
                 Il risultato conta. Il percorso costruisce il giocatore.
@@ -153,11 +153,11 @@ export default function ChiSiamoPage() {
               </p>
             </div>
 
-            <ol className="paideio-principles relative mt-14 grid gap-10 lg:grid-cols-3">
+            <ol className="paideio-principles relative mt-14 grid gap-10 pt-7 lg:grid-cols-3 lg:gap-12">
               {PRINCIPLES.map((principle) => (
                 <li
                   key={principle.number}
-                  className="paideio-principle relative border-t border-vetro/55 pt-6"
+                  className="paideio-principle relative border-t border-vetro/55 pt-8"
                   data-game-reveal
                 >
                   <span className="font-heading text-sm font-bold text-accent-cyan-ink">

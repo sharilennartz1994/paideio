@@ -77,7 +77,7 @@ export default function ProssimeReleasePage() {
 
           <div className="mt-10 grid gap-5 md:grid-cols-2">
             {RELEASES.map(({ icon: Icon, marker, title, description, details }, index) => (
-              <article key={title} className="card-clip border-t-2 border-game-cyan/55 bg-carta-alta p-6 md:p-8">
+              <article key={title} className="card-clip border-t-2 border-accent-cyan-ink/55 bg-carta-alta p-6 md:p-8">
                 <div className="flex items-start justify-between gap-4">
                   <span className="flex size-12 items-center justify-center bg-game-blue text-game-white">
                     <Icon className="size-6" aria-hidden />
@@ -92,7 +92,7 @@ export default function ProssimeReleasePage() {
                 <ul className="mt-5 grid gap-2 border-t border-nebbia/18 pt-5">
                   {details.map((detail) => (
                     <li key={detail} className="flex items-center gap-2 text-sm text-nebbia">
-                      <span className="size-1.5 bg-game-ball" aria-hidden />
+                      <span className="size-1.5 bg-accent-ball-ink" aria-hidden />
                       {detail}
                     </li>
                   ))}
@@ -102,9 +102,9 @@ export default function ProssimeReleasePage() {
           </div>
         </section>
 
-        <section className="mt-20 grid gap-8 border border-game-cyan/35 bg-carta-bassa p-6 md:grid-cols-[0.8fr_1.2fr] md:p-10" aria-labelledby="feedback-title">
+        <section className="mt-20 grid gap-8 border border-accent-cyan-ink/35 bg-carta-bassa p-6 md:grid-cols-[0.8fr_1.2fr] md:p-10" aria-labelledby="feedback-title">
           <div>
-            <span className="flex size-14 items-center justify-center bg-game-ball text-game-ink">
+            <span className="flex size-14 items-center justify-center bg-accent-ball-ink text-carta">
               <Lightbulb className="size-7" aria-hidden />
             </span>
             <p className="ui-kicker mt-6">La tua idea conta</p>

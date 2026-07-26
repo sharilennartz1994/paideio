@@ -11,7 +11,7 @@ export default async function DiventaCoachPage() {
     <div className="hex-texture min-h-[75vh] px-4 py-12 md:px-10 lg:px-16">
       <div className="mx-auto grid max-w-5xl items-center gap-10 lg:grid-cols-2">
       <GamePanel tone="cyan" className="p-7 md:p-10">
-        <div className="flex size-11 items-center justify-center bg-game-ball text-game-ink">
+        <div className="flex size-11 items-center justify-center bg-accent-ball-ink text-carta">
           <Trophy className="size-5" />
         </div>
         <p className="ui-kicker mt-6">Coach mode</p>
