@@ -470,6 +470,10 @@ di sospettare un problema di build/codice, controlla la dashboard
 bloccato) per un banner "Deployment Blocked" / "Fix Git Configuration".
 
 **Limitazioni note ancora aperte**:
+- Il driver emette un warning preventivo sulla futura semantica di
+  `sslmode`; prima di `pg` 9 impostare esplicitamente
+  `sslmode=verify-full` nella connection string Neon. Vedi
+  `docs/PRODUCTION-HANDOFF.md`.
 - **Un solo database Neon condiviso** tra sviluppo locale e produzione
   (nessun branch dedicato) — vedi "Dati demo" sopra per le implicazioni
   pratiche. Da separare con un branch Neon prima che ci siano utenti reali
