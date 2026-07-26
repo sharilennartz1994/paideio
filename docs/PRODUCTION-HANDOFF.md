@@ -110,6 +110,15 @@ Database:
 7. Aggiungere magic-byte validation e pulizia del blob avatar precedente.
 8. Aggiungere constraint DB (`rating`, giorni, intervalli orari).
 
+## Warning infrastrutturale noto
+
+`pg-connection-string` segnala che in una futura major release i valori
+`sslmode=prefer`, `require` e `verify-ca` seguiranno la semantica libpq.
+Prima di aggiornare a `pg` 9 / `pg-connection-string` 3, impostare
+esplicitamente `sslmode=verify-full` nella connection string Neon se si vuole
+mantenere la verifica TLS attuale. Oggi è un warning preventivo e non un
+errore di connessione.
+
 ## Regole di manutenzione
 
 - Testi UI in italiano.
