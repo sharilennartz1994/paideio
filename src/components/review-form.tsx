@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { createReview } from "@/lib/actions/reviews";
 import { celebrate } from "@/lib/confetti";
 import { StarRatingInput } from "@/components/star-rating";
+import { FullScreenGameLoader } from "@/components/design";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -46,6 +47,7 @@ export function ReviewForm({ bookingId, coachName }: { bookingId: string; coachN
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
+      {isPending && <FullScreenGameLoader label="Invio della recensione" />}
       <StarRatingInput value={rating} onChange={setRating} />
       <Textarea
         placeholder="Com'è andata la lezione? (opzionale)"
@@ -55,7 +57,7 @@ export function ReviewForm({ bookingId, coachName }: { bookingId: string; coachN
       />
       <div className="flex gap-2">
         <Button size="sm" onClick={handleSubmit} disabled={isPending}>
-          {isPending ? "Invio…" : "Invia recensione"}
+          Invia recensione
         </Button>
         <Button size="sm" variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
           Annulla

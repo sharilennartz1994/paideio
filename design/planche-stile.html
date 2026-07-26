@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paideio — Campo Centrale, tavola campione rev. 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --carta:#0F2233; --carta-alta:#16324B; --carta-bassa:#0A1826;
+  --calce:#F2F4F3; --nebbia:#9FB0BC; --vetro:#5FC4AC;
+  --ottico:#D6E32B; --ruggine:#EB7E61; --sabbia:#EAE3D6;
+  --serif:"Instrument Serif",Georgia,serif;
+  --sans:"Hanken Grotesk",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--carta); color:var(--calce); font-family:var(--sans);
+  font-size:17px; font-weight:400; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+/* motivo 07 — GRANULO, densità whisper (≤8%) */
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:
+    radial-gradient(circle at 13% 27%, rgba(159,176,188,.07) .6px, transparent .7px),
+    radial-gradient(circle at 71% 62%, rgba(159,176,188,.06) .6px, transparent .7px),
+    radial-gradient(circle at 42% 88%, rgba(159,176,188,.065) .5px, transparent .6px),
+    radial-gradient(circle at 88% 14%, rgba(159,176,188,.05) .5px, transparent .6px);
+  background-size:37px 41px,53px 47px,43px 59px,61px 43px;
+}
+.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 40px 110px}
+section{padding:74px 0;border-top:1px solid rgba(159,176,188,.16)}
+section:first-of-type{border-top:0}
+.eyebrow{
+  font-size:12.5px; font-weight:600; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--vetro); margin-bottom:20px;
+}
+h2{font-family:var(--serif);font-size:34px;line-height:1.15;font-weight:400;margin-bottom:8px}
+.note{color:var(--nebbia);font-size:15px;max-width:64ch;margin-bottom:36px}
+.note code{background:rgba(159,176,188,.12);padding:1px 5px;font-size:13.5px}
+strong{font-weight:600}
+
+/* ---------- HERO ---------- */
+.hero{padding:98px 0 82px}
+.hero h1{
+  font-family:var(--serif); font-size:62px; line-height:1.03; font-weight:400;
+  letter-spacing:-.012em; max-width:16ch; margin:18px 0 22px;
+}
+.hero h1 em{font-style:italic;color:var(--vetro)}
+.hero p{font-size:19px;color:var(--nebbia);max-width:54ch}
+.hero-actions{display:flex;gap:14px;align-items:center;margin-top:36px;flex-wrap:wrap}
+/* GIOIELLO — unica apparizione dell'ottico in questo schermo */
+.btn-jewel{
+  background:var(--ottico); color:var(--carta); font-family:var(--sans);
+  font-size:15px; font-weight:600; border:0; padding:15px 30px;
+  border-radius:999px; cursor:pointer;
+}
+.btn-ghost{
+  background:transparent; color:var(--calce); font-family:var(--sans); font-weight:500;
+  font-size:15px; border:1.5px solid rgba(242,244,243,.4); padding:14px 26px;
+  border-radius:999px; cursor:pointer;
+}
+
+/* ---------- PALETTE ---------- */
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(206px,1fr));gap:2px}
+.sw{padding:20px 18px 16px;min-height:158px;display:flex;flex-direction:column;justify-content:flex-end}
+.sw .tok{font-size:13.5px;font-weight:600;letter-spacing:.01em}
+.sw .hex{font-size:12.5px;opacity:.7;margin-top:2px;font-variant-numeric:tabular-nums}
+.sw .role{font-size:12.5px;line-height:1.45;margin-top:10px;opacity:.88}
+.sw .aa{font-size:11.5px;margin-top:9px;opacity:.7;font-variant-numeric:tabular-nums}
+.sw.out{border:1px solid rgba(159,176,188,.2)}
+
+/* ---------- TIPO ---------- */
+.type-row{display:flex;gap:28px;align-items:baseline;padding:17px 0;border-bottom:1px solid rgba(159,176,188,.12)}
+.type-row .lbl{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--nebbia);width:196px;flex-shrink:0}
+.t-display{font-family:var(--serif);font-size:62px;line-height:1.02;font-weight:400}
+.t-h1{font-family:var(--serif);font-size:44px;line-height:1.1;font-weight:400}
+.t-h2{font-family:var(--serif);font-size:34px;line-height:1.15;font-weight:400}
+.t-h3{font-family:var(--serif);font-size:26px;line-height:1.25;font-weight:400}
+.t-bodylg{font-size:19px}
+.t-caption{font-size:14px;color:var(--nebbia)}
+.tab{font-variant-numeric:tabular-nums}
+
+/* ---------- COMPONENTI ---------- */
+.demo{display:grid;grid-template-columns:1.15fr .85fr;gap:2px;align-items:start}
+@media(max-width:900px){.demo{grid-template-columns:1fr}}
+/* motivo 08 — VETRO: filo luminoso su 2 lati + 4 fissaggi */
+.glass{
+  background:var(--carta-alta); padding:30px; position:relative; border-radius:2px;
+  border-top:1.5px solid var(--vetro); border-left:1.5px solid var(--vetro);
+  box-shadow:inset -1px -1px 0 rgba(10,24,38,.6);
+}
+.glass::before,.glass::after{
+  content:"";position:absolute;width:5px;height:5px;border-radius:50%;
+  background:var(--nebbia);opacity:.4;
+}
+.glass::before{top:9px;left:9px} .glass::after{top:9px;right:9px}
+.fix-b{position:absolute;bottom:9px;width:5px;height:5px;border-radius:50%;background:var(--nebbia);opacity:.4}
+.card-name{font-family:var(--serif);font-size:26px;font-weight:400;margin:14px 0 4px}
+.card-meta{font-size:13.5px;color:var(--nebbia);font-variant-numeric:tabular-nums}
+.price{font-family:var(--serif);font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0 0}
+.chip{
+  font-size:13px;font-weight:500;padding:7px 16px;border-radius:999px;
+  background:rgba(159,176,188,.13);color:var(--calce);
+}
+/* motivo 06 — GRIP: bande a 25° sulla chip attiva */
+.chip.on{
+  color:var(--carta);font-weight:600;
+  background:repeating-linear-gradient(115deg,var(--vetro) 0 10px,#54b19b 10px 11px);
+}
+.avatar{
+  width:58px;height:58px;border-radius:50%;background:var(--sabbia);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:22px;color:var(--carta);
+}
+.stat{background:var(--carta-alta);padding:26px 24px;border-radius:2px}
+.stat .k{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--vetro)}
+.stat .v{font-family:var(--serif);font-size:44px;line-height:1.05;margin-top:8px;font-variant-numeric:tabular-nums}
+.stat.urg{background:transparent;border:1px solid var(--ruggine)}
+.stat.urg .k{color:var(--ruggine)}
+/* motivo 04 — LINEA DI SERVIZIO: la T come divisore */
+.tdiv{height:2px;background:rgba(242,244,243,.55);position:relative;margin:26px 0 20px}
+.tdiv::after{content:"";position:absolute;left:50%;top:0;width:2px;height:20px;background:rgba(242,244,243,.55)}
+
+/* ---------- BLOCCO D'INVERSIONE ---------- */
+.invert{background:var(--sabbia);color:var(--carta);padding:52px 44px;border-radius:2px;margin-top:2px}
+.invert h3{font-family:var(--serif);font-size:34px;font-weight:400;line-height:1.14;max-width:20ch}
+.invert p{font-size:16px;margin-top:12px;max-width:56ch;color:#2c4257}
+.invert .btn{display:inline-block;margin-top:22px;background:var(--carta);color:var(--sabbia);
+  padding:13px 26px;border-radius:999px;font-size:15px;font-weight:600}
+
+/* ---------- FASCIA RETE (footer) ---------- */
+.netband{background:var(--carta-bassa);padding:58px 0 46px;position:relative}
+.netband::before{content:"";position:absolute;top:0;left:0;right:0;height:5px;background:var(--sabbia)}
+.netmesh{height:64px;margin-top:34px;background-image:
+  linear-gradient(rgba(159,176,188,.16) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(159,176,188,.16) 1px,transparent 1px);
+  background-size:15px 15px}
+.wordmark{font-family:var(--serif);font-size:34px;letter-spacing:.02em}
+.wordmark .dot{color:var(--ottico)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section class="hero">
+    <div class="eyebrow">Paideio · sistema visivo · rev. 2 · 25 luglio 2026</div>
+    <h1>Campo Centrale.<br>Il contenuto non sta davanti al campo,<br><em>sta sopra il campo.</em></h1>
+    <p>La carta è la resina blu vista dall'alto — una tinta, non un grigio. Vetro temperato come voce,
+       sabbia del manto come blocco d'inversione. Il giallo ottico è un gioiello: una sola apparizione
+       per schermo.</p>
+    <div class="hero-actions">
+      <button class="btn-jewel">Trova un coach</button>
+      <button class="btn-ghost">Diventa coach</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">§ 0 — Punto di vigilanza</div>
+    <h2>Perché questo non è l'ennesima app padel nera</h2>
+    <p class="note">Scegliendo il fondo scuro perdiamo l'asse che ci separava dalla categoria
+       (Playtomic, Matchi e simili sono tutte nere con accenti neon). La distanza deve venire da
+       tre cose verificabili su una cattura — se un giudice della Fase 5 non sa citarle guardando
+       una schermata, il sistema ha fallito su questo punto.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px">
+      <div style="background:var(--carta-alta);padding:26px">
+        <div class="eyebrow" style="margin-bottom:12px">01</div>
+        <h3 style="font-family:var(--serif);font-size:24px;font-weight:400;margin-bottom:8px">Il buio ha una tinta</h3>
+        <p style="font-size:14.5px;color:var(--nebbia)">#0F2233 è resina blu. Il #111316 «asfalto»
+          del sistema archiviato è vietato: un fondo desaturato è una violazione.</p></div>
+      <div style="background:var(--carta-alta);padding:26px">
+        <div class="eyebrow" style="margin-bottom:12px">02</div>
+        <h3 style="font-family:var(--serif);font-size:24px;font-weight:400;margin-bottom:8px">Tipografia editoriale</h3>
+        <p style="font-size:14.5px;color:var(--nebbia)">Serif in peso 400, corsivo come firma.
+          Nessun maiuscolo nero corsivo: era la firma del sistema archiviato ed è quella della categoria.</p></div>
+      <div style="background:var(--carta-alta);padding:26px">
+        <div class="eyebrow" style="margin-bottom:12px">03</div>
+        <h3 style="font-family:var(--serif);font-size:24px;font-weight:400;margin-bottom:8px">Il giallo è raro</h3>
+        <p style="font-size:14.5px;color:var(--nebbia)">La categoria usa il neon come vernice.
+          Qui una sola apparizione per schermo, mai in campitura larga, mai un glow.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">§ 3 — Palette « inchiostro rovesciato »</div>
+    <h2>Nove token, ognuno con una materia e un solo ruolo</h2>
+    <p class="note">Rapporti WCAG calcolati con <code>tools/contrast.py</code>, non stimati.
+       <strong>--sabbia</strong> è retrocessa da carta a blocco: l'avevi rifiutata come sfondo, ma
+       come fascia invertita su fondo blu è il contrasto più forte del sistema (12,7:1).
+       <strong>--ruggine</strong> è stata schiarita da #E0765A a #EB7E61 perché sulle card dava
+       4,34:1, sotto AA.</p>
+    <div class="swatches">
+      <div class="sw out" style="background:#0F2233;color:#F2F4F3">
+        <div class="tok">--carta</div><div class="hex">#0F2233</div>
+        <div class="role">Carta. Resina blu del campo. Mai un grigio desaturato.</div><div class="aa">fondo</div></div>
+      <div class="sw" style="background:#16324B;color:#F2F4F3">
+        <div class="tok">--carta-alta</div><div class="hex">#16324B</div>
+        <div class="role">Superficie sollevata: card, pannelli.</div><div class="aa">fondo</div></div>
+      <div class="sw" style="background:#0A1826;color:#F2F4F3">
+        <div class="tok">--carta-bassa</div><div class="hex">#0A1826</div>
+        <div class="role">Incassato, righe alterne, disabilitato.</div><div class="aa">fondo</div></div>
+      <div class="sw" style="background:#F2F4F3;color:#0F2233">
+        <div class="tok">--calce</div><div class="hex">#F2F4F3</div>
+        <div class="role">Inchiostro: testo principale e titoli.</div><div class="aa">AAA 14,7:1 su carta</div></div>
+      <div class="sw" style="background:#9FB0BC;color:#0F2233">
+        <div class="tok">--nebbia</div><div class="hex">#9FB0BC</div>
+        <div class="role">Testo secondario, didascalie.</div><div class="aa">AAA 7,3:1 su carta</div></div>
+      <div class="sw" style="background:#5FC4AC;color:#0F2233">
+        <div class="tok">--vetro</div><div class="hex">#5FC4AC</div>
+        <div class="role">Voce: link, bordi attivi, focus, stati positivi.</div><div class="aa">AAA 7,7:1 su carta</div></div>
+      <div class="sw" style="background:#D6E32B;color:#0F2233">
+        <div class="tok">--ottico</div><div class="hex">#D6E32B</div>
+        <div class="role">GIOIELLO. Max 1 per schermo, mai in campitura larga.</div><div class="aa">AAA 11,5:1 su carta</div></div>
+      <div class="sw" style="background:#EB7E61;color:#0F2233">
+        <div class="tok">--ruggine</div><div class="hex">#EB7E61</div>
+        <div class="role">Terra battuta. Urgenza, errori, scadenze.</div><div class="aa">AA 5,9:1 su carta</div></div>
+      <div class="sw" style="background:#EAE3D6;color:#0F2233">
+        <div class="tok">--sabbia</div><div class="hex">#EAE3D6</div>
+        <div class="role">Blocco d'inversione: fasce d'impatto, tavole incise.</div><div class="aa">12,7:1 contro la carta</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">§ 5 — Tipografia</div>
+    <h2>Due famiglie, non tre</h2>
+    <p class="note">Il mono è stato rimosso su tua richiesta: i dati vivono nel sans con cifre
+       tabulari, che allinea prezzi e orari in colonna senza importare una terza voce.
+       Instrument Serif in peso unico 400 — a display è più editoriale di un nero, e scarta in
+       blocco il cliché «sport = maiuscolo nero corsivo». Anybody e Space Mono sono ritirati.</p>
+    <div class="type-row"><div class="lbl">display 62 · serif</div><div class="t-display">Elena Ferraro</div></div>
+    <div class="type-row"><div class="lbl">h1 44 · serif corsivo</div><div class="t-h1"><em>Lezioni che si vedono</em></div></div>
+    <div class="type-row"><div class="lbl">h2 34 · serif</div><div class="t-h2">Coach vicino a te</div></div>
+    <div class="type-row"><div class="lbl">h3 26 · serif</div><div class="t-h3">Le tue prenotazioni</div></div>
+    <div class="type-row"><div class="lbl">body-lg 19 · sans</div><div class="t-bodylg">Scegli il campo, l'orario e il tipo di allenamento.</div></div>
+    <div class="type-row"><div class="lbl">body 17 · sans</div><div>Una prenotazione occupa uno slot settimanale intero: il coach conferma o rifiuta.</div></div>
+    <div class="type-row"><div class="lbl">caption 14 · sans</div><div class="t-caption">Ultimo aggiornamento tre minuti fa</div></div>
+    <div class="type-row"><div class="lbl">dati · sans tabulare</div><div class="tab">45 € · 18:30–20:00 · 2,4 km · 4,8 ★</div></div>
+    <div class="type-row"><div class="lbl">cifre allineate</div><div class="tab" style="line-height:1.5">
+      45 €<br>112 €<br>8 €</div></div>
+  </section>
+
+  <section>
+    <div class="eyebrow">§ 4 — Applicazione</div>
+    <h2>La grammatica su componenti reali del prodotto</h2>
+    <p class="note">Angoli vivi (0–2 px) per ciò che viene dal campo e dal vetro; angoli pieni per ciò
+       che viene dalla pallina e dal grip. Nessun raggio intermedio: il <code>rounded-lg</code>
+       generico sparisce. L'ottico non compare in questa schermata — il gioiello era già speso
+       nell'hero.</p>
+    <div class="demo">
+      <div class="glass"><span class="fix-b" style="left:9px"></span><span class="fix-b" style="right:9px"></span>
+        <div style="display:flex;gap:16px;align-items:center">
+          <div class="avatar">EF</div>
+          <div><div class="card-name">Elena Ferraro</div>
+            <div class="card-meta">Milano · 2,4 km · 4,8 ★ (23 recensioni)</div></div>
+          <div style="margin-left:auto;text-align:right">
+            <div class="price">45 €</div>
+            <div class="card-meta" style="font-size:12.5px">a lezione</div></div>
+        </div>
+        <div class="tdiv"></div>
+        <p style="font-size:15.5px;color:var(--nebbia)">Ex agonista, allena da otto anni sui campi
+          di Milano nord. Lavora molto sulla lettura della parete e sull'uscita di vetro.</p>
+        <div class="chips">
+          <span class="chip on">Intermedio</span><span class="chip">Avanzato</span>
+          <span class="chip">Singolo</span><span class="chip">Gruppo</span>
+        </div>
+      </div>
+      <div style="display:grid;gap:2px">
+        <div class="stat"><div class="k">Lezioni svolte</div><div class="v">412</div></div>
+        <div class="stat"><div class="k">Coach dal</div><div class="v">2019</div></div>
+        <div class="stat urg"><div class="k">Richieste in attesa</div><div class="v" style="color:var(--ruggine)">3</div></div>
+      </div>
+    </div>
+
+    <div class="invert">
+      <h3>Sei un coach? Il tuo campo ti aspetta.</h3>
+      <p>Il blocco d'inversione è la sabbia del manto: è il momento di massimo contrasto del sistema,
+         e per questo se ne usa uno solo per pagina.</p>
+      <span class="btn">Diventa coach</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">§ 1 — Alfabeto chiuso</div>
+    <h2>Otto motivi, in attesa delle incisioni</h2>
+    <p class="note">Le anteprime CSS della revisione 1 erano schemi tecnici e le hai bocciate come
+       rappresentazione: sono state tolte. I motivi restano quelli validati, e si giudicheranno
+       <strong>solo su incisioni vere della Fase 2</strong> — generate, detourate, sottoposte al tuo
+       veto sulla planche contact. Qui resta l'elenco, non il disegno.</p>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:2px">
+      <div style="background:var(--carta-alta);padding:22px 24px"><strong>01 · Cucitura</strong> — dalla pallina.
+        <span style="color:var(--nebbia)">Curva a S a due lobi. Separatori, punti elenco, punto del wordmark.</span></div>
+      <div style="background:var(--carta-alta);padding:22px 24px"><strong>02 · Foratura</strong> — dalla pala.
+        <span style="color:var(--nebbia)">Fori tondi su griglia sfalsata. Pattern, maschera avatar, badge.</span></div>
+      <div style="background:var(--carta-alta);padding:22px 24px"><strong>03 · Malla</strong> — dalla recinzione.
+        <span style="color:var(--nebbia)">Reticolo di rombi. Texture whisper, velo su fasce.</span></div>
+      <div style="background:var(--carta-alta);padding:22px 24px"><strong>04 · Linea di servizio</strong> — dal campo.
+        <span style="color:var(--nebbia)">Due tratti ad angolo retto. Divisori, stato attivo.</span></div>
+      <div style="background:var(--carta-alta);padding:22px 24px"><strong>05 · Rete</strong> — dalla rete.
+        <span style="color:var(--nebbia)">Fascia piena su maglia quadra. Footer, barre di avanzamento.</span></div>
+      <div style="background:var(--carta-alta);padding:22px 24px"><strong>06 · Grip</strong> — dall'impugnatura.
+        <span style="color:var(--nebbia)">Bande a 25°. Chip, accenti diagonali.</span></div>
+      <div style="background:var(--carta-alta);padding:22px 24px"><strong>07 · Granulo</strong> — dal manto.
+        <span style="color:var(--nebbia)">Sabbia silicea. È la texture di fondo di questa pagina.</span></div>
+      <div style="background:var(--carta-alta);padding:22px 24px"><strong>08 · Vetro</strong> — dalla parete.
+        <span style="color:var(--nebbia)">Filo luminoso su due lati, quattro fissaggi. Ogni card.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">§ 6 — Principi falsificabili</div>
+    <h2>Nove regole che un giudice può prendere in fallo su una cattura</h2>
+    <ol style="max-width:72ch;font-size:16px;line-height:1.8;padding-left:22px">
+      <li><strong>La carta ha una tinta</strong> — un grigio o un nero desaturato = violazione.</li>
+      <li><strong>L'ornamento si merita</strong> — due elementi <em>song</em> insieme = violazione.</li>
+      <li><strong>Un motivo per elemento</strong> — più di 2 motivi mescolati = rifiutato.</li>
+      <li><strong>L'ottico è un gioiello, non della vernice</strong> — campitura larga o due apparizioni = violazione.</li>
+      <li><strong>Gli angoli hanno una causa</strong> — un raggio intermedio = violazione.</li>
+      <li><strong>Astrarre, mai illustrare</strong> — asset decorativo che raffigura una scena = violazione.</li>
+      <li><strong>La materia alle superfici, il tratto agli ornamenti</strong>.</li>
+      <li><strong>Il movimento ha una causa</strong> — un loop decorativo permanente = violazione.</li>
+      <li><strong>Niente scoreboard</strong> — maiuscolo nero corsivo, glow neon, bordo luminoso = violazione.</li>
+    </ol>
+  </section>
+
+</div>
+
+<div class="netband">
+  <div class="wrap" style="padding-bottom:0">
+    <div class="wordmark">PAIDEIO<span class="dot">.</span></div>
+    <p style="color:var(--nebbia);font-size:15px;margin-top:8px;max-width:52ch">
+      Il footer è il motivo Rete: fascia piena in alto, maglia quadra sotto.</p>
+    <div class="netmesh"></div>
+  </div>
+</div>
+</body>
+</html>

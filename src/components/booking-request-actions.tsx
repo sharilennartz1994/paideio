@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import { updateBookingStatus } from "@/lib/actions/bookings";
 import { celebrate } from "@/lib/confetti";
+import { FullScreenGameLoader } from "@/components/design";
 import { Button } from "@/components/ui/button";
 
 export function BookingRequestActions({ bookingId }: { bookingId: string }) {
@@ -33,24 +34,27 @@ export function BookingRequestActions({ bookingId }: { bookingId: string }) {
   }
 
   return (
-    <div className="flex gap-2">
-      <Button
-        size="sm"
-        disabled={isPending}
-        onClick={handleConfirm}
-        className="bg-ball font-mono text-xs font-bold tracking-wider text-ball-foreground uppercase hover:bg-ball/90"
-      >
-        Accetta
-      </Button>
-      <Button
-        size="sm"
-        variant="outline"
-        disabled={isPending}
-        onClick={handleReject}
-        className="font-mono text-xs tracking-wider uppercase"
-      >
-        Rifiuta
-      </Button>
-    </div>
+    <>
+      {isPending && <FullScreenGameLoader label="Aggiorniamo la richiesta" />}
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          disabled={isPending}
+          onClick={handleConfirm}
+          className="bg-ball font-mono text-xs font-bold tracking-wider text-ball-foreground uppercase hover:bg-ball/90"
+        >
+          Accetta
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={isPending}
+          onClick={handleReject}
+          className="font-mono text-xs tracking-wider uppercase"
+        >
+          Rifiuta
+        </Button>
+      </div>
+    </>
   );
 }

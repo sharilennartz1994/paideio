@@ -49,3 +49,14 @@ next-env.d.ts
 
 # stato locale del runtime dell'agente
 .claude/scheduled_tasks.lock
+
+# strumenti e cache locali degli agenti (possono contenere configurazioni locali)
+/.agents/
+/.codex/
+/tmp/
+
+# materiale di lavorazione non necessario a runtime o al passaggio di consegne
+/design/audits/
+/design/style-options/
+/design/assets-comic/_raw/
+/design/assets-comic/_archive-*/

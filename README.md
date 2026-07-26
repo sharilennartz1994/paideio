@@ -1,29 +1,43 @@
 # Paideio
 
-Marketplace per trovare coach di padel e prenotare lezioni singole o di gruppo. Due ruoli: giocatore (cerca e prenota) e coach (gestisce campi, orari, tipo di allenamento, livelli, richieste).
+Marketplace italiano per trovare coach di padel, confrontare disponibilità e
+prezzi e richiedere lezioni singole o di gruppo. I coach gestiscono profilo,
+campi, orari e richieste dalla propria dashboard.
 
-Il nome viene dal greco antico παιδεία (paideia): la formazione della persona attraverso la pratica e la guida di un maestro.
+Produzione: [playpaideio.com](https://playpaideio.com)
 
 ## Stack
 
-Next.js 16 (App Router, Turbopack), TypeScript, Tailwind v4, shadcn/ui su Base UI, Drizzle ORM su SQLite locale, autenticazione Clerk.
+- Next.js 16 App Router, React 19 e TypeScript
+- Tailwind CSS v4 e componenti shadcn basati su Base UI
+- Drizzle ORM su Postgres Neon
+- Clerk per autenticazione e ruoli
+- Vercel per hosting, Blob e dominio
 
-Dettagli architetturali, convenzioni e decisioni di design: vedi [`AGENTS.md`](./AGENTS.md).
-
-## Avvio rapido
+## Avvio locale
 
 ```bash
 npm install
-npm run db:seed   # crea e popola paideio.db con dati demo
-npm run dev        # http://localhost:3000
+npm run dev
 ```
 
-Il seed crea tre coach demo pubblici (Elena Ferraro, Davide Conti, Giulia Romano), navigabili senza autenticazione. Per provare il flusso giocatore/coach completo, registrati con Clerk e usa "Diventa coach" per passare al ruolo coach.
+L’app usa `.env.local`. Sviluppo e produzione condividono ancora lo stesso
+database Neon: **non eseguire `npm run db:seed` senza aver letto
+[`docs/PRODUCTION-HANDOFF.md`](./docs/PRODUCTION-HANDOFF.md)**.
 
-## Comandi
+## Verifica
 
-- `npm run dev` — dev server
-- `npm run build` — build di produzione
-- `npm run lint` — ESLint
-- `npm run db:seed` — resetta e ripopola il database demo
-- `npm run db:push` — applica lo schema Drizzle al DB locale
+```bash
+npm run lint
+npx tsc --noEmit
+npm run build
+```
+
+## Documentazione
+
+- [`docs/PRODUCTION-HANDOFF.md`](./docs/PRODUCTION-HANDOFF.md) — runbook operativo
+- [`AGENTS.md`](./AGENTS.md) — architettura, convenzioni e stato funzionale
+- [`PRODUCT.md`](./PRODUCT.md) — utenti, scopo e principi di prodotto
+- [`DESIGN.md`](./DESIGN.md) — identità e regole visuali
+- [`design/HANDOFF.md`](./design/HANDOFF.md) — handoff sintetico di design
+- [`docs/EMAIL-SETUP.md`](./docs/EMAIL-SETUP.md) — configurazione email feedback

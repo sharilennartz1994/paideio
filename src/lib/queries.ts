@@ -1,7 +1,7 @@
 import "server-only";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "./db";
-import { users, coachProfiles, locations, availabilitySlots, bookings, reviews, favorites } from "./db/schema";
+import { users, coachProfiles, locations, availabilitySlots, bookings, reviews, favorites, notifications } from "./db/schema";
 
 export { LEVELS, TRAINING_TYPES, dayName, parseJsonArray, levelBadgeClass, BOOKING_STATUS_CONFIG } from "./constants";
 export type { Level, TrainingType } from "./constants";
@@ -9,6 +9,22 @@ import type { Level, TrainingType } from "./constants";
 import { parseJsonArray, toLocalDateString, haversineDistanceKm } from "./constants";
 
 const DEFAULT_SEARCH_RADIUS_KM = 50;
+
+export async function getNotificationsForUser(userId: string) {
+  return db.query.notifications.findMany({
+    where: eq(notifications.userId, userId),
+    orderBy: [desc(notifications.createdAt)],
+    limit: 50,
+  });
+}
+
+export async function getUnreadNotificationCount(userId: string) {
+  const unread = await db.query.notifications.findMany({
+    where: and(eq(notifications.userId, userId), isNull(notifications.readAt)),
+    columns: { id: true },
+  });
+  return unread.length;
+}
 
 export type RatingSummary = { average: number | null; count: number };
 
@@ -185,6 +201,10 @@ export async function getCoachCalendar(coachId: string, daysAhead = 21): Promise
   );
 
   const result: CalendarSlot[] = [];
+  // Dati storici o richieste concorrenti possono aver prodotto turni
+  // ricorrenti identici. Il calendario pubblico deve comunque mostrare un
+  // solo slot prenotabile, evitando anche chiavi React duplicate.
+  const generatedKeys = new Set<string>();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -200,6 +220,8 @@ export async function getCoachCalendar(coachId: string, daysAhead = 21): Promise
       if (!location) continue;
 
       const key = `${dateStr}|${slot.locationId}|${slot.startTime}|${slot.endTime}`;
+      if (generatedKeys.has(key)) continue;
+      generatedKeys.add(key);
       result.push({
         date: dateStr,
         dayOfWeek,

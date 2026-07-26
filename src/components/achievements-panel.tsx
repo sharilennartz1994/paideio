@@ -1,4 +1,4 @@
-import { Sparkles, Medal, Award, Trophy, Heart, Flame, type LucideIcon } from "lucide-react";
+import { Sparkles, Medal, Award, Trophy, Heart, Flame, type LucideIcon } from "@/components/icons/paideio-icons";
 import type { Achievement } from "@/lib/queries";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -21,7 +21,7 @@ export function AchievementsPanel({ achievements }: { achievements: Achievement[
       <CardHeader>
         <CardTitle className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
           I tuoi traguardi{" "}
-          <span className="text-ball">
+          <span className="text-accent-ball-ink">
             {earnedCount}/{achievements.length}
           </span>
         </CardTitle>

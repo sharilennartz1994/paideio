@@ -45,7 +45,7 @@ export function CoachAvatar({
   const color = PALETTE[hashString(name) % PALETTE.length];
   return (
     <div
-      className={`flex shrink-0 items-center justify-center rounded-full font-heading font-black text-white uppercase italic ${color} ${sizeClass}`}
+      className={`flex shrink-0 items-center justify-center rounded-full font-heading font-black text-white uppercase ${color} ${sizeClass}`}
     >
       {initials(name)}
     </div>

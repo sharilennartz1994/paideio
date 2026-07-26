@@ -10,5 +10,15 @@ export default async function CampiPage() {
 
   const coachLocations = await db.query.locations.findMany({ where: eq(locations.coachId, user.id) });
 
-  return <LocationManager initialLocations={coachLocations} />;
+  return (
+    <div>
+      <div className="mb-5">
+        <h2 className="font-heading text-2xl text-calce">Dove alleni</h2>
+        <p className="mt-1 text-sm text-nebbia">Aggiungi i club una sola volta: li ritroverai quando pubblichi gli orari.</p>
+      </div>
+      <div className="border border-outline-variant/20 bg-surface-container p-6 shadow-2xl">
+      <LocationManager initialLocations={coachLocations} />
+      </div>
+    </div>
+  );
 }

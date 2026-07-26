@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/lib/session";
 import { type ActionResult, err } from "@/lib/action-result";
 
 export async function becomeCoach(_prevState: ActionResult | null): Promise<ActionResult> {
+  void _prevState;
   const user = await getCurrentUser();
   if (!user) return err("Devi accedere per diventare coach.");
 
