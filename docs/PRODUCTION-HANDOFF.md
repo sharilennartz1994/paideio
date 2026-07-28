@@ -7,7 +7,7 @@ Ultimo aggiornamento: 26 luglio 2026.
 - URL principale: <https://playpaideio.com>
 - Alias Vercel: <https://paideio.vercel.app>
 - Hosting: Vercel, progetto `sharilennartz1994s-projects/paideio`
-- Database: Postgres Neon
+- Database: Postgres Neon — progetto `paideio-eu`, regione `aws-eu-central-1` (Francoforte, UE)
 - Autenticazione: Clerk production su `playpaideio.com`
 - Dati demo: rimossi dal database condiviso il 26 luglio 2026
 
@@ -108,6 +108,36 @@ Database:
 5. Implementare PWA e installabilità.
 6. Aggiungere magic-byte validation e pulizia del blob avatar precedente.
 7. Aggiungere constraint DB (`rating`, giorni, intervalli orari).
+
+## Migrazione del database in Unione europea
+
+Eseguita il 28 luglio 2026. Il progetto era in `aws-us-east-1`, quindi i dati
+personali uscivano dallo Spazio economico europeo. **La regione di un progetto
+Neon non è modificabile dopo la creazione**: è stato creato `paideio-eu` in
+`aws-eu-central-1` (Francoforte) e i dati sono stati travasati.
+
+Procedura seguita, riutilizzabile:
+
+1. creare la risorsa dal Marketplace Vercel scegliendo la regione (la CLI 56.x
+   non espone la regione fra le opzioni: va fatto dal pannello);
+2. collegarla al progetto **con un prefisso** — `vercel integration resource
+   connect <risorsa> paideio --prefix EU` — così `EU_DATABASE_URL` nasce
+   accanto a `DATABASE_URL` e la produzione non viene toccata;
+3. `DATABASE_URL=<nuova> npx drizzle-kit push --force`;
+4. dump dell'origine e ripristino: `scripts/db-dump.mts` → `scripts/db-restore.mts`;
+5. verificare con `scripts/check-integrita-slot.mts` e confrontare le righe;
+6. scambio: `disconnect` del vecchio, `disconnect` + `connect` senza prefisso
+   del nuovo;
+7. aggiornare la sola riga `DATABASE_URL` in `.env.local` — **non** fare un
+   `vercel env pull` completo, sovrascriverebbe le chiavi Clerk di sviluppo
+   con quelle di produzione;
+8. `vercel --prod`, verifica, poi eliminare il vecchio progetto.
+
+La regione va verificata dall'hostname (`...eu-central-1.aws.neon.tech`), non
+dall'etichetta del pannello.
+
+I backup restano in `.backup/`, esclusa dal repo perché contiene dati
+personali reali.
 
 ## Schema: capienza lezioni di gruppo
 

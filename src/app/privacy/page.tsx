@@ -17,14 +17,14 @@ export const metadata: Metadata = {
     "Quali dati personali tratta Paideio, per quali finalità, con quali fornitori e quali diritti puoi esercitare.",
 };
 
-const UPDATED_AT = "27 luglio 2026";
+const UPDATED_AT = "28 luglio 2026";
 
 const INDEX = [
   { id: "titolare", label: "Titolare del trattamento" },
   { id: "dati", label: "Quali dati trattiamo e perché" },
   { id: "posizione", label: "Posizione geografica" },
   { id: "fornitori", label: "Fornitori che trattano i dati" },
-  { id: "estero", label: "Trasferimenti fuori dall’Unione europea" },
+  { id: "estero", label: "Dove sono conservati i tuoi dati" },
   { id: "conservazione", label: "Per quanto tempo li conserviamo" },
   { id: "cookie", label: "Cookie e memoria del browser" },
   { id: "diritti", label: "I tuoi diritti" },
@@ -177,11 +177,16 @@ export default function PrivacyPage() {
         </p>
       </LegalSection>
 
-      <LegalSection id="estero" number="05" title="Trasferimenti fuori dall’Unione europea">
+      <LegalSection id="estero" number="05" title="Dove sono conservati i tuoi dati">
         <LegalHighlight>
-          Il database del servizio è attualmente ospitato negli Stati Uniti. I dati descritti
-          sopra sono quindi trasferiti fuori dallo Spazio economico europeo.
+          Il database che contiene account, profili, prenotazioni e recensioni è ospitato
+          nell’Unione europea, in Germania (Francoforte).
         </LegalHighlight>
+        <p>
+          Alcuni fornitori indicati sopra hanno però sede negli Stati Uniti: per le funzioni
+          che svolgono — autenticazione, hosting dell’applicazione, invio delle email — un
+          trasferimento di dati fuori dallo Spazio economico europeo può comunque avvenire.
+        </p>
         <p>
           Un trasferimento del genere è lecito solo in presenza di adeguate garanzie: adesione
           del fornitore al quadro di protezione dei dati UE-USA, oppure clausole contrattuali
@@ -189,9 +194,8 @@ export default function PrivacyPage() {
         </p>
         <p>
           <Da>
-            Da risolvere prima della pubblicazione: verificare le garanzie in essere e
-            indicarle qui, oppure spostare il database in una regione europea ed eliminare
-            questa sezione. Vedi la nota tecnica consegnata insieme a questa bozza.
+            Da completare prima della pubblicazione: verificare per Clerk, Vercel e Resend
+            quale garanzia sia in essere e indicarla qui.
           </Da>
         </p>
       </LegalSection>

@@ -22,10 +22,13 @@ allenamento, livelli, richieste).
   Fluid Compute, che tiene vivo il runtime tra le richieste, quindi un pool
   TCP riutilizzabile è la scelta giusta — vedi skill `neon-postgres`).
   `attachDatabasePool` da `@vercel/functions` lascia che il runtime dreni le
-  connessioni prima che l'istanza vada in sospensione. **Un solo database
-  Neon condiviso tra sviluppo locale e produzione** (nessun branch
-  dedicato ancora) — vedi "Stato e prossimi passi" per il follow-up
-  consigliato prima che ci siano utenti reali.
+  connessioni prima che l'istanza vada in sospensione. Il progetto Neon è
+  `paideio-eu`, regione **`aws-eu-central-1` (Francoforte)**: la regione di un
+  progetto Neon non è modificabile dopo la creazione, quindi spostarla ha
+  richiesto un progetto nuovo e il travaso dei dati (28 luglio 2026, vedi
+  `docs/PRODUCTION-HANDOFF.md`). **Un solo database Neon condiviso tra
+  sviluppo locale e produzione** (nessun branch dedicato ancora) — vedi
+  "Stato e prossimi passi".
 - Autenticazione: Clerk (`@clerk/nextjs`). `src/proxy.ts` protegge
   `/coach-admin(.*)` e `/prenotazioni(.*)`; le altre rotte sono pubbliche
   (pattern "public-first"). `getCurrentUser()` in `src/lib/session.ts` fa da
@@ -616,6 +619,14 @@ bloccato) per un banner "Deployment Blocked" / "Fix Git Configuration".
 - [ ] Branch Neon dedicato allo sviluppo locale, separato dalla produzione
       (oggi condividono lo stesso database — vedi "Dati demo" e "Deploy in
       produzione")
+- [x] Database in Unione europea — progetto `paideio-eu` a Francoforte
+      (`aws-eu-central-1`) dal 28 luglio 2026. La regione non è modificabile:
+      è stato creato un progetto nuovo e i dati sono stati travasati con
+      `scripts/db-dump.mts` / `scripts/db-restore.mts`. Il vecchio progetto
+      `us-east-1` è stato eliminato.
+- [x] Termini di servizio e informativa privacy (`/termini`, `/privacy`),
+      collegati dal footer. Restano marcati come bozza non validata finché
+      un legale non conferma tempi di conservazione e tenuta della manleva.
 - [x] Capienza reale per le lezioni di gruppo — vedi la sezione "Capienza slot
       e prenotabilità". `coachProfiles.groupCapacity` configurabile dal
       coach, regola condivisa in `computeSlotOccupancy()`, indici parziali

@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     "Le condizioni che regolano l’uso di Paideio per giocatori e coach: ruolo della piattaforma, obblighi, prenotazioni e responsabilità.",
 };
 
-const UPDATED_AT = "27 luglio 2026";
+const UPDATED_AT = "28 luglio 2026";
 
 const INDEX = [
   { id: "chi-siamo", label: "Chi gestisce Paideio" },
