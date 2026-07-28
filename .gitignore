@@ -60,3 +60,6 @@ next-env.d.ts
 /design/style-options/
 /design/assets-comic/_raw/
 /design/assets-comic/_archive-*/
+
+# Backup database (dati personali reali) — mai nel repo
+.backup/

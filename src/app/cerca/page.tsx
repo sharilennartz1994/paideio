@@ -11,6 +11,7 @@ import {
 } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/session";
 import { UseMyLocationButton } from "@/components/use-my-location-button";
+import { readSearchLocation } from "@/lib/search-location";
 import { CoachAvatar } from "@/components/coach-avatar";
 import { FavoriteButton } from "@/components/favorite-button";
 import { GameCta, GameEmptyState } from "@/components/design";
@@ -22,12 +23,12 @@ const LEVEL_LABELS: Record<Level, string> = {
   avanzato: "Avanzato",
 };
 
+// `lat`/`lng` non compaiono più: la posizione arriva dal cookie di sessione,
+// non dalla query string. Vedi `lib/actions/search-location.ts`.
 type SearchParams = Promise<{
   city?: string;
   type?: string;
   level?: string;
-  lat?: string;
-  lng?: string;
   maxPrice?: string;
 }>;
 
@@ -36,16 +37,12 @@ function FiltersForm({
   type,
   level,
   near,
-  lat,
-  lng,
   maxPrice,
 }: {
   city?: string;
   type?: TrainingType;
   level?: Level;
-  near?: { lat: number; lng: number };
-  lat?: number;
-  lng?: number;
+  near?: boolean;
   maxPrice: number;
 }) {
   return (
@@ -98,7 +95,6 @@ function FiltersForm({
         Prezzo massimo: <span className="tabular-nums text-calce">{maxPrice}€</span>
         <input name="maxPrice" type="range" min={20} max={150} defaultValue={maxPrice} className="mt-3 h-11 w-full cursor-pointer accent-vetro" />
       </label>
-      {near && <><input type="hidden" name="lat" value={lat} /><input type="hidden" name="lng" value={lng} /></>}
       <GameCta type="submit" className="w-full">Applica filtri</GameCta>
     </form>
   );
@@ -109,9 +105,9 @@ export default async function CercaPage({ searchParams }: { searchParams: Search
   const city = params.city?.trim() || undefined;
   const type = params.type === "singolo" || params.type === "gruppo" ? (params.type as TrainingType) : undefined;
   const level = LEVELS.includes(params.level as Level) ? (params.level as Level) : undefined;
-  const lat = params.lat ? Number(params.lat) : undefined;
-  const lng = params.lng ? Number(params.lng) : undefined;
-  const near = lat != null && lng != null && !Number.isNaN(lat) && !Number.isNaN(lng) ? { lat, lng } : undefined;
+  // La città digitata ha la precedenza sulla posizione rilevata.
+  const posizione = city ? undefined : await readSearchLocation();
+  const near = posizione;
   const maxPrice = params.maxPrice ? Number(params.maxPrice) : 150;
 
   const user = await getCurrentUser();
@@ -137,15 +133,15 @@ export default async function CercaPage({ searchParams }: { searchParams: Search
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <MobileFilterSheet summary={`${[city, type, level].filter(Boolean).length} filtri applicati`}>
-            <FiltersForm city={city} type={type} level={level} near={near} lat={lat} lng={lng} maxPrice={maxPrice} />
+            <FiltersForm city={city} type={type} level={level} near={!!near} maxPrice={maxPrice} />
           </MobileFilterSheet>
-          <Suspense fallback={null}><UseMyLocationButton /></Suspense>
+          <Suspense fallback={null}><UseMyLocationButton active={!!near} /></Suspense>
         </div>
       </div>
 
       <div className="flex flex-col gap-8 lg:flex-row">
         <aside className="glass-panel hidden h-fit w-72 shrink-0 p-6 lg:sticky lg:top-24 lg:block">
-          <FiltersForm city={city} type={type} level={level} near={near} lat={lat} lng={lng} maxPrice={maxPrice} />
+          <FiltersForm city={city} type={type} level={level} near={!!near} maxPrice={maxPrice} />
         </aside>
 
         {/* Results grid */}
