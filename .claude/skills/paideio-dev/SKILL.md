@@ -18,10 +18,15 @@ npm run db:seed   # azzera e ripopola il database demo (Postgres/Neon, non più 
 npm run dev        # avvia il dev server (porta 3000, o la prima libera)
 ```
 
-**Attenzione**: sviluppo locale e produzione (https://paideio.vercel.app)
+**Attenzione**: sviluppo locale e produzione (https://playpaideio.com)
 condividono lo stesso database Neon — `npm run db:seed` scrive anche in
 quello che vedono gli utenti reali. Vedi AGENTS.md sezioni "Dati demo" e
 "Deploy in produzione" prima di rilanciarlo.
+
+Il progetto Neon è `paideio-eu`, regione `aws-eu-central-1` (Francoforte). La
+regione di un progetto Neon non si può cambiare: spostarla richiede un
+progetto nuovo e il travaso con `scripts/db-dump.mts` e
+`scripts/db-restore.mts`. Procedura in `docs/PRODUCTION-HANDOFF.md`.
 
 Il seed crea tre coach demo pubblici, due giocatori sintetici e scenari per
 richiesta, conferma futura, lezione completata con recensione, annullamento e

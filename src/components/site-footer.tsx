@@ -1,6 +1,18 @@
 import Link from "next/link";
 import { GameAsset } from "@/components/design";
 
+const FOOTER_LINKS = [
+  { href: "/cerca", label: "Trova un coach" },
+  { href: "/diventa-coach", label: "Diventa coach" },
+  { href: "/chi-siamo", label: "Il concept" },
+  { href: "/prossime-release", label: "Prossime release" },
+] as const;
+
+const LEGAL_LINKS = [
+  { href: "/termini", label: "Termini di servizio" },
+  { href: "/privacy", label: "Privacy" },
+] as const;
+
 export function SiteFooter() {
   const year = new Date().getFullYear();
 
@@ -18,20 +30,35 @@ export function SiteFooter() {
             © {year} Paideio. Dal greco antico παιδεία, la formazione della persona attraverso lo sport.
           </p>
         </div>
-        <nav aria-label="Link nel piè di pagina" className="flex flex-wrap justify-center gap-2">
-          <Link href="/cerca" className="flex min-h-11 items-center px-3 text-sm text-game-white/65 transition-colors hover:text-game-cyan">
-            Trova un coach
-          </Link>
-          <Link href="/diventa-coach" className="flex min-h-11 items-center px-3 text-sm text-game-white/65 transition-colors hover:text-game-cyan">
-            Diventa coach
-          </Link>
-          <Link href="/chi-siamo" className="flex min-h-11 items-center px-3 text-sm text-game-white/65 transition-colors hover:text-game-cyan">
-            Il concept
-          </Link>
-          <Link href="/prossime-release" className="flex min-h-11 items-center px-3 text-sm text-game-white/65 transition-colors hover:text-game-cyan">
-            Prossime release
-          </Link>
-        </nav>
+        <div className="flex flex-col items-center gap-2 md:items-end">
+          <nav aria-label="Link nel piè di pagina" className="flex flex-wrap justify-center gap-2">
+            {FOOTER_LINKS.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className="flex min-h-11 items-center px-3 text-sm text-game-white/65 transition-colors hover:text-game-cyan"
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+          {/* Documenti legali: separati e più quieti, ma sempre raggiungibili da
+              ogni pagina — è il posto in cui vengono cercati. */}
+          <nav
+            aria-label="Documenti legali"
+            className="flex flex-wrap justify-center gap-2 md:justify-end"
+          >
+            {LEGAL_LINKS.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                className="flex min-h-11 items-center px-3 text-xs text-game-white/50 underline decoration-game-white/20 underline-offset-4 transition-colors hover:text-game-cyan hover:decoration-game-cyan"
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+        </div>
       </div>
     </footer>
   );
