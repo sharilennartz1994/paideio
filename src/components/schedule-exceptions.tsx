@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { closeAvailabilityDate, reopenAvailabilityDate } from "@/lib/actions/coach-admin";
 import { dayName } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FullScreenGameLoader, GameBadge, GameEmptyState } from "@/components/design";
 import { cn } from "@/lib/utils";
 
@@ -69,32 +70,25 @@ export function ScheduleExceptions({
     });
   }
 
-  function handleCloseDay(date: string, slotsOfDay: ScheduleSlotView[]) {
-    const active = slotsOfDay.reduce((sum, s) => sum + (s.closed ? 0 : s.activeBookings), 0);
-    const warning = active > 0
-      ? `\n\nAttenzione: ${active} ${active === 1 ? "lezione già prenotata verrà annullata" : "lezioni già prenotate verranno annullate"} e i giocatori riceveranno una notifica.`
-      : "";
-    if (!window.confirm(`Chiudere tutto il ${formatDay(date)}?${warning}`)) return;
-    run("Giornata chiusa.", async () => {
-      const r = await closeAvailabilityDate({ date });
-      return r.ok ? { ok: true } : { ok: false, error: r.error };
-    });
+  /** Le chiusure sono confermate, quindi l'azione deve dire se ha funzionato. */
+  async function confirmAndRun(
+    label: string,
+    fn: () => Promise<{ ok: boolean; error?: string }>
+  ): Promise<boolean> {
+    const result = await fn();
+    if (result.ok) {
+      toast.success(label);
+      return true;
+    }
+    toast.error(result.error ?? "Operazione non riuscita.");
+    return false;
   }
 
-  function handleCloseSlot(slot: ScheduleSlotView) {
-    const warning = slot.activeBookings > 0
-      ? `\n\nAttenzione: ${slot.activeBookings} ${slot.activeBookings === 1 ? "lezione già prenotata verrà annullata" : "lezioni già prenotate verranno annullate"} e i giocatori riceveranno una notifica.`
-      : "";
-    if (!window.confirm(`Chiudere ${slot.startTime}–${slot.endTime} del ${formatDay(slot.date)}?${warning}`)) return;
-    run("Turno chiuso per questa data.", async () => {
-      const r = await closeAvailabilityDate({
-        date: slot.date,
-        locationId: slot.locationId,
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-      });
-      return r.ok ? { ok: true } : { ok: false, error: r.error };
-    });
+  function bookingsWarning(count: number) {
+    if (count === 0) return undefined;
+    return count === 1
+      ? "C’è 1 lezione già prenotata su questa data: verrà annullata e il giocatore riceverà una notifica."
+      : `Ci sono ${count} lezioni già prenotate su questa data: verranno annullate e i giocatori riceveranno una notifica.`;
   }
 
   if (days.length === 0) {
@@ -138,15 +132,32 @@ export function ScheduleExceptions({
               </Button>
             ) : (
               slotsOfDay.length > 0 && (
-                <Button
-                  size="sm"
-                  variant="ghost"
+                <ConfirmDialog
+                  trigger={
+                    <Button size="sm" variant="ghost" className="mt-1 px-0 text-nebbia">
+                      Chiudi tutto il giorno
+                    </Button>
+                  }
                   disabled={isPending}
-                  className="mt-1 px-0 text-nebbia"
-                  onClick={() => handleCloseDay(date, slotsOfDay)}
-                >
-                  Chiudi tutto il giorno
-                </Button>
+                  title="Chiudere l’intera giornata?"
+                  description={
+                    <>
+                      <strong className="text-calce capitalize">{formatDay(date)}</strong> sparirà
+                      dalle disponibilità dei giocatori, compresi eventuali turni che pubblicherai
+                      dopo. I turni settimanali restano: potrai riaprire la giornata quando vuoi.
+                    </>
+                  }
+                  warning={bookingsWarning(
+                    slotsOfDay.reduce((sum, s) => sum + (s.closed ? 0 : s.activeBookings), 0)
+                  )}
+                  confirmLabel="Sì, chiudi la giornata"
+                  onConfirm={() =>
+                    confirmAndRun("Giornata chiusa.", async () => {
+                      const r = await closeAvailabilityDate({ date });
+                      return r.ok ? { ok: true } : { ok: false, error: r.error };
+                    })
+                  }
+                />
               )
             )}
           </div>
@@ -204,9 +215,35 @@ export function ScheduleExceptions({
                       </Button>
                     )
                   ) : (
-                    <Button size="sm" variant="ghost" disabled={isPending} onClick={() => handleCloseSlot(slot)}>
-                      Chiudi
-                    </Button>
+                    <ConfirmDialog
+                      trigger={
+                        <Button size="sm" variant="ghost">
+                          Chiudi
+                        </Button>
+                      }
+                      disabled={isPending}
+                      title="Chiudere questo turno?"
+                      description={
+                        <>
+                          Solo <strong className="text-calce">{slot.startTime}–{slot.endTime}</strong> del{" "}
+                          <span className="capitalize">{formatDay(slot.date)}</span> sparirà dalle
+                          disponibilità. Il turno settimanale resta attivo su tutte le altre date.
+                        </>
+                      }
+                      warning={bookingsWarning(slot.activeBookings)}
+                      confirmLabel="Sì, chiudi il turno"
+                      onConfirm={() =>
+                        confirmAndRun("Turno chiuso per questa data.", async () => {
+                          const r = await closeAvailabilityDate({
+                            date: slot.date,
+                            locationId: slot.locationId,
+                            startTime: slot.startTime,
+                            endTime: slot.endTime,
+                          });
+                          return r.ok ? { ok: true } : { ok: false, error: r.error };
+                        })
+                      }
+                    />
                   )}
                 </div>
               </div>

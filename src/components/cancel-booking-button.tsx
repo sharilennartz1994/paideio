@@ -60,11 +60,12 @@ export function CancelBookingButton({
             <AlertDialogClose render={<Button variant="outline" />}>
               Torna indietro
             </AlertDialogClose>
+            {/* Stesso riempimento pieno di `ConfirmDialog`: la variante
+                `destructive` di shadcn dà 3,91:1 in modalità notte. */}
             <Button
-              variant="destructive"
               onClick={handleCancel}
               disabled={isPending}
-              className="font-heading font-bold uppercase"
+              className="bg-ruggine font-heading font-bold text-game-ink uppercase hover:bg-ruggine/85"
             >
               Sì, annulla la lezione
             </Button>

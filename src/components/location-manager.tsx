@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { addLocation, removeLocation } from "@/lib/actions/coach-admin";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,24 +56,14 @@ export function LocationManager({ initialLocations }: { initialLocations: Locati
     });
   }
 
-  function handleRemove(id: string) {
-    // Il cascade della FK cancella anche gli availability_slots del campo: se
-    // non lo diciamo, il coach si ritrova il calendario svuotato senza capire
-    // perché.
-    if (
-      !window.confirm(
-        "Rimuovere questo campo? Verranno eliminati anche i turni settimanali pubblicati su questo campo e le prenotazioni future collegate verranno annullate."
-      )
-    )
-      return;
-    startTransition(async () => {
-      const result = await removeLocation(id);
-      if (result.ok) {
-        toast("Campo rimosso.");
-      } else {
-        toast.error(result.error);
-      }
-    });
+  async function handleRemove(id: string): Promise<boolean> {
+    const result = await removeLocation(id);
+    if (result.ok) {
+      toast("Campo rimosso.");
+      return true;
+    }
+    toast.error(result.error);
+    return false;
   }
 
   return (
@@ -103,9 +94,27 @@ export function LocationManager({ initialLocations }: { initialLocations: Locati
                 </Badge>
               )}
             </div>
-            <Button size="sm" variant="outline" disabled={isPending} onClick={() => handleRemove(loc.id)}>
-              Rimuovi
-            </Button>
+            {/* Il cascade della FK cancella anche gli availability_slots del
+                campo: se non lo diciamo, il coach si ritrova il calendario
+                svuotato senza capire perché. */}
+            <ConfirmDialog
+              trigger={
+                <Button size="sm" variant="outline">
+                  Rimuovi
+                </Button>
+              }
+              disabled={isPending}
+              title="Rimuovere questo campo?"
+              description={
+                <>
+                  <strong className="text-calce">{loc.name}</strong> sparirà dal tuo profilo
+                  pubblico.
+                </>
+              }
+              warning="Verranno eliminati anche tutti i turni settimanali pubblicati su questo campo, e le prenotazioni future collegate verranno annullate con notifica ai giocatori."
+              confirmLabel="Sì, rimuovi il campo"
+              onConfirm={() => handleRemove(loc.id)}
+            />
           </div>
         ))}
       </div>

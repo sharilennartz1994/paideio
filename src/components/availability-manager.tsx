@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { addAvailabilitySlot, removeAvailabilitySlot } from "@/lib/actions/coach-admin";
 import { dayName } from "@/lib/constants";
 import { LocationManager } from "@/components/location-manager";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -76,16 +77,14 @@ export function AvailabilityManager({
     });
   }
 
-  function handleRemove(id: string) {
-    if (!window.confirm("Rimuovere questo turno dalla disponibilità settimanale?")) return;
-    startTransition(async () => {
-      const result = await removeAvailabilitySlot(id);
-      if (result.ok) {
-        toast("Orario rimosso.");
-      } else {
-        toast.error(result.error);
-      }
-    });
+  async function handleRemove(id: string): Promise<boolean> {
+    const result = await removeAvailabilitySlot(id);
+    if (result.ok) {
+      toast("Orario rimosso.");
+      return true;
+    }
+    toast.error(result.error);
+    return false;
   }
 
   // Senza campi non esiste un turno da pubblicare: prima qui c'era solo un
@@ -133,9 +132,25 @@ export function AvailabilityManager({
                     <p className="font-heading text-calce">{slot.startTime}–{slot.endTime}</p>
                     <p className="text-xs text-nebbia">{locationById.get(slot.locationId)?.name}</p>
                   </div>
-                  <Button size="sm" variant="ghost" disabled={isPending} onClick={() => handleRemove(slot.id)}>
-                    Rimuovi
-                  </Button>
+                  <ConfirmDialog
+                    trigger={
+                      <Button size="sm" variant="ghost">
+                        Rimuovi
+                      </Button>
+                    }
+                    disabled={isPending}
+                    title="Rimuovere questo turno?"
+                    description={
+                      <>
+                        <strong className="text-calce capitalize">{dayName(group.day)}</strong>{" "}
+                        <strong className="text-calce">{slot.startTime}–{slot.endTime}</strong> non
+                        si ripeterà più. Se ti serve togliere una sola data, chiudila in “Le
+                        prossime date” invece di rimuovere il turno.
+                      </>
+                    }
+                    confirmLabel="Sì, rimuovi il turno"
+                    onConfirm={() => handleRemove(slot.id)}
+                  />
                 </div>
               ))}
             </div>

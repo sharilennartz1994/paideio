@@ -157,6 +157,13 @@ ricorrenza. Regola condivisa in `closureKey()`/`isSlotClosed()`
 l'advisory lock. Chiudere annulla e notifica le prenotazioni attive sulla data.
 Test: `npm run test:chiusure`. Dettagli in `AGENTS.md`.
 
+## Conferme
+
+Usare `ConfirmDialog` (`components/confirm-dialog.tsx`), mai `window.confirm()`
+— nel codice non ne resta nessuno. `onConfirm` ritorna un booleano: `true`
+chiude, `false` tiene aperto per far leggere l'errore. Il bottone di conferma
+usa `bg-ruggine text-game-ink`, non `variant="destructive"` (3,91:1 di notte).
+
 ## Contrasto: superficie fissa ⇒ testo fisso
 
 Se lo sfondo è un colore che **non** cambia con il tema (`--ottico`,

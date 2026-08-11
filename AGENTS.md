@@ -493,6 +493,30 @@ Test: `npm run test:chiusure` (stesso Postgres usa-e-getta di
   `revalidatePath("/", "layout")`, così il contatore della campanella si
   aggiorna immediatamente.
 
+### Conferme: `ConfirmDialog`, mai `window.confirm()`
+
+`src/components/confirm-dialog.tsx` è la conferma canonica del prodotto,
+costruita sull’`AlertDialog` Base UI già usato da `CancelBookingButton`. Il
+dialog nativo del browser non rispetta il tema, non permette di evidenziare la
+conseguenza distruttiva e su iOS mostra il dominio in cima: **non
+reintrodurlo**. Al 12 agosto 2026 non resta nessun `window.confirm()` nel
+codice — rimozione di turno, rimozione di campo e le due chiusure calendario
+passano tutte da qui.
+
+- `onConfirm` ritorna un booleano: `true` chiude il dialog, `false` lo lascia
+  aperto perché l’utente legga l’errore nel toast. Le funzioni chiamate devono
+  quindi ritornare l’esito, non limitarsi a lanciare un toast.
+- `warning` è il riquadro per la conseguenza irreversibile (quante lezioni
+  verranno annullate, che il cascade cancella anche i turni). Va usato per il
+  danno collaterale, non per ripetere il titolo.
+- Il bottone di conferma **non** usa `variant="destructive"` di shadcn: è un
+  riempimento al 10-20% con testo `--destructive`, che di notte dà 3,91:1.
+  Usa `bg-ruggine text-game-ink` (6,32:1 fissi in entrambi i temi, vedi la
+  regola “superficie fissa ⇒ testo fisso”). Stessa scelta in
+  `CancelBookingButton`.
+- Il `trigger` è un `Button` reale, quindi **non** va `nativeButton={false}`
+  (vedi “Note Base UI”).
+
 ## Riepilogo prenotazioni giocatore
 
 - `/prenotazioni` delega la parte interattiva a
