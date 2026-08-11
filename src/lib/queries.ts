@@ -1,7 +1,7 @@
 import "server-only";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "./db";
-import { users, coachProfiles, locations, availabilitySlots, bookings, reviews, favorites, notifications } from "./db/schema";
+import { users, coachProfiles, locations, availabilitySlots, availabilityClosures, bookings, reviews, favorites, notifications } from "./db/schema";
 
 export { LEVELS, TRAINING_TYPES, dayName, parseJsonArray, levelBadgeClass, BOOKING_STATUS_CONFIG } from "./constants";
 export type { Level, TrainingType } from "./constants";
@@ -11,6 +11,8 @@ import {
   toLocalDateString,
   haversineDistanceKm,
   computeSlotOccupancy,
+  closureKey,
+  isSlotClosed,
   DEFAULT_GROUP_CAPACITY,
 } from "./constants";
 
@@ -233,7 +235,22 @@ export function slotKey(date: string, locationId: string | null, startTime: stri
   return `${date}|${locationId}|${startTime}|${endTime}`;
 }
 
-export async function getCoachCalendar(coachId: string, daysAhead = 21): Promise<CalendarSlot[]> {
+/** Istanza concreta di uno slot, con lo stato di chiusura per l'area coach. */
+export type ScheduleSlot = CalendarSlot & {
+  closed: boolean;
+  /** Chiusa perché è chiusa l'intera giornata, non il singolo turno. */
+  closedWholeDay: boolean;
+  /** Prenotazioni ancora attive su questa istanza. */
+  activeBookings: number;
+};
+
+/**
+ * Genera le istanze concrete dei turni ricorrenti nella finestra richiesta,
+ * annotate con occupazione e chiusure. `getCoachCalendar` scarta le chiuse
+ * (il giocatore non deve vederle), `getCoachSchedule` le tiene (il coach deve
+ * poterle riaprire): stessa sorgente per non farle divergere.
+ */
+async function buildCoachSchedule(coachId: string, daysAhead: number): Promise<ScheduleSlot[]> {
   const coachLocations = await db.query.locations.findMany({
     where: eq(locations.coachId, coachId),
   });
@@ -249,6 +266,16 @@ export async function getCoachCalendar(coachId: string, daysAhead = 21): Promise
   const groupCapacity = profile?.groupCapacity ?? DEFAULT_GROUP_CAPACITY;
   const coachTrainingTypes = parseJsonArray(profile?.trainingTypes ?? "[]");
 
+  const closures = await db.query.availabilityClosures.findMany({
+    where: eq(availabilityClosures.coachId, coachId),
+  });
+  const closedKeys = new Set(
+    closures.map((c) => closureKey(c.date, c.locationId, c.startTime))
+  );
+  const wholeDayClosed = new Set(
+    closures.filter((c) => c.locationId == null).map((c) => c.date)
+  );
+
   const existingBookings = await db.query.bookings.findMany({
     where: and(eq(bookings.coachId, coachId), inArray(bookings.status, ["richiesta", "confermata"])),
   });
@@ -262,7 +289,7 @@ export async function getCoachCalendar(coachId: string, daysAhead = 21): Promise
     else activeTypesByKey.set(key, [booking.type]);
   }
 
-  const result: CalendarSlot[] = [];
+  const result: ScheduleSlot[] = [];
   // Dati storici o richieste concorrenti possono aver prodotto turni
   // ricorrenti identici. Il calendario pubblico deve comunque mostrare un
   // solo slot prenotabile, evitando anche chiavi React duplicate.
@@ -285,11 +312,8 @@ export async function getCoachCalendar(coachId: string, daysAhead = 21): Promise
       if (generatedKeys.has(key)) continue;
       generatedKeys.add(key);
 
-      const occupancy = computeSlotOccupancy(
-        activeTypesByKey.get(key) ?? [],
-        groupCapacity,
-        coachTrainingTypes
-      );
+      const activeTypes = activeTypesByKey.get(key) ?? [];
+      const occupancy = computeSlotOccupancy(activeTypes, groupCapacity, coachTrainingTypes);
       result.push({
         date: dateStr,
         dayOfWeek,
@@ -302,11 +326,44 @@ export async function getCoachCalendar(coachId: string, daysAhead = 21): Promise
         seatsTaken: occupancy.seatsTaken,
         capacity: occupancy.capacity,
         availableTypes: occupancy.availableTypes,
+        closed: isSlotClosed(closedKeys, dateStr, slot.locationId, slot.startTime),
+        closedWholeDay: wholeDayClosed.has(dateStr),
+        activeBookings: activeTypes.length,
       });
     }
   }
 
   return result.sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime));
+}
+
+export async function getCoachCalendar(coachId: string, daysAhead = 21): Promise<CalendarSlot[]> {
+  const schedule = await buildCoachSchedule(coachId, daysAhead);
+  return schedule.filter((slot) => !slot.closed);
+}
+
+/** Vista del coach: include le istanze chiuse, che deve poter riaprire. */
+export async function getCoachSchedule(coachId: string, daysAhead = 28): Promise<ScheduleSlot[]> {
+  return buildCoachSchedule(coachId, daysAhead);
+}
+
+/**
+ * Giornate chiuse per intero, comprese quelle in cui il coach non ha turni
+ * ricorrenti: senza questa lista sparirebbero dall'interfaccia e non si
+ * potrebbero più riaprire.
+ */
+export async function getCoachClosedDays(coachId: string, daysAhead = 28): Promise<string[]> {
+  const today = toLocalDateString(new Date());
+  const limit = new Date();
+  limit.setHours(0, 0, 0, 0);
+  limit.setDate(limit.getDate() + daysAhead - 1);
+  const rows = await db.query.availabilityClosures.findMany({
+    where: eq(availabilityClosures.coachId, coachId),
+  });
+  const limitStr = toLocalDateString(limit);
+  return rows
+    .filter((r) => r.locationId == null && r.date >= today && r.date <= limitStr)
+    .map((r) => r.date)
+    .sort();
 }
 
 export async function getBookingsForPlayer(playerId: string) {

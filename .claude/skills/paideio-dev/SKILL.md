@@ -147,6 +147,16 @@ diventa "Salva tra i preferiti". I preferiti (`getFavoriteCoaches`) non
 applicano quel filtro, e `FavoriteButton` prende `viewerRole` con varianti
 `icon`/`cta`, aprendo Clerk per gli anonimi invece di sparire.
 
+## Chiusure calendario
+
+`availability_slots` è ricorrente settimanale; `availability_closures` è
+l'eccezione su una data precisa — un singolo turno oppure l'intera giornata
+(`location_id`/`start_time`/`end_time` a `null`). Non modifica mai la
+ricorrenza. Regola condivisa in `closureKey()`/`isSlotClosed()`
+(`constants.ts`), usata da `buildCoachSchedule()` e da `createBooking()` dentro
+l'advisory lock. Chiudere annulla e notifica le prenotazioni attive sulla data.
+Test: `npm run test:chiusure`. Dettagli in `AGENTS.md`.
+
 ## Contrasto: superficie fissa ⇒ testo fisso
 
 Se lo sfondo è un colore che **non** cambia con il tema (`--ottico`,

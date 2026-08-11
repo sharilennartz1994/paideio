@@ -8,6 +8,35 @@ export const DEFAULT_GROUP_CAPACITY = 4;
 export const MIN_GROUP_CAPACITY = 2;
 export const MAX_GROUP_CAPACITY = 12;
 
+/**
+ * Chiavi di chiusura del calendario. Come `computeSlotOccupancy`, questa è la
+ * regola *unica*: la usano `getCoachCalendar` (per non disegnare gli slot
+ * chiusi) e `createBooking` (per rifiutarli). Se divergono, il giocatore
+ * prenota una data che il coach ha chiuso.
+ *
+ * Una chiusura di giornata usa `*` al posto di campo e orario, così copre
+ * anche i turni pubblicati dopo la chiusura.
+ */
+export function closureKey(
+  date: string,
+  locationId: string | null,
+  startTime: string | null
+): string {
+  return `${date}|${locationId ?? "*"}|${startTime ?? "*"}`;
+}
+
+export function isSlotClosed(
+  closedKeys: ReadonlySet<string>,
+  date: string,
+  locationId: string,
+  startTime: string
+): boolean {
+  return (
+    closedKeys.has(closureKey(date, null, null)) ||
+    closedKeys.has(closureKey(date, locationId, startTime))
+  );
+}
+
 export type SlotOccupancy = {
   /** Posti già occupati sullo slot. Una singola vale sempre 1. */
   seatsTaken: number;

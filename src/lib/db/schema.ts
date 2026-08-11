@@ -57,6 +57,46 @@ export const availabilitySlots = pgTable("availability_slots", {
   endTime: text("end_time").notNull(), // "HH:MM"
 });
 
+/**
+ * Eccezioni al calendario ricorrente: il coach pubblica "ogni lunedì 18-19",
+ * ma un lunedì preciso non può esserci. Una riga qui chiude una data.
+ *
+ * - `locationId`/`startTime`/`endTime` valorizzati → chiude quella singola
+ *   istanza di slot (giorno + campo + fascia).
+ * - tutti e tre `null` → chiude l'intera giornata, compresi i turni aggiunti
+ *   dopo la chiusura.
+ *
+ * Non tocca `availability_slots`: la ricorrenza resta intatta e la chiusura si
+ * può revocare senza doverla ricostruire.
+ */
+export const availabilityClosures = pgTable(
+  "availability_closures",
+  {
+    id: text("id").primaryKey(),
+    coachId: text("coach_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    date: text("date").notNull(), // "YYYY-MM-DD"
+    locationId: text("location_id").references(() => locations.id, { onDelete: "cascade" }),
+    startTime: text("start_time"),
+    endTime: text("end_time"),
+    reason: text("reason").notNull().default(""),
+    createdAt: text("created_at").notNull(),
+  },
+  (table) => [
+    index("availability_closures_coach_date_idx").on(table.coachId, table.date),
+    // Due indici parziali invece di uno solo: in Postgres i NULL sono distinti
+    // tra loro, quindi un unico indice su colonne nullable lascerebbe passare
+    // chiusure giornaliere duplicate.
+    uniqueIndex("availability_closures_day_idx")
+      .on(table.coachId, table.date)
+      .where(sql`location_id IS NULL`),
+    uniqueIndex("availability_closures_slot_idx")
+      .on(table.coachId, table.date, table.locationId, table.startTime)
+      .where(sql`location_id IS NOT NULL`),
+  ]
+);
+
 export const bookings = pgTable(
   "bookings",
   {

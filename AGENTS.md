@@ -42,7 +42,8 @@ allenamento, livelli, richieste).
 ## Struttura
 
 - `src/lib/db/schema.ts` — schema Drizzle (users, coachProfiles, locations,
-  availabilitySlots, bookings, notifications, productFeedback)
+  availabilitySlots, availabilityClosures, bookings, notifications,
+  productFeedback)
 - `src/lib/db/seed.ts` — dati demo (`npm run db:seed`)
 - `src/lib/queries.ts` — query lato server, marcato `"server-only"`: **non
   importarlo da client component** (trascinerebbe il driver `pg` nel bundle
@@ -431,6 +432,53 @@ gli scrittori su quello slot e si rilascia da solo a commit o rollback. Non
 sostituirlo con un semplice `SELECT count(*)`: il lock è ciò che rende corretto
 il conteggio.
 
+## Chiusure del calendario (eccezioni alla ricorrenza)
+
+I turni in `availability_slots` sono **ricorrenti settimanali**: "ogni lunedì
+18-19". Serviva poter dire "questo lunedì no" senza smontare la ricorrenza, da
+cui la tabella **`availability_closures`** (12 agosto 2026).
+
+- `locationId`/`startTime`/`endTime` valorizzati → chiude quella singola
+  istanza (giorno + campo + fascia).
+- tutti e tre `null` → chiude l'**intera giornata**, compresi i turni
+  pubblicati *dopo* la chiusura.
+- Una chiusura **non tocca** `availability_slots`: la ricorrenza resta intatta
+  e riaprire è una `DELETE`, non una ricostruzione.
+
+Come per la capienza, la regola sta in **un solo posto**: `closureKey()` e
+`isSlotClosed()` in `constants.ts`, usate sia dal calendario sia dall'action.
+La chiave di una chiusura giornaliera è `<data>|*|*`, ed è per questo che copre
+anche i turni futuri. Se le due strade divergono, il giocatore prenota una data
+che il coach ha chiuso.
+
+Difese, dal più esterno al più interno:
+1. `buildCoachSchedule()` in `queries.ts` genera le istanze concrete annotate;
+   `getCoachCalendar()` **scarta** le chiuse (il giocatore non le vede),
+   `getCoachSchedule()` le **tiene** (il coach deve poterle riaprire). Stessa
+   sorgente apposta.
+2. `createBooking()` ricontrolla **dentro l'advisory lock**, insieme alla
+   capienza: la UI può essere stantia.
+3. Due indici unici parziali, `availability_closures_day_idx` (dove
+   `location_id IS NULL`) e `availability_closures_slot_idx` (dove non lo è).
+   Servono due indici separati perché in Postgres i NULL sono distinti tra
+   loro: un indice unico solo su colonne nullable lascerebbe passare chiusure
+   giornaliere duplicate.
+
+**Chiudere una data annulla le prenotazioni attive che ci stanno sopra**, nella
+stessa transazione, con notifica al giocatore e al coach. Bloccare la chiusura
+sarebbe inutile proprio nel caso che serve (il coach sa già che non ci sarà), e
+lasciare le prenotazioni in piedi creerebbe lezioni fantasma. `closeAvailability
+Date()` ritorna quante ne ha annullate, e la UI lo dice nel `confirm()` prima di
+procedere. La riapertura **non** le ripristina: sono già state comunicate come
+annullate.
+
+`getCoachClosedDays()` esiste per un caso preciso: una giornata chiusa in cui
+non c'è nessun turno ricorrente non produrrebbe istanze, sparirebbe
+dall'interfaccia e non sarebbe più riapribile.
+
+Test: `npm run test:chiusure` (stesso Postgres usa-e-getta di
+`test:capienza`, istruzioni in testa allo script).
+
 ## Notifiche prenotazioni
 
 - `notifications` conserva notifiche in-app per giocatore e coach, collegate
@@ -599,6 +647,8 @@ Le conseguenze, da tenere allineate se tocchi una di queste superfici:
   soli, vedi skill `vercel-storage`)
 - `npm run db:push` — applica lo schema Drizzle al database (stessa nota sul
   dotenv, già nello script)
+- `npm run test:capienza` / `npm run test:chiusure` — test end-to-end contro un
+  Postgres usa-e-getta (istruzioni in testa agli script in `scripts/`)
 - `npm run build` — build di produzione
 
 ## Dati demo
@@ -739,6 +789,9 @@ bloccato) per un banner "Deployment Blocked" / "Fix Git Configuration".
       e prenotabilità". `coachProfiles.groupCapacity` configurabile dal
       coach, regola condivisa in `computeSlotOccupancy()`, indici parziali
       rifatti e advisory lock in `createBooking`. Test: `npm run test:capienza`.
+- [x] Chiusure del calendario: il coach può togliere una data precisa (un
+      turno o l'intera giornata) senza smontare la ricorrenza — vedi la
+      sezione "Chiusure del calendario". Test: `npm run test:chiusure`.
 - [ ] Policy di cancellazione: oggi un giocatore può annullare una
       prenotazione `confermata` in qualsiasi momento, senza finestra minima
       né conseguenze per il coach che ha bloccato lo slot.

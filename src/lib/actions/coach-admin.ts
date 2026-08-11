@@ -2,10 +2,17 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { and, eq, gte, inArray } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull } from "drizzle-orm";
 import { put } from "@vercel/blob";
 import { db } from "@/lib/db";
-import { locations, availabilitySlots, coachProfiles, bookings } from "@/lib/db/schema";
+import {
+  locations,
+  availabilitySlots,
+  availabilityClosures,
+  coachProfiles,
+  bookings,
+  notifications,
+} from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/session";
 import {
   LEVELS,
@@ -152,6 +159,145 @@ export async function removeAvailabilitySlot(slotId: string): Promise<ActionResu
   const slot = await db.query.availabilitySlots.findFirst({ where: eq(availabilitySlots.id, slotId) });
   if (!slot || slot.coachId !== coach.id) return err("Non autorizzato.");
   await db.delete(availabilitySlots).where(eq(availabilitySlots.id, slotId));
+  revalidateCoachSurfaces(coach.id);
+  return ok(undefined);
+}
+
+const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Chiude una data: o l'intera giornata, o una singola istanza di slot.
+ *
+ * Le prenotazioni ancora attive su ciò che viene chiuso vengono **annullate**
+ * nella stessa transazione, con una notifica per il giocatore e una per il
+ * coach. Bloccare la chiusura sarebbe inutile proprio nel caso che serve (il
+ * coach sa già che non ci sarà), e lasciare le prenotazioni in piedi su una
+ * data chiusa creerebbe lezioni fantasma.
+ */
+export async function closeAvailabilityDate(input: {
+  date: string;
+  locationId?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+}): Promise<ActionResult<{ cancelled: number }>> {
+  const coachResult = await requireCoach();
+  if (!coachResult.ok) return coachResult;
+  const coach = coachResult.data;
+
+  if (!DATE_PATTERN.test(input.date)) return err("Data non valida.");
+  const today = toLocalDateString(new Date());
+  if (input.date < today) return err("Non puoi chiudere una data già passata.");
+
+  const wholeDay = !input.locationId;
+  if (!wholeDay) {
+    if (!input.startTime || !TIME_PATTERN.test(input.startTime) || !input.endTime || !TIME_PATTERN.test(input.endTime)) {
+      return err("Orario non valido.");
+    }
+    const location = await db.query.locations.findFirst({
+      where: eq(locations.id, input.locationId!),
+    });
+    if (!location || location.coachId !== coach.id) return err("Non autorizzato.");
+  }
+
+  const createdAt = new Date().toISOString();
+  const cancelled = await db.transaction(async (tx) => {
+    const affected = await tx.query.bookings.findMany({
+      where: and(
+        eq(bookings.coachId, coach.id),
+        eq(bookings.date, input.date),
+        inArray(bookings.status, ["richiesta", "confermata"]),
+        ...(wholeDay
+          ? []
+          : [eq(bookings.locationId, input.locationId!), eq(bookings.startTime, input.startTime!)])
+      ),
+    });
+
+    if (affected.length > 0) {
+      await tx
+        .update(bookings)
+        .set({ status: "annullata" })
+        .where(inArray(bookings.id, affected.map((b) => b.id)));
+      await tx.insert(notifications).values(
+        affected.flatMap((booking) => [
+          {
+            id: randomUUID(),
+            userId: booking.playerId,
+            bookingId: booking.id,
+            type: "booking_cancelled" as const,
+            title: "Lezione annullata dal coach",
+            message: `Il coach ha chiuso ${input.date}: la lezione delle ${booking.startTime} è stata annullata.`,
+            href: "/prenotazioni",
+            createdAt,
+          },
+          {
+            id: randomUUID(),
+            userId: coach.id,
+            bookingId: booking.id,
+            type: "booking_cancelled" as const,
+            title: "Lezione annullata per chiusura",
+            message: `Hai chiuso ${input.date}: la lezione delle ${booking.startTime} è stata annullata.`,
+            href: "/coach-admin/richieste",
+            createdAt,
+          },
+        ])
+      );
+    }
+
+    await tx
+      .insert(availabilityClosures)
+      .values({
+        id: randomUUID(),
+        coachId: coach.id,
+        date: input.date,
+        locationId: wholeDay ? null : input.locationId!,
+        startTime: wholeDay ? null : input.startTime!,
+        endTime: wholeDay ? null : input.endTime!,
+        createdAt,
+      })
+      .onConflictDoNothing();
+
+    return affected.length;
+  });
+
+  revalidateCoachSurfaces(coach.id);
+  revalidatePath("/prenotazioni");
+  revalidatePath("/notifiche");
+  revalidatePath("/", "layout");
+  return ok({ cancelled });
+}
+
+/**
+ * Riapre una data chiusa. Non ripristina le prenotazioni annullate: sono già
+ * state comunicate ai giocatori come annullate, resuscitarle a loro insaputa
+ * sarebbe peggio del doverle richiedere di nuovo.
+ */
+export async function reopenAvailabilityDate(input: {
+  date: string;
+  locationId?: string | null;
+  startTime?: string | null;
+}): Promise<ActionResult> {
+  const coachResult = await requireCoach();
+  if (!coachResult.ok) return coachResult;
+  const coach = coachResult.data;
+
+  if (!DATE_PATTERN.test(input.date)) return err("Data non valida.");
+
+  await db
+    .delete(availabilityClosures)
+    .where(
+      and(
+        eq(availabilityClosures.coachId, coach.id),
+        eq(availabilityClosures.date, input.date),
+        input.locationId
+          ? and(
+              eq(availabilityClosures.locationId, input.locationId),
+              eq(availabilityClosures.startTime, input.startTime ?? "")
+            )
+          : isNull(availabilityClosures.locationId)
+      )
+    );
+
   revalidateCoachSurfaces(coach.id);
   return ok(undefined);
 }
