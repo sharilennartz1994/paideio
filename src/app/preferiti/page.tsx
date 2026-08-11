@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, MapPin, Search, User, Users } from "@/components/icons/paideio-icons";
+import { ArrowRight, Clock, MapPin, Search, User, Users } from "@/components/icons/paideio-icons";
 import { getCurrentUser } from "@/lib/session";
 import { getFavoriteCoaches, parseJsonArray, levelBadgeClass } from "@/lib/queries";
 import { Badge } from "@/components/ui/badge";
@@ -36,7 +36,7 @@ export default async function PreferitiPage() {
             }
           />
         )}
-        {favorites.map(({ coach, profile, locations, rating }) => (
+        {favorites.map(({ coach, profile, locations, rating, hasPublishedAvailability }) => (
           <div
             key={coach.id}
             className="card-clip group flex flex-col gap-4 border-t border-secondary-fixed bg-surface-container-low p-6 transition-colors hover:bg-surface-container-high"
@@ -61,7 +61,7 @@ export default async function PreferitiPage() {
                     €{profile.pricePerLesson}/lezione
                   </span>
                 )}
-                <FavoriteButton coachId={coach.id} initialFavorite isPlayer />
+                <FavoriteButton coachId={coach.id} initialFavorite viewerRole="player" />
               </div>
             </div>
             <p className="line-clamp-2 font-sans text-sm text-on-surface-variant">{profile.bio}</p>
@@ -81,11 +81,21 @@ export default async function PreferitiPage() {
                 </Badge>
               ))}
             </div>
+            {/* Un preferito può essere salvato prima che il coach apra il
+                calendario: in quel caso non compare in /cerca e la lista è
+                l'unico modo per ritrovarlo, quindi va detto a che punto è. */}
+            {!hasPublishedAvailability && (
+              <p className="flex items-center gap-2 border border-nebbia/30 bg-carta-bassa px-3 py-2 text-xs text-nebbia">
+                <Clock className="size-3.5 shrink-0 text-accent-ball-ink" aria-hidden />
+                Non ha ancora pubblicato orari — torna a controllare, lo trovi sempre qui.
+              </p>
+            )}
             <Link
               href={`/coach/${coach.id}`}
               className="group/btn flex w-fit items-center gap-2 font-heading text-label-caps font-bold text-secondary-fixed uppercase transition-colors duration-150 hover:text-calce"
             >
-              Vedi profilo e calendario <ArrowRight className="size-4" />
+              {hasPublishedAvailability ? "Vedi profilo e calendario" : "Vedi profilo"}{" "}
+              <ArrowRight className="size-4" />
             </Link>
           </div>
         ))}

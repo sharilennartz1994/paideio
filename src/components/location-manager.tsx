@@ -56,7 +56,15 @@ export function LocationManager({ initialLocations }: { initialLocations: Locati
   }
 
   function handleRemove(id: string) {
-    if (!window.confirm("Rimuovere questo campo? Le prenotazioni future collegate verranno annullate.")) return;
+    // Il cascade della FK cancella anche gli availability_slots del campo: se
+    // non lo diciamo, il coach si ritrova il calendario svuotato senza capire
+    // perché.
+    if (
+      !window.confirm(
+        "Rimuovere questo campo? Verranno eliminati anche i turni settimanali pubblicati su questo campo e le prenotazioni future collegate verranno annullate."
+      )
+    )
+      return;
     startTransition(async () => {
       const result = await removeLocation(id);
       if (result.ok) {

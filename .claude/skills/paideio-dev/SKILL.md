@@ -132,6 +132,32 @@ pubblicazione basata su profilo, campi e turni; gli orari sono raggruppati per
 giorno e le rimozioni richiedono conferma. Non ridurre nuovamente questi flussi
 a form o liste prive di contesto.
 
+Tre regole nate da un test con un coach reale che non riusciva a pubblicare gli
+orari (agosto 2026): `coach-admin-nav.tsx` è una griglia a 5 colonne sotto `md`
+perché la vecchia riga `overflow-x-auto` lasciava "Orari" e "Richieste" fuori
+schermo sui telefoni; le mutazioni del coach usano
+`revalidateCoachSurfaces(coachId)` in `actions/coach-admin.ts`, perché campi e
+turni alimentano anche `/coach-admin`, `/coach/[id]` e `/cerca`; e
+`/coach-admin/orari` senza campi rende inline il form di creazione campo invece
+di rimandare a un'altra scheda. Dettagli in `AGENTS.md`.
+
+Dallo stesso giro: un coach senza turni pubblicati **non compare in
+`/cerca`** (`searchCoaches`), ma il suo profilo resta raggiungibile e lì la CTA
+diventa "Salva tra i preferiti". I preferiti (`getFavoriteCoaches`) non
+applicano quel filtro, e `FavoriteButton` prende `viewerRole` con varianti
+`icon`/`cta`, aprendo Clerk per gli anonimi invece di sparire.
+
+## Contrasto: superficie fissa ⇒ testo fisso
+
+Se lo sfondo è un colore che **non** cambia con il tema (`--ottico`,
+`--ruggine`, `--sabbia`, `--game-*`), anche il testo sopra deve essere fisso.
+Accoppiarlo a `--carta`/`--calce`/`--vetro` produce componenti leggibili in una
+sola modalità, e il difetto sfugge perché si sviluppa quasi sempre in modalità
+notte. Gli `on-*` erano tutti sbagliati così (il bottone "Salva profilo" dava
+1,01:1 di giorno); ora puntano a `--game-ink`. Per le CTA su arene scure fisse
+usare `GameCta tone="arena"`, non `outline`. Dettagli, numeri e trappole degli
+script di audit in `AGENTS.md`.
+
 Da `/cerca` ogni risultato offre una CTA `Prenota` verso
 `/coach/[id]#prenota`; il configuratore sul profilo è full-width e centrale,
 mai in una sidebar. Gli anonimi vedono “Accedi e prenota”, i player “Invia

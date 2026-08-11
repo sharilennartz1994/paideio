@@ -47,11 +47,32 @@ export type CoachSearchResult = {
   locations: (typeof locations.$inferSelect)[];
   distanceKm: number | null;
   rating: RatingSummary;
+  /** Ha almeno un turno settimanale pubblicato, quindi è prenotabile. */
+  hasPublishedAvailability: boolean;
 };
+
+/**
+ * Coach che hanno pubblicato almeno un turno. Una sola query per tutta la
+ * ricerca invece di un conteggio per coach: la lista è piccola e questo evita
+ * di aggiungere un N+1 a quello già presente in `loadCoachCard`.
+ */
+async function loadCoachIdsWithAvailability(): Promise<Set<string>> {
+  const rows = await db.query.availabilitySlots.findMany({ columns: { coachId: true } });
+  return new Set(rows.map((row) => row.coachId));
+}
+
+export async function coachHasPublishedAvailability(coachId: string): Promise<boolean> {
+  const slot = await db.query.availabilitySlots.findFirst({
+    where: eq(availabilitySlots.coachId, coachId),
+    columns: { id: true },
+  });
+  return slot != null;
+}
 
 async function loadCoachCard(
   coach: typeof users.$inferSelect,
-  near?: { lat: number; lng: number }
+  near?: { lat: number; lng: number },
+  hasPublishedAvailability = false
 ): Promise<(CoachSearchResult & { locations: (typeof locations.$inferSelect)[] }) | null> {
   // Il profilo decide se il coach è mostrabile; locations e rating sono
   // indipendenti tra loro e dal profilo, quindi si caricano in parallelo.
@@ -70,7 +91,7 @@ async function loadCoachCard(
     distanceKm = distances.length > 0 ? Math.min(...distances) : null;
   }
 
-  return { coach, profile, locations: coachLocations, distanceKm, rating };
+  return { coach, profile, locations: coachLocations, distanceKm, rating, hasPublishedAvailability };
 }
 
 export type CoachSort = "rating" | "distance" | "price";
@@ -83,12 +104,20 @@ export async function searchCoaches(filters: {
   sort?: CoachSort;
   maxPrice?: number;
 }): Promise<CoachSearchResult[]> {
-  const allCoaches = await db.query.users.findMany({ where: eq(users.role, "coach") });
+  const [allCoaches, coachIdsWithAvailability] = await Promise.all([
+    db.query.users.findMany({ where: eq(users.role, "coach") }),
+    loadCoachIdsWithAvailability(),
+  ]);
   const radiusKm = filters.near?.radiusKm ?? DEFAULT_SEARCH_RADIUS_KM;
 
   const results: CoachSearchResult[] = [];
   for (const coach of allCoaches) {
-    const card = await loadCoachCard(coach, filters.near);
+    // Un coach senza turni pubblicati non è prenotabile: mostrarlo in ricerca
+    // con la CTA "Prenota" porta il giocatore su un calendario vuoto. Resta
+    // raggiungibile dal link diretto e dai preferiti già salvati.
+    if (!coachIdsWithAvailability.has(coach.id)) continue;
+
+    const card = await loadCoachCard(coach, filters.near, true);
     if (!card) continue;
 
     if (filters.near) {
@@ -126,12 +155,17 @@ export async function searchCoaches(filters: {
 }
 
 export async function getFavoriteCoaches(playerId: string): Promise<CoachSearchResult[]> {
-  const favoriteRows = await db.query.favorites.findMany({ where: eq(favorites.playerId, playerId) });
+  const [favoriteRows, coachIdsWithAvailability] = await Promise.all([
+    db.query.favorites.findMany({ where: eq(favorites.playerId, playerId) }),
+    loadCoachIdsWithAvailability(),
+  ]);
   const results: CoachSearchResult[] = [];
   for (const fav of favoriteRows) {
     const coach = await db.query.users.findFirst({ where: eq(users.id, fav.coachId) });
     if (!coach) continue;
-    const card = await loadCoachCard(coach);
+    // Al contrario della ricerca, qui i coach senza turni restano visibili: è
+    // esattamente il motivo per cui il giocatore li ha salvati.
+    const card = await loadCoachCard(coach, undefined, coachIdsWithAvailability.has(coach.id));
     if (card) results.push(card);
   }
   return results;

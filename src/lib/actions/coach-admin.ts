@@ -26,6 +26,18 @@ async function requireCoach(): Promise<ActionResult<NonNullable<Awaited<ReturnTy
   return ok(user);
 }
 
+// Campi e turni non toccano solo la scheda da cui sono stati modificati: la
+// checklist di /coach-admin, la pagina orari, il profilo pubblico e la ricerca
+// mostrano tutti gli stessi dati. Rivalidarne solo una lasciava il coach
+// convinto di non aver salvato nulla e i giocatori senza disponibilità nuove.
+function revalidateCoachSurfaces(coachId: string) {
+  revalidatePath("/coach-admin");
+  revalidatePath("/coach-admin/campi");
+  revalidatePath("/coach-admin/orari");
+  revalidatePath(`/coach/${coachId}`);
+  revalidatePath("/cerca");
+}
+
 export async function addLocation(input: {
   name: string;
   address: string;
@@ -45,7 +57,7 @@ export async function addLocation(input: {
     lat: input.lat ?? null,
     lng: input.lng ?? null,
   });
-  revalidatePath("/coach-admin/campi");
+  revalidateCoachSurfaces(coachResult.data.id);
   return ok(undefined);
 }
 
@@ -75,7 +87,7 @@ export async function removeLocation(locationId: string): Promise<ActionResult> 
     await tx.delete(locations).where(eq(locations.id, locationId));
   });
 
-  revalidatePath("/coach-admin/campi");
+  revalidateCoachSurfaces(coach.id);
   revalidatePath("/prenotazioni");
   return ok(undefined);
 }
@@ -128,7 +140,7 @@ export async function addAvailabilitySlot(input: {
     startTime: input.startTime,
     endTime: input.endTime,
   });
-  revalidatePath("/coach-admin/orari");
+  revalidateCoachSurfaces(coach.id);
   return ok(undefined);
 }
 
@@ -140,7 +152,7 @@ export async function removeAvailabilitySlot(slotId: string): Promise<ActionResu
   const slot = await db.query.availabilitySlots.findFirst({ where: eq(availabilitySlots.id, slotId) });
   if (!slot || slot.coachId !== coach.id) return err("Non autorizzato.");
   await db.delete(availabilitySlots).where(eq(availabilitySlots.id, slotId));
-  revalidatePath("/coach-admin/orari");
+  revalidateCoachSurfaces(coach.id);
   return ok(undefined);
 }
 
@@ -217,5 +229,8 @@ export async function updateCoachProfile(input: {
     })
     .where(eq(coachProfiles.userId, coach.id));
   revalidatePath("/coach-admin/profilo");
+  // Livelli, tipi di lezione e tariffa sono gli stessi dati che filtrano la
+  // ricerca e riempiono il profilo pubblico.
+  revalidateCoachSurfaces(coach.id);
   return ok(undefined);
 }

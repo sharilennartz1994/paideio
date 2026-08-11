@@ -79,6 +79,17 @@ export default async function CoachAdminDashboard() {
           <p className="mt-2 max-w-md text-sm leading-relaxed text-nebbia">
             Completa questi passaggi perché i giocatori possano trovarti, capire la tua proposta e scegliere un orario.
           </p>
+          {/* Senza turni il coach non compare in /cerca (vedi `searchCoaches`).
+              Se non glielo diciamo qui, l'unico segnale è il silenzio. */}
+          {slots.length === 0 && (
+            <p className="mt-4 flex items-start gap-2 border border-nebbia/30 bg-carta-bassa p-3 text-sm leading-relaxed text-nebbia">
+              <Clock className="mt-0.5 size-4 shrink-0 text-accent-ball-ink" aria-hidden />
+              <span>
+                Finché non pubblichi almeno un turno <strong className="text-calce">non compari nella ricerca</strong>:
+                chi arriva sul tuo profilo può solo salvarti tra i preferiti.
+              </span>
+            </p>
+          )}
           <div
             className="mt-5 h-2 overflow-hidden bg-nebbia/15"
             role="progressbar"

@@ -69,7 +69,7 @@ export default function ChiSiamoPage() {
               <GameCta href="/cerca" tone="ball" showBall arrow>
                 Trova un coach
               </GameCta>
-              <GameCta href="/academy" tone="outline">
+              <GameCta href="/academy" tone="arena">
                 Entra in Academy
               </GameCta>
             </div>

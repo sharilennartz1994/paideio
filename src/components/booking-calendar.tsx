@@ -9,6 +9,7 @@ import { celebrate } from "@/lib/confetti";
 import type { CalendarSlot } from "@/lib/queries";
 import type { TrainingType } from "@/lib/constants";
 import { Textarea } from "@/components/ui/textarea";
+import { FavoriteButton } from "@/components/favorite-button";
 import { FullScreenGameLoader, GameBadge, GameCta, GameEmptyState } from "@/components/design";
 import { cn } from "@/lib/utils";
 
@@ -55,6 +56,7 @@ export function BookingCalendar({
   levels,
   viewerRole,
   pricePerLesson,
+  initialFavorite = false,
 }: {
   coachId: string;
   slots: CalendarSlot[];
@@ -62,6 +64,8 @@ export function BookingCalendar({
   levels: string[];
   viewerRole: "player" | "coach" | null;
   pricePerLesson?: number | null;
+  /** Serve solo allo stato vuoto, che propone di salvare il coach. */
+  initialFavorite?: boolean;
 }) {
   const availableSlots = useMemo(() => slots.filter((slot) => !slot.booked), [slots]);
   const dates = useMemo(
@@ -121,7 +125,15 @@ export function BookingCalendar({
       <GameEmptyState
         asset="pickupTube"
         title="Nuovi orari in arrivo"
-        description="Il coach non ha ancora pubblicato disponibilità. Salva il profilo tra i preferiti e torna presto."
+        description="Il coach non ha ancora pubblicato disponibilità. Salvalo tra i preferiti: lo ritrovi nella tua lista e puoi tornare a controllare."
+        action={
+          <FavoriteButton
+            coachId={coachId}
+            initialFavorite={initialFavorite}
+            viewerRole={viewerRole}
+            variant="cta"
+          />
+        }
       />
     );
   }

@@ -20,7 +20,7 @@ export default function AcademyPage() {
         asset="racket"
       >
         <GameCta href="/academy/tecnica" tone="ball" showBall arrow>Esplora i colpi</GameCta>
-        <GameCta href="/academy/regole" tone="outline" arrow>Regole 2026</GameCta>
+        <GameCta href="/academy/regole" tone="arena" arrow>Regole 2026</GameCta>
       </EditorialHero>
       <div className="mx-auto max-w-7xl space-y-14 px-5 py-12 md:px-8 md:py-16">
         <AcademyIntro title="Non leggere tutto. Parti dal tuo punto.">

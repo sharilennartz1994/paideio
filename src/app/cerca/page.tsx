@@ -224,7 +224,7 @@ export default async function CercaPage({ searchParams }: { searchParams: Search
                   Prenota
                 </GameCta>
                 <div className="flex items-center justify-end">
-                  <FavoriteButton coachId={coach.id} initialFavorite={favoriteIds.has(coach.id)} isPlayer={isPlayer} />
+                  <FavoriteButton coachId={coach.id} initialFavorite={favoriteIds.has(coach.id)} viewerRole={user?.role ?? null} />
                 </div>
               </div>
             </article>

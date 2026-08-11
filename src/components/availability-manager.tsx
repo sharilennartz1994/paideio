@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { addAvailabilitySlot, removeAvailabilitySlot } from "@/lib/actions/coach-admin";
 import { dayName } from "@/lib/constants";
+import { LocationManager } from "@/components/location-manager";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -86,11 +88,27 @@ export function AvailabilityManager({
     });
   }
 
+  // Senza campi non esiste un turno da pubblicare: prima qui c'era solo un
+  // avviso che rimandava a un'altra scheda, e il coach restava bloccato.
+  // Adesso il primo campo si crea direttamente da questa pagina.
   if (locations.length === 0) {
     return (
-      <Alert role="status">
-        <AlertDescription>Aggiungi prima almeno un campo nella scheda &quot;Campi&quot;.</AlertDescription>
-      </Alert>
+      <div className="flex flex-col gap-6">
+        <Alert role="status">
+          <AlertDescription>
+            Un turno è sempre legato a un campo: crea il primo qui sotto e poi torni subito a
+            pubblicare gli orari.
+          </AlertDescription>
+        </Alert>
+        <LocationManager initialLocations={[]} />
+        <p className="text-sm text-nebbia">
+          Preferisci gestirli tutti insieme?{" "}
+          <Link href="/coach-admin/campi" className="font-semibold text-vetro underline underline-offset-4">
+            Vai alla scheda Campi
+          </Link>
+          .
+        </p>
+      </div>
     );
   }
 

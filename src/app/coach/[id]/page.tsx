@@ -29,6 +29,12 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
   ]);
   const trainingTypes = parseJsonArray(detail.profile.trainingTypes);
   const levels = parseJsonArray(detail.profile.levels);
+  // I turni sono settimanali, quindi un coach che ne ha pubblicato almeno uno
+  // genera sempre qualche slot nella finestra di 21 giorni: calendario vuoto
+  // equivale a "non ancora prenotabile". Questi coach non compaiono in /cerca
+  // (vedi `searchCoaches`), ma la pagina resta raggiungibile da link diretto e
+  // dai preferiti già salvati — lì la CTA diventa "Salva tra i preferiti".
+  const isBookable = calendar.length > 0;
 
   return (
     <div className="pb-32">
@@ -64,9 +70,18 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
               ))}
             </div>
             <div className="mt-7 flex flex-wrap justify-center gap-3 md:justify-start">
-              <GameCta href="#prenota" tone="ball" showBall arrow size="large">
-                Scegli giorno e orario
-              </GameCta>
+              {isBookable ? (
+                <GameCta href="#prenota" tone="ball" showBall arrow size="large">
+                  Scegli giorno e orario
+                </GameCta>
+              ) : (
+                <FavoriteButton
+                  coachId={id}
+                  initialFavorite={favoriteIds.has(id)}
+                  viewerRole={user?.role ?? null}
+                  variant="cta"
+                />
+              )}
               {detail.profile.pricePerLesson != null && (
                 <span className="flex min-h-13 items-center border border-nebbia/30 bg-carta-alta px-5 text-sm text-nebbia">
                   Da <strong className="ml-2 font-heading text-xl text-calce">€{detail.profile.pricePerLesson}</strong>
@@ -83,7 +98,7 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
           <FavoriteButton
             coachId={id}
             initialFavorite={favoriteIds.has(id)}
-            isPlayer={isPlayer}
+            viewerRole={user?.role ?? null}
             className="absolute top-4 right-4 border-outline-variant bg-surface-container/80 md:static"
           />
         </div>
@@ -102,12 +117,18 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
       <section id="prenota" className="scroll-mt-24 px-4 md:px-16">
         <div className="mx-auto mb-6 flex max-w-6xl flex-col justify-between gap-3 md:flex-row md:items-end">
           <div>
-            <p className="ui-kicker">Prenota con {detail.coach.name.split(" ")[0]}</p>
-            <h2 className="mt-2 font-heading text-3xl text-calce md:text-4xl">Trova il tuo momento in campo</h2>
+            <p className="ui-kicker">
+              {isBookable ? `Prenota con ${detail.coach.name.split(" ")[0]}` : "Non ancora prenotabile"}
+            </p>
+            <h2 className="mt-2 font-heading text-3xl text-calce md:text-4xl">
+              {isBookable ? "Trova il tuo momento in campo" : "Ancora nessun orario in calendario"}
+            </h2>
           </div>
           <p className="flex max-w-md items-start gap-2 text-sm leading-relaxed text-nebbia">
             <CalendarDays className="mt-0.5 size-5 shrink-0 text-vetro" aria-hidden />
-            Scegli uno slot, indica il tuo livello e invia la richiesta. Il coach dovrà confermarla.
+            {isBookable
+              ? "Scegli uno slot, indica il tuo livello e invia la richiesta. Il coach dovrà confermarla."
+              : "Questo coach non ha ancora pubblicato turni, quindi non compare nella ricerca. Salvalo tra i preferiti per ritrovarlo quando apre il calendario."}
           </p>
         </div>
         <div className="mx-auto max-w-6xl">
@@ -118,6 +139,7 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
             levels={levels}
             viewerRole={user?.role ?? null}
             pricePerLesson={detail.profile.pricePerLesson}
+            initialFavorite={favoriteIds.has(id)}
           />
         </div>
       </section>

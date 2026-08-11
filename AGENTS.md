@@ -157,6 +157,53 @@ Corollari già applicati:
   proprio: `.game-cta` lo risolve con l’ombra netta, altrove serve
   `border-game-ink` esplicito.
 
+### La regola inversa: superficie fissa ⇒ testo fisso
+
+Sopra c’è la regola “su superficie tematizzata usa accenti theme-aware”. Vale
+anche al contrario, ed è quella che si era rotta: **se lo sfondo è un colore
+FISSO, il testo che ci sta sopra deve essere fisso.** I colori fissi sono
+`--ottico`, `--ruggine`, `--sabbia` e tutti i `--game-*`; quelli che cambiano
+con il tema sono `--carta`, `--carta-alta`, `--carta-bassa`, `--calce`,
+`--nebbia`, `--vetro` e i tre `--accent-*-ink`. Accoppiarli fa funzionare il
+componente in una modalità sola su due, e il difetto passa inosservato perché
+chi sviluppa sta quasi sempre in modalità notte.
+
+Casi trovati e corretti (12 agosto 2026, misurati in entrambi i temi):
+
+- Tutti gli `on-*` in `@theme inline` erano `var(--carta)` su sfondi fissi.
+  `text-ball-foreground` e `text-on-secondary-fixed` sul giallo davano
+  **1,01:1 di giorno** — il bottone “Salva profilo” era un rettangolo giallo
+  vuoto. Ora `--color-ball-foreground`, `--color-on-secondary*`,
+  `--color-on-tertiary*` e `--color-on-error*` puntano a `var(--game-ink)`
+  (15,01:1 sul giallo, 6,32:1 sull’arancio, uguali nei due temi). Con lo stesso
+  bug erano illeggibili il bottone “Conferma” di `booking-request-actions`, i
+  badge traguardo e il contatore richieste in `coach-admin-nav`.
+- `--secondary-foreground` era `--carta` su `--sabbia` fisso: 4,26:1 di giorno e
+  3,42:1 di notte, sotto AA in entrambi. Ora `--game-white`, 4,79:1 fisso.
+  **Attenzione**: esistono due definizioni parallele, `--color-secondary-*` in
+  `@theme inline` (sorgente delle utility Tailwind) e `--secondary-*` in
+  `:root` (sorgente delle variabili shadcn). Vanno cambiate a coppie —
+  modificarne una sola non ha effetto sulle utility.
+- `GameCta tone="danger"` usava `text-ruggine`, fisso, su superficie
+  tematizzata: 2,13:1 di giorno (bottone “Rifiuta”). Ora
+  `text-accent-orange-ink`, che è theme-aware; il riempimento in hover resta
+  ruggine pieno con `game-ink` sopra.
+- `GameCta tone="outline"` usa `--vetro`, corretto sulle superfici
+  tematizzate ma **non** sulle arene fisse: in modalità giorno `--vetro` è un
+  verdeazzurro scuro e su `.net-texture` scendeva a 2,32:1. Per quei casi c’è
+  ora **`tone="arena"`** (`--game-cyan`, 8,51:1 di giorno e 9,75:1 di notte),
+  usato in `home/coach-path.tsx`, `chi-siamo` e nell’`EditorialHero` di
+  `/academy`. Non sostituire `outline` con `arena` ovunque: su una card chiara
+  il ciano fisso scende a ~1,9:1.
+
+Per verificare, non fidarsi dell’occhio in modalità notte: aprire la pagina in
+modalità giorno e misurare. Nota per chi scrive script di audit: molti colori
+calcolati escono in `oklab()` e le texture (`.net-texture`, `.paper-grain`)
+dipingono il fondo con `background-image`, non con `background-color` — un
+parser ingenuo produce una valanga di falsi positivi. Risolvere i colori
+passandoli a un canvas 1×1 e comporre anche il primo layer di
+`background-image` quando è un gradiente piatto.
+
 ### Navigazione mobile
 
 `app-bottom-nav.tsx` è solo il guscio server (ruolo + contatore notifiche);
@@ -443,6 +490,67 @@ il conteggio.
 - La sidebar desktop resta una rail compatta da 80px e non si espande sopra i
   contenuti; le etichette appaiono come tooltip. I `devIndicators` Next sono
   disabilitati per non sovrapporre il pulsante dev alla rail durante i test.
+
+### Le cinque schede coach devono stare tutte nello schermo
+
+`coach-admin-nav.tsx` è una **griglia a 5 colonne** (icona sopra etichetta,
+`text-[10px]`, `hyphens-auto`) sotto `md`, e torna alla riga di tab classica da
+`md` in su. Prima era una sola riga `overflow-x-auto`: a 390px i tab misuravano
+519px in 342px disponibili, quindi **"Orari" e "Richieste" restavano fuori
+schermo** e su iOS, dove la scrollbar non si vede, erano di fatto
+irraggiungibili. È il motivo per cui il primo coach reale ha compilato solo
+Profilo e non ha mai pubblicato disponibilità. Se aggiungi una scheda, verifica
+che tutte restino visibili a 320px e non introdurre di nuovo lo scroll
+orizzontale senza affordance.
+
+### `revalidateCoachSurfaces()`
+
+Campi, turni e profilo alimentano **cinque superfici**: la checklist di
+`/coach-admin`, `/coach-admin/campi`, `/coach-admin/orari`, il profilo pubblico
+`/coach/[id]` e `/cerca`. Le action in `actions/coach-admin.ts` rivalidavano
+solo la scheda da cui partiva la modifica, così un turno appena pubblicato non
+compariva né nella checklist né lato giocatore. Usare l'helper
+`revalidateCoachSurfaces(coachId)` per qualunque nuova mutazione del coach,
+invece di un singolo `revalidatePath`.
+
+### Nessun vicolo cieco su `/coach-admin/orari`
+
+Un turno è sempre legato a un campo, ma la pagina Orari non può limitarsi a
+dire "vai prima alla scheda Campi": quando `locations` è vuoto rende inline
+`<LocationManager initialLocations={[]} />`, così il primo campo si crea senza
+cambiare pagina e la rivalidazione riporta subito il form dei turni. Vale la
+regola generale: uno stato vuoto che dipende da un altro passo deve offrire
+quel passo, non solo nominarlo.
+
+Nota: `locations` ha `onDelete: "cascade"` verso `availability_slots`, quindi
+rimuovere un campo cancella anche i suoi turni — il `confirm()` in
+`location-manager.tsx` lo dice esplicitamente.
+
+### Un coach senza turni non compare in ricerca
+
+`searchCoaches()` scarta i coach senza nessuna riga in `availability_slots`
+(`loadCoachIdsWithAvailability()`, una query sola per tutta la ricerca).
+Mostrarli portava il giocatore su un calendario vuoto dopo aver premuto
+"Prenota". La soglia è **almeno un turno settimanale configurato**, non "almeno
+uno slot libero": un coach tutto esaurito resta in ricerca, come dev'essere.
+
+Le conseguenze, da tenere allineate se tocchi una di queste superfici:
+
+- `/coach/[id]` resta pubblico e raggiungibile da link diretto e dai preferiti.
+  Con `calendar.length === 0` la CTA dell'hero e lo stato vuoto del
+  `BookingCalendar` diventano **"Salva tra i preferiti"**, e il titolo della
+  sezione dice "Non ancora prenotabile" invece di promettere una prenotazione.
+- `getFavoriteCoaches()` **non** applica il filtro: un preferito salvato prima
+  che il coach aprisse il calendario deve restare consultabile — è l'unico modo
+  per ritrovarlo. La card mostra "Non ha ancora pubblicato orari".
+- `/coach-admin` avverte il coach che finché non pubblica un turno non compare
+  in ricerca. Senza quell'avviso l'unico segnale sarebbe il silenzio.
+- `FavoriteButton` prende `viewerRole` (non più `isPlayer`) e ha due varianti:
+  `icon` (il cuoricino) e `cta` (bottone etichettato). Per i visitatori anonimi
+  apre il modale Clerk `SignInButton` invece di sparire: prima il salvataggio
+  era invisibile finché non avevi già un account, il che rendeva impossibile
+  usarlo come CTA principale. Per i coach resta nascosto, perché
+  `toggleFavorite()` accetta solo i player.
 
 ## Academy didattica e asset
 
