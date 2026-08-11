@@ -161,8 +161,11 @@ Test: `npm run test:chiusure`. Dettagli in `AGENTS.md`.
 
 Usare `ConfirmDialog` (`components/confirm-dialog.tsx`), mai `window.confirm()`
 — nel codice non ne resta nessuno. `onConfirm` ritorna un booleano: `true`
-chiude, `false` tiene aperto per far leggere l'errore. Il bottone di conferma
-usa `bg-ruggine text-game-ink`, non `variant="destructive"` (3,91:1 di notte).
+chiude, `false` tiene aperto per far leggere l'errore. Il bottone di conferma è
+**neutro** (`variant="default"`), mai rosso: il rosso è per gli errori, non per
+un'azione scelta dall'utente. Il rischio sta nei riquadri `reassurance` (ciano,
+come si torna indietro) e `warning` (arancio, cosa si perde). Titoli in seconda
+persona: "Vuoi davvero chiudere questo slot?".
 
 ## Contrasto: superficie fissa ⇒ testo fisso
 

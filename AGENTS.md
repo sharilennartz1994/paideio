@@ -509,11 +509,21 @@ passano tutte da qui.
 - `warning` è il riquadro per la conseguenza irreversibile (quante lezioni
   verranno annullate, che il cascade cancella anche i turni). Va usato per il
   danno collaterale, non per ripetere il titolo.
-- Il bottone di conferma **non** usa `variant="destructive"` di shadcn: è un
-  riempimento al 10-20% con testo `--destructive`, che di notte dà 3,91:1.
-  Usa `bg-ruggine text-game-ink` (6,32:1 fissi in entrambi i temi, vedi la
-  regola “superficie fissa ⇒ testo fisso”). Stessa scelta in
-  `CancelBookingButton`.
+- **Il bottone di conferma è neutro, mai rosso.** Il rosso significa errore o
+  allarme; qui l’utente sta facendo una cosa che ha scelto di fare, spesso
+  reversibile. Usa `variant="default"` (`--vetro` su `--carta`: 5,45:1 di
+  giorno, 9,82:1 di notte, i due token cambiano tema insieme). Da non
+  confondere con `variant="destructive"` di shadcn, che oltre a essere rosso è
+  un riempimento al 10-20% con testo `--destructive` e di notte dà 3,91:1.
+  Stessa scelta in `CancelBookingButton`.
+- Il rischio lo comunicano i **due riquadri**, non il colore del pulsante:
+  `reassurance` (ciano, icona `History`) dice come si torna indietro,
+  `warning` (arancio, icona `AlertTriangle`) dice cosa si perde. Le chiusure
+  calendario hanno solo il primo, la rimozione di un campo solo il secondo, la
+  rimozione di un turno il primo con il rimando alla chiusura. Affidare il
+  segnale al solo colore è debole comunque: meglio dire *cosa* succede.
+- I titoli sono in seconda persona e nominano l’oggetto — “Vuoi davvero
+  chiudere questo slot?”, non “Chiudere…?”.
 - Il `trigger` è un `Button` reale, quindi **non** va `nativeButton={false}`
   (vedi “Note Base UI”).
 

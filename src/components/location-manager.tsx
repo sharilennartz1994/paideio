@@ -104,15 +104,16 @@ export function LocationManager({ initialLocations }: { initialLocations: Locati
                 </Button>
               }
               disabled={isPending}
-              title="Rimuovere questo campo?"
+              kicker="Campo di allenamento"
+              title="Vuoi davvero rimuovere questo campo?"
               description={
                 <>
                   <strong className="text-calce">{loc.name}</strong> sparirà dal tuo profilo
                   pubblico.
                 </>
               }
-              warning="Verranno eliminati anche tutti i turni settimanali pubblicati su questo campo, e le prenotazioni future collegate verranno annullate con notifica ai giocatori."
-              confirmLabel="Sì, rimuovi il campo"
+              warning="Questa non è reversibile: verranno eliminati anche tutti i turni settimanali pubblicati su questo campo, e le prenotazioni future collegate verranno annullate con notifica ai giocatori. Potrai riaggiungere il campo, ma dovrai ricostruire gli orari da capo."
+              confirmLabel="Rimuovi il campo"
               onConfirm={() => handleRemove(loc.id)}
             />
           </div>

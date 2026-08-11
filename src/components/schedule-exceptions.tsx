@@ -139,18 +139,20 @@ export function ScheduleExceptions({
                     </Button>
                   }
                   disabled={isPending}
-                  title="Chiudere l’intera giornata?"
+                  kicker="Chiusura giornata"
+                  title="Vuoi davvero chiudere tutta la giornata?"
                   description={
                     <>
                       <strong className="text-calce capitalize">{formatDay(date)}</strong> sparirà
                       dalle disponibilità dei giocatori, compresi eventuali turni che pubblicherai
-                      dopo. I turni settimanali restano: potrai riaprire la giornata quando vuoi.
+                      dopo.
                     </>
                   }
+                  reassurance="L’azione è reversibile: i tuoi turni settimanali restano intatti e puoi riaprire la giornata quando vuoi."
                   warning={bookingsWarning(
                     slotsOfDay.reduce((sum, s) => sum + (s.closed ? 0 : s.activeBookings), 0)
                   )}
-                  confirmLabel="Sì, chiudi la giornata"
+                  confirmLabel="Chiudi la giornata"
                   onConfirm={() =>
                     confirmAndRun("Giornata chiusa.", async () => {
                       const r = await closeAvailabilityDate({ date });
@@ -222,16 +224,18 @@ export function ScheduleExceptions({
                         </Button>
                       }
                       disabled={isPending}
-                      title="Chiudere questo turno?"
+                      kicker="Chiusura slot"
+                      title="Vuoi davvero chiudere questo slot?"
                       description={
                         <>
                           Solo <strong className="text-calce">{slot.startTime}–{slot.endTime}</strong> del{" "}
                           <span className="capitalize">{formatDay(slot.date)}</span> sparirà dalle
-                          disponibilità. Il turno settimanale resta attivo su tutte le altre date.
+                          disponibilità dei giocatori.
                         </>
                       }
+                      reassurance="L’azione è reversibile: il turno settimanale resta attivo su tutte le altre date e puoi riaprire questo slot quando vuoi."
                       warning={bookingsWarning(slot.activeBookings)}
-                      confirmLabel="Sì, chiudi il turno"
+                      confirmLabel="Chiudi lo slot"
                       onConfirm={() =>
                         confirmAndRun("Turno chiuso per questa data.", async () => {
                           const r = await closeAvailabilityDate({

@@ -139,16 +139,17 @@ export function AvailabilityManager({
                       </Button>
                     }
                     disabled={isPending}
-                    title="Rimuovere questo turno?"
+                    kicker="Turno settimanale"
+                    title="Vuoi davvero rimuovere questo turno?"
                     description={
                       <>
                         <strong className="text-calce capitalize">{dayName(group.day)}</strong>{" "}
                         <strong className="text-calce">{slot.startTime}–{slot.endTime}</strong> non
-                        si ripeterà più. Se ti serve togliere una sola data, chiudila in “Le
-                        prossime date” invece di rimuovere il turno.
+                        si ripeterà più su nessuna data.
                       </>
                     }
-                    confirmLabel="Sì, rimuovi il turno"
+                    reassurance="Puoi ricrearlo in qualsiasi momento dal modulo qui sotto. Se invece ti serve saltare una sola data, chiudila in “Le prossime date”: il turno resta e togli solo quel giorno."
+                    confirmLabel="Rimuovi il turno"
                     onConfirm={() => handleRemove(slot.id)}
                   />
                 </div>

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { updateBookingStatus } from "@/lib/actions/bookings";
+import { AlertTriangle } from "@/components/icons/paideio-icons";
 import { FullScreenGameLoader } from "@/components/design";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,24 +51,32 @@ export function CancelBookingButton({
           Annulla
         </AlertDialogTrigger>
         <AlertDialogContent>
-          <p className="ui-kicker text-accent-orange-ink">Conferma richiesta</p>
-          <AlertDialogTitle className="mt-2">Vuoi annullare la lezione?</AlertDialogTitle>
+          <p className="ui-kicker text-accent-cyan-ink">Annullamento lezione</p>
+          <AlertDialogTitle className="mt-2">Vuoi davvero annullare questa lezione?</AlertDialogTitle>
           <AlertDialogDescription>
             Stai annullando la lezione con {coachName ?? "il coach"} del {date} alle {startTime}.
             Tu e il coach riceverete subito una notifica.
           </AlertDialogDescription>
+          <p className="mt-4 flex items-start gap-2 border border-accent-orange-ink/45 bg-carta-bassa p-3 text-sm leading-relaxed text-calce">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0 text-accent-orange-ink" aria-hidden />
+            <span>
+              L’annullamento non si può revocare: per tornare in campo con questo coach dovrai
+              inviare una nuova richiesta, e lo slot potrebbe nel frattempo essere occupato.
+            </span>
+          </p>
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <AlertDialogClose render={<Button variant="outline" />}>
               Torna indietro
             </AlertDialogClose>
-            {/* Stesso riempimento pieno di `ConfirmDialog`: la variante
-                `destructive` di shadcn dà 3,91:1 in modalità notte. */}
+            {/* Bottone neutro come in `ConfirmDialog`: il rosso significa
+                errore, non "azione che l'utente ha scelto di fare". Il rischio
+                sta nel riquadro sopra. */}
             <Button
               onClick={handleCancel}
               disabled={isPending}
-              className="bg-ruggine font-heading font-bold text-game-ink uppercase hover:bg-ruggine/85"
+              className="font-heading font-bold uppercase"
             >
-              Sì, annulla la lezione
+              Annulla la lezione
             </Button>
           </div>
         </AlertDialogContent>
