@@ -12,7 +12,7 @@ import {
 } from "@/components/legal-layout";
 
 export const metadata: Metadata = {
-  title: "Informativa privacy — Paideio",
+  title: "Informativa privacy - Paideio",
   description:
     "Quali dati personali tratta Paideio, per quali finalità, con quali fornitori e quali diritti puoi esercitare.",
 };
@@ -184,7 +184,7 @@ export default function PrivacyPage() {
         </LegalHighlight>
         <p>
           Alcuni fornitori indicati sopra hanno però sede negli Stati Uniti: per le funzioni
-          che svolgono — autenticazione, hosting dell’applicazione, invio delle email — un
+          che svolgono - autenticazione, hosting dell’applicazione, invio delle email - un
           trasferimento di dati fuori dallo Spazio economico europeo può comunque avvenire.
         </p>
         <p>

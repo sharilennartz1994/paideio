@@ -1,6 +1,6 @@
-# Paideio — Sistema visivo « Game Arena »
+# Paideio - Sistema visivo « Game Arena »
 
-## Direzione normativa corrente — 26 luglio 2026
+## Direzione normativa corrente - 26 luglio 2026
 
 Paideio deve sembrare un moderno gioco online interamente dedicato al padel.
 L’esperienza è energica e tattile, ma non inventa punteggi o progressi:
@@ -20,7 +20,7 @@ gioca`.
 Le sezioni storiche successive descrivono l’origine degli asset e restano
 archivio; in caso di conflitto prevale questa direzione Game Arena.
 
-## Registro illustrativo Game Mode — 26 luglio 2026
+## Registro illustrativo Game Mode - 26 luglio 2026
 
 La libreria comic/cel-shaded in `design/assets-comic/` è il registro
 illustrativo corrente del prodotto. Mantiene la struttura, la palette di
@@ -48,10 +48,10 @@ tavole incise nei momenti narrativi.
 Documento di riferimento della grammatica visiva. **Ogni asset generato deve essere ricostruibile a
 partire da questo solo documento.** Se non è vero, la grammatica non è finita.
 
-Stato: Fase 1 — grammatica, revisione 2, 25 luglio 2026. In attesa di validazione utente.
+Stato: Fase 1 - grammatica, revisione 2, 25 luglio 2026. In attesa di validazione utente.
 
 Sostituisce il sistema « Agonistic Pulse » (replica 1:1 dell'export Google Stitch). La decisione di
-archiviarlo è dell'utente, 25 luglio 2026 — vedi `CHANGELOG.md`.
+archiviarlo è dell'utente, 25 luglio 2026 - vedi `CHANGELOG.md`.
 
 ---
 
@@ -69,11 +69,11 @@ il fondo scuro. **L'argomento resta valido e va neutralizzato altrove**: dal mom
 chiaro/scuro non ci differenzia più, la distanza dallo slop di categoria deve venire da tre cose
 precise, verificabili su una cattura:
 
-1. **Il buio ha una tinta e una materia** — `#0F2233` è resina blu, non grigio neutro. Il
+1. **Il buio ha una tinta e una materia** - `#0F2233` è resina blu, non grigio neutro. Il
    `#111316` « asfalto » del sistema precedente è vietato: un fondo desaturato = violazione.
-2. **La tipografia è editoriale, non da scoreboard** — serif in peso 400, corsivo come firma.
+2. **La tipografia è editoriale, non da scoreboard** - serif in peso 400, corsivo come firma.
    Nessun maiuscolo nero corsivo: era la firma del sistema archiviato ed è la firma della categoria.
-3. **Il giallo è un gioiello, uno per schermo** — la categoria usa il neon come vernice. Qui una
+3. **Il giallo è un gioiello, uno per schermo** - la categoria usa il neon come vernice. Qui una
    sola apparizione, e mai in campitura larga.
 
 Se un giudice della Fase 5 non sa dire, guardando una cattura, perché questo non è « l'ennesima app
@@ -107,20 +107,20 @@ Sono **comportamenti** → vivono nel livello motion (§ 7), mai nell'alfabeto.
 ## 2. Registri di resa
 
 La carta è scura: gli asset sono quindi **chiari su fondo scuro**. È anche la configurazione
-migliore per il detourage — il chroma-key ha bisogno di forte contrasto tra soggetto e fondo
+migliore per il detourage - il chroma-key ha bisogno di forte contrasto tra soggetto e fondo
 (§ 9.4).
 
 > **Revisione degli STYLE BLOCK dopo la planche d'ancrage, 25 luglio 2026.** Il metodo prevede una
 > sola finestra per toccarli: dopo l'ancrage, prima del primo lotto. È questa. Due correzioni,
 > ricavate dai difetti misurati sulle quattro varianti (`audits/audit-ancrage-round1.md` § 3):
-> **(a)** tutte e quattro derivavano verso un rilievo metallico sbalzato — il pannello di vetro
-> leggeva come piastra di metallo spazzolato — quindi gli interdetti guadagnano `no embossing,
+> **(a)** tutte e quattro derivavano verso un rilievo metallico sbalzato - il pannello di vetro
+> leggeva come piastra di metallo spazzolato - quindi gli interdetti guadagnano `no embossing,
 > no repoussé, no metallic sheen, no brushed metal`; **(b)** « at most one small area » di giallo
 > non era misurabile e due varianti su quattro l'hanno letto come « tre palline piene », quindi
 > il limite è ora quantificato al 2 % della superficie.
 > **Da qui in avanti i blocchi sono congelati**: si copiano verbatim, non si ritoccano più.
 
-### 2a. Registro **TRATTO** — STYLE BLOCK, verbatim
+### 2a. Registro **TRATTO** - STYLE BLOCK, verbatim
 
 ```
 Elegant ornamental line illustration, single-plane vector look, drawn as a museum plate.
@@ -136,7 +136,7 @@ timeless.
 Si applica a: cucitura, linea di servizio, rete, bande grip, divisori, punti elenco, icone.
 Riferimento di stile: `assets/00-anchor/anchor-sheet-v1.png`.
 
-### 2b. Registro **INCISIONE** — STYLE BLOCK, verbatim
+### 2b. Registro **INCISIONE** - STYLE BLOCK, verbatim
 
 ```
 Detailed engraved illustration in the manner of a 19th-century patent plate, built entirely from
@@ -154,7 +154,7 @@ Si applica a: la pala, la pallina, la scatola di vetro in assonometria, il campo
 le vignette editoriali che oggi sono blocchi gradiente segnaposto.
 Riferimento di stile: `assets/00-anchor/anchor-sheet-v1.png`.
 
-### 2c. Registro **MATERIA** — STYLE BLOCK, verbatim
+### 2c. Registro **MATERIA** - STYLE BLOCK, verbatim
 
 ```
 Flat seamless tileable surface texture, edge-to-edge, with no framing, no border, no vignette and
@@ -167,7 +167,7 @@ no objects, no illustration, no focal point, no neon. Quiet, material, timeless.
 ```
 
 Si applica a: granulo, malla, campo di foratura, tessitura della rete.
-**Nessuna immagine di riferimento su questo registro** — vedi § 9.2, è il piede in fallo più
+**Nessuna immagine di riferimento su questo registro** - vedi § 9.2, è il piede in fallo più
 costoso della pipeline.
 
 ### 2d. Cartografia (chi rende cosa)
@@ -186,7 +186,7 @@ Tornare indietro deve costare due spostamenti di file.
 
 ---
 
-## 3. Palette (token colore) — « inchiostro rovesciato »
+## 3. Palette (token colore) - « inchiostro rovesciato »
 
 Rapporti calcolati con `tools/contrast.py`, non stimati. Ogni coppia dichiarata «testo» è
 verificata AA (≥ 4,5:1) con margine.
@@ -199,12 +199,12 @@ verificata AA (≥ 4,5:1) con margine.
 | `--calce` | `#F2F4F3` | Vernice bianca delle linee | **Inchiostro**: testo principale, titoli | AAA 14,7:1 su carta ✓ |
 | `--nebbia` | `#9FB0BC` | Alone d'umidità sul vetro | Testo secondario, didascalie | AAA 7,3:1 su carta ✓ |
 | `--vetro` | `#5FC4AC` | Vetro temperato visto di taglio | **Voce**: link, bordi attivi, focus, stati positivi | AAA 7,7:1 su carta ✓ |
-| `--ottico` | `#D6E32B` | Feltro della pallina, giallo ottico | **GIOIELLO — max 1 apparizione per schermo** | AAA 11,5:1 su carta ✓ |
+| `--ottico` | `#D6E32B` | Feltro della pallina, giallo ottico | **GIOIELLO - max 1 apparizione per schermo** | AAA 11,5:1 su carta ✓ |
 | `--ruggine` | `#EB7E61` | Terra battuta dei campi all'aperto | Urgenza, errori, scadenze | AA 5,9:1 su carta ✓ |
 | `--sabbia` | `#EAE3D6` | Sabbia silicea del manto | **Blocco d'inversione**: fasce ad alto impatto, tavole incise | fondo |
 
 Nove token. `--sabbia` è retrocessa da carta a **blocco**: era il fondo nella revisione 1,
-l'utente l'ha rifiutata in quel ruolo. Non sparisce — è la materia del manto, e come fascia
+l'utente l'ha rifiutata in quel ruolo. Non sparisce - è la materia del manto, e come fascia
 invertita su fondo blu è il contrasto più forte del sistema (12,7:1).
 
 **Coppie AA validate per il testo corrente**
@@ -212,8 +212,8 @@ Su carta scura: calce (14,7) · nebbia (7,3) · vetro (7,7) · ottico (11,5) · 
 sabbia (12,7).
 Su `--carta-alta` (le card): calce (11,9) · nebbia (5,9) · vetro (6,3) · ottico (9,4) ·
 ruggine (4,8).
-Su blocco `--sabbia`: carta (12,7) — il testo sui blocchi chiari è il blu della carta.
-Su blocco `--ottico`: carta (11,5) — mai testo chiaro sul giallo.
+Su blocco `--sabbia`: carta (12,7) - il testo sui blocchi chiari è il blu della carta.
+Su blocco `--ottico`: carta (11,5) - mai testo chiaro sul giallo.
 
 **Coppie vietate** (misurate, non presunte): nebbia su sabbia (1,8) · vetro su sabbia (1,7) ·
 calce su sabbia (1,2) · calce su ottico (1,3) · qualsiasi testo chiaro su `--ottico`.
@@ -225,15 +225,15 @@ calce su sabbia (1,2) · calce su ottico (1,3) · qualsiasi testo chiaro su `--o
 - **Griglia icone**: 24 px; **due sole** spessore di tratto: 2 px (principale) / 1 px (dettaglio).
 - **Modulo pattern**: 48 px · **Base di spaziatura**: 8 px.
 - **Logica degli angoli**: **vivi** per ciò che deriva dal campo e dal vetro (pannelli, card,
-  fasce, tagli) — raggio 0 o 2 px; **tondi** per ciò che deriva dalla pallina e dal grip (chip,
-  avatar, pill, badge) — raggio pieno. Non esistono raggi intermedi: il `rounded-lg` generico
+  fasce, tagli) - raggio 0 o 2 px; **tondi** per ciò che deriva dalla pallina e dal grip (chip,
+  avatar, pill, badge) - raggio pieno. Non esistono raggi intermedi: il `rounded-lg` generico
   sparisce.
-- **3 densità decorative** — è l'unico strumento di limitazione dell'intensità (la scala a tre
+- **3 densità decorative** - è l'unico strumento di limitazione dell'intensità (la scala a tre
   ranghi in pixel della revisione 1 è stata rifiutata dall'utente e rimossa: faceva lo stesso
   lavoro di questa regola, in modo più rigido e meno leggibile):
-  - *whisper* — granulo/malla di fondo, contrasto ≤ 8 %, non disturba mai la lettura;
-  - *voice* — bordi, divisori, bande grip, un colore;
-  - *song* — momento hero, **max 1 visibile per schermo**.
+  - *whisper* - granulo/malla di fondo, contrasto ≤ 8 %, non disturba mai la lettura;
+  - *voice* - bordi, divisori, bande grip, un colore;
+  - *song* - momento hero, **max 1 visibile per schermo**.
 
 ---
 
@@ -243,13 +243,13 @@ calce su sabbia (1,2) · calce su ottico (1,3) · qualsiasi testo chiaro su `--o
 sans con cifre tabulari (`font-variant-numeric: tabular-nums`), che allinea prezzi e orari in
 colonna senza importare una terza voce.
 
-- **Serif editoriale — `Instrument Serif`**: titoli, nomi dei coach, numeri hero. Il corsivo è una
+- **Serif editoriale - `Instrument Serif`**: titoli, nomi dei coach, numeri hero. Il corsivo è una
   firma, non un ripiego. Peso unico 400: a 40 px+ è più editoriale di un nero, ed evita in blocco
   il cliché «sport = maiuscolo nero corsivo» (vedi § 0, punto di vigilanza 2).
-- **Sans umanista — `Hanken Grotesk`**: UI, corpo del testo, navigazione, form, **dati**, etichette.
+- **Sans umanista - `Hanken Grotesk`**: UI, corpo del testo, navigazione, form, **dati**, etichette.
   Unica famiglia conservata dal sistema precedente.
 - **`Anybody` e `Space Mono` sono ritirati.**
-- **Auto-ospitate**: `next/font/google` scarica e serve dal nostro dominio in fase di build — zero
+- **Auto-ospitate**: `next/font/google` scarica e serve dal nostro dominio in fase di build - zero
   chiamate a terzi, nessun cookie di font.
 
 Scala desktop (base 17 px, ratio ~1,28):
@@ -268,22 +268,22 @@ Su fondo scuro il testo chiaro « ingrassa » otticamente: il corpo va impostato
 Sono il **barème dei giudici** della Fase 5. Ognuno si può prendere in fallo su una singola
 schermata.
 
-1. **La carta ha una tinta** — il fondo è resina blu. Un grigio o un nero desaturato a schermo
+1. **La carta ha una tinta** - il fondo è resina blu. Un grigio o un nero desaturato a schermo
    (`#111`, `#1a1a1a`, `#111316`) = violazione. È la regola che ci separa dallo slop di categoria.
-2. **L'ornamento si merita** — due elementi *song* visibili insieme = violazione.
-3. **Un motivo per elemento** — più di 2 motivi mescolati in un componente = rifiutato.
-4. **L'ottico è un gioiello, non della vernice** — il giallo in campitura larga, o due apparizioni
+2. **L'ornamento si merita** - due elementi *song* visibili insieme = violazione.
+3. **Un motivo per elemento** - più di 2 motivi mescolati in un componente = rifiutato.
+4. **L'ottico è un gioiello, non della vernice** - il giallo in campitura larga, o due apparizioni
    nello stesso schermo = violazione.
-5. **Gli angoli hanno una causa** — un raggio intermedio (né 0/2 px né pieno) = violazione: vuol
+5. **Gli angoli hanno una causa** - un raggio intermedio (né 0/2 px né pieno) = violazione: vuol
    dire che l'elemento non sa da quale materia viene.
-6. **Astrarre, mai illustrare** — un asset decorativo che raffigura una scena (un giocatore che
+6. **Astrarre, mai illustrare** - un asset decorativo che raffigura una scena (un giocatore che
    colpisce, un campo prospettico «fotografico») = violazione. Le illustrazioni editoriali del
    registro INCISIONE sono l'unica eccezione, e sono dichiarate.
-7. **La materia alle superfici, il tratto agli ornamenti** — una texture usata come divisore, o un
+7. **La materia alle superfici, il tratto agli ornamenti** - una texture usata come divisore, o un
    ornamento al tratto usato come fondo tileato = violazione.
-8. **Il movimento ha una causa** — nulla si anima senza un'azione dell'utente o un cambio di stato.
+8. **Il movimento ha una causa** - nulla si anima senza un'azione dell'utente o un cambio di stato.
    Un loop decorativo permanente = violazione.
-9. **Niente scoreboard** — un titolo in maiuscolo nero corsivo, un glow neon, un bordo luminoso
+9. **Niente scoreboard** - un titolo in maiuscolo nero corsivo, un glow neon, un bordo luminoso
    = violazione. Sono le firme del sistema archiviato e della categoria.
 
 ---
@@ -292,7 +292,7 @@ schermata.
 
 - **Rimbalzo**: solo su conferma di un'azione riuscita (prenotazione inviata). Una volta, non in
   loop.
-- **Traiettoria**: la transizione tra due stati segue un arco, non una linea — `cubic-bezier(.33,
+- **Traiettoria**: la transizione tra due stati segue un arco, non una linea - `cubic-bezier(.33,
   0, .2, 1)`.
 - **Il vetro reagisce**: al focus, il filo luminoso del motivo Vetro si accende sui 2 lati. È
   l'unico effetto di «luce» ammesso, e non è un glow: è un bordo che cambia colore.
@@ -308,16 +308,16 @@ fiducia:
 1. **La pala non ha corde.** È una lastra piena forata. Se un asset mostra un piatto incordato, è
    una racchetta da tennis: rifiutato.
 2. **La pala non ha manico lungo.** Impugnatura corta, cordino da polso, silhouette a goccia o
-   diamante o tonda — mai ovale allungato.
+   diamante o tonda - mai ovale allungato.
 3. **Il campo è 20 × 10 m e chiuso su 4 lati**: vetro sul fondo e su metà delle laterali, malla
    sul resto. Un campo aperto senza pareti = rifiutato. **Proporzione esatta 2:1** e **vista
    zenitale ortografica**: sulla planche d'ancrage il modello ha reso tutte e quattro le varianti
    in assonometria con le pareti svasate, e con rapporti fra 1,24 e 1,66. Nel prompt della tavola
    dedicata vanno imposti in lettere: `exactly twice as long as it is wide`, `strict top-down
    orthographic view, no perspective, no splayed walls`.
-4. **La rete è più bassa al centro**: 92 cm ai pali, 88 cm al centro. L'avvallamento va al centro —
+4. **La rete è più bassa al centro**: 92 cm ai pali, 88 cm al centro. L'avvallamento va al centro -
    una rete tesa dritta, o più alta al centro, è sbagliata.
-5. **La pallina ha una cucitura a due lobi** — due lobi, mai tre, mai una linea dritta.
+5. **La pallina ha una cucitura a due lobi** - due lobi, mai tre, mai una linea dritta.
 6. **Il wordmark è sempre « PAIDEIO »**, mai « Paideia ». Il termine greco παιδεία è il concetto
    raccontato in `/chi-siamo`; il nome del prodotto no. Errore già presente nell'export Stitch
    originale, non ripeterlo.
@@ -331,7 +331,7 @@ fiducia:
    dell'asset + dimensione scritta in lettere nel testo.
 2. Generazione a lotti di 4-8; `referenced_image_paths` = planche d'ancrage, oppure l'ornamento
    capostipite del motivo. **Eccezione: mai riferimento sui prompt "vuoti"** (registro MATERIA,
-   texture whisper) — il modello ci ricasca dentro gli oggetti della referenza.
+   texture whisper) - il modello ci ricasca dentro gli oggetti della referenza.
 3. Dentro un lotto: **l'ornamento del motivo PRIMA**, poi le sue declinazioni con lui in referenza.
 4. Nessun alpha nativo: generare su fondo pieno fortemente contrastato (qui: sabbia chiara su
    `#0F2233`) → chroma-key (`tools/key_bg.py`) → QA tuilage < 12/255

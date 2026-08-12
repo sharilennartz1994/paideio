@@ -90,7 +90,7 @@ export function LocationManager({ initialLocations }: { initialLocations: Locati
               </p>
               {loc.lat == null && (
                 <Badge variant="outline" className="mt-1.5">
-                  Non geolocalizzato — non comparirà nella ricerca &quot;vicino a me&quot;
+                  Non geolocalizzato - non comparirà nella ricerca &quot;vicino a me&quot;
                 </Badge>
               )}
             </div>

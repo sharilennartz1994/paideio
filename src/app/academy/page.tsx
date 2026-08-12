@@ -5,7 +5,7 @@ import { AcademyIntro, LearningPath } from "@/components/academy/academy-ui";
 import { ACADEMY_SECTIONS } from "@/lib/editorial-content";
 
 export const metadata: Metadata = {
-  title: "Academy — Impara il padel | Paideio",
+  title: "Academy - Impara il padel | Paideio",
   description: "Tecnica, strategia, regole, preparazione, attrezzatura e cultura del padel.",
 };
 

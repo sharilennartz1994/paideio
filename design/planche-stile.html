@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Paideio — Campo Centrale, tavola campione rev. 2</title>
+<title>Paideio - Campo Centrale, tavola campione rev. 2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
@@ -21,7 +21,7 @@ body{
   font-size:17px; font-weight:400; line-height:1.6;
   -webkit-font-smoothing:antialiased;
 }
-/* motivo 07 — GRANULO, densità whisper (≤8%) */
+/* motivo 07 - GRANULO, densità whisper (≤8%) */
 body::before{
   content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
   background-image:
@@ -52,7 +52,7 @@ strong{font-weight:600}
 .hero h1 em{font-style:italic;color:var(--vetro)}
 .hero p{font-size:19px;color:var(--nebbia);max-width:54ch}
 .hero-actions{display:flex;gap:14px;align-items:center;margin-top:36px;flex-wrap:wrap}
-/* GIOIELLO — unica apparizione dell'ottico in questo schermo */
+/* GIOIELLO - unica apparizione dell'ottico in questo schermo */
 .btn-jewel{
   background:var(--ottico); color:var(--carta); font-family:var(--sans);
   font-size:15px; font-weight:600; border:0; padding:15px 30px;
@@ -87,7 +87,7 @@ strong{font-weight:600}
 /* ---------- COMPONENTI ---------- */
 .demo{display:grid;grid-template-columns:1.15fr .85fr;gap:2px;align-items:start}
 @media(max-width:900px){.demo{grid-template-columns:1fr}}
-/* motivo 08 — VETRO: filo luminoso su 2 lati + 4 fissaggi */
+/* motivo 08 - VETRO: filo luminoso su 2 lati + 4 fissaggi */
 .glass{
   background:var(--carta-alta); padding:30px; position:relative; border-radius:2px;
   border-top:1.5px solid var(--vetro); border-left:1.5px solid var(--vetro);
@@ -107,7 +107,7 @@ strong{font-weight:600}
   font-size:13px;font-weight:500;padding:7px 16px;border-radius:999px;
   background:rgba(159,176,188,.13);color:var(--calce);
 }
-/* motivo 06 — GRIP: bande a 25° sulla chip attiva */
+/* motivo 06 - GRIP: bande a 25° sulla chip attiva */
 .chip.on{
   color:var(--carta);font-weight:600;
   background:repeating-linear-gradient(115deg,var(--vetro) 0 10px,#54b19b 10px 11px);
@@ -122,7 +122,7 @@ strong{font-weight:600}
 .stat .v{font-family:var(--serif);font-size:44px;line-height:1.05;margin-top:8px;font-variant-numeric:tabular-nums}
 .stat.urg{background:transparent;border:1px solid var(--ruggine)}
 .stat.urg .k{color:var(--ruggine)}
-/* motivo 04 — LINEA DI SERVIZIO: la T come divisore */
+/* motivo 04 - LINEA DI SERVIZIO: la T come divisore */
 .tdiv{height:2px;background:rgba(242,244,243,.55);position:relative;margin:26px 0 20px}
 .tdiv::after{content:"";position:absolute;left:50%;top:0;width:2px;height:20px;background:rgba(242,244,243,.55)}
 
@@ -150,7 +150,7 @@ strong{font-weight:600}
   <section class="hero">
     <div class="eyebrow">Paideio · sistema visivo · rev. 2 · 25 luglio 2026</div>
     <h1>Campo Centrale.<br>Il contenuto non sta davanti al campo,<br><em>sta sopra il campo.</em></h1>
-    <p>La carta è la resina blu vista dall'alto — una tinta, non un grigio. Vetro temperato come voce,
+    <p>La carta è la resina blu vista dall'alto - una tinta, non un grigio. Vetro temperato come voce,
        sabbia del manto come blocco d'inversione. Il giallo ottico è un gioiello: una sola apparizione
        per schermo.</p>
     <div class="hero-actions">
@@ -160,11 +160,11 @@ strong{font-weight:600}
   </section>
 
   <section>
-    <div class="eyebrow">§ 0 — Punto di vigilanza</div>
+    <div class="eyebrow">§ 0 - Punto di vigilanza</div>
     <h2>Perché questo non è l'ennesima app padel nera</h2>
     <p class="note">Scegliendo il fondo scuro perdiamo l'asse che ci separava dalla categoria
        (Playtomic, Matchi e simili sono tutte nere con accenti neon). La distanza deve venire da
-       tre cose verificabili su una cattura — se un giudice della Fase 5 non sa citarle guardando
+       tre cose verificabili su una cattura - se un giudice della Fase 5 non sa citarle guardando
        una schermata, il sistema ha fallito su questo punto.</p>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px">
       <div style="background:var(--carta-alta);padding:26px">
@@ -186,7 +186,7 @@ strong{font-weight:600}
   </section>
 
   <section>
-    <div class="eyebrow">§ 3 — Palette « inchiostro rovesciato »</div>
+    <div class="eyebrow">§ 3 - Palette « inchiostro rovesciato »</div>
     <h2>Nove token, ognuno con una materia e un solo ruolo</h2>
     <p class="note">Rapporti WCAG calcolati con <code>tools/contrast.py</code>, non stimati.
        <strong>--sabbia</strong> è retrocessa da carta a blocco: l'avevi rifiutata come sfondo, ma
@@ -225,11 +225,11 @@ strong{font-weight:600}
   </section>
 
   <section>
-    <div class="eyebrow">§ 5 — Tipografia</div>
+    <div class="eyebrow">§ 5 - Tipografia</div>
     <h2>Due famiglie, non tre</h2>
     <p class="note">Il mono è stato rimosso su tua richiesta: i dati vivono nel sans con cifre
        tabulari, che allinea prezzi e orari in colonna senza importare una terza voce.
-       Instrument Serif in peso unico 400 — a display è più editoriale di un nero, e scarta in
+       Instrument Serif in peso unico 400 - a display è più editoriale di un nero, e scarta in
        blocco il cliché «sport = maiuscolo nero corsivo». Anybody e Space Mono sono ritirati.</p>
     <div class="type-row"><div class="lbl">display 62 · serif</div><div class="t-display">Elena Ferraro</div></div>
     <div class="type-row"><div class="lbl">h1 44 · serif corsivo</div><div class="t-h1"><em>Lezioni che si vedono</em></div></div>
@@ -244,11 +244,11 @@ strong{font-weight:600}
   </section>
 
   <section>
-    <div class="eyebrow">§ 4 — Applicazione</div>
+    <div class="eyebrow">§ 4 - Applicazione</div>
     <h2>La grammatica su componenti reali del prodotto</h2>
     <p class="note">Angoli vivi (0–2 px) per ciò che viene dal campo e dal vetro; angoli pieni per ciò
        che viene dalla pallina e dal grip. Nessun raggio intermedio: il <code>rounded-lg</code>
-       generico sparisce. L'ottico non compare in questa schermata — il gioiello era già speso
+       generico sparisce. L'ottico non compare in questa schermata - il gioiello era già speso
        nell'hero.</p>
     <div class="demo">
       <div class="glass"><span class="fix-b" style="left:9px"></span><span class="fix-b" style="right:9px"></span>
@@ -284,45 +284,45 @@ strong{font-weight:600}
   </section>
 
   <section>
-    <div class="eyebrow">§ 1 — Alfabeto chiuso</div>
+    <div class="eyebrow">§ 1 - Alfabeto chiuso</div>
     <h2>Otto motivi, in attesa delle incisioni</h2>
     <p class="note">Le anteprime CSS della revisione 1 erano schemi tecnici e le hai bocciate come
        rappresentazione: sono state tolte. I motivi restano quelli validati, e si giudicheranno
-       <strong>solo su incisioni vere della Fase 2</strong> — generate, detourate, sottoposte al tuo
+       <strong>solo su incisioni vere della Fase 2</strong> - generate, detourate, sottoposte al tuo
        veto sulla planche contact. Qui resta l'elenco, non il disegno.</p>
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:2px">
-      <div style="background:var(--carta-alta);padding:22px 24px"><strong>01 · Cucitura</strong> — dalla pallina.
+      <div style="background:var(--carta-alta);padding:22px 24px"><strong>01 · Cucitura</strong> - dalla pallina.
         <span style="color:var(--nebbia)">Curva a S a due lobi. Separatori, punti elenco, punto del wordmark.</span></div>
-      <div style="background:var(--carta-alta);padding:22px 24px"><strong>02 · Foratura</strong> — dalla pala.
+      <div style="background:var(--carta-alta);padding:22px 24px"><strong>02 · Foratura</strong> - dalla pala.
         <span style="color:var(--nebbia)">Fori tondi su griglia sfalsata. Pattern, maschera avatar, badge.</span></div>
-      <div style="background:var(--carta-alta);padding:22px 24px"><strong>03 · Malla</strong> — dalla recinzione.
+      <div style="background:var(--carta-alta);padding:22px 24px"><strong>03 · Malla</strong> - dalla recinzione.
         <span style="color:var(--nebbia)">Reticolo di rombi. Texture whisper, velo su fasce.</span></div>
-      <div style="background:var(--carta-alta);padding:22px 24px"><strong>04 · Linea di servizio</strong> — dal campo.
+      <div style="background:var(--carta-alta);padding:22px 24px"><strong>04 · Linea di servizio</strong> - dal campo.
         <span style="color:var(--nebbia)">Due tratti ad angolo retto. Divisori, stato attivo.</span></div>
-      <div style="background:var(--carta-alta);padding:22px 24px"><strong>05 · Rete</strong> — dalla rete.
+      <div style="background:var(--carta-alta);padding:22px 24px"><strong>05 · Rete</strong> - dalla rete.
         <span style="color:var(--nebbia)">Fascia piena su maglia quadra. Footer, barre di avanzamento.</span></div>
-      <div style="background:var(--carta-alta);padding:22px 24px"><strong>06 · Grip</strong> — dall'impugnatura.
+      <div style="background:var(--carta-alta);padding:22px 24px"><strong>06 · Grip</strong> - dall'impugnatura.
         <span style="color:var(--nebbia)">Bande a 25°. Chip, accenti diagonali.</span></div>
-      <div style="background:var(--carta-alta);padding:22px 24px"><strong>07 · Granulo</strong> — dal manto.
+      <div style="background:var(--carta-alta);padding:22px 24px"><strong>07 · Granulo</strong> - dal manto.
         <span style="color:var(--nebbia)">Sabbia silicea. È la texture di fondo di questa pagina.</span></div>
-      <div style="background:var(--carta-alta);padding:22px 24px"><strong>08 · Vetro</strong> — dalla parete.
+      <div style="background:var(--carta-alta);padding:22px 24px"><strong>08 · Vetro</strong> - dalla parete.
         <span style="color:var(--nebbia)">Filo luminoso su due lati, quattro fissaggi. Ogni card.</span></div>
     </div>
   </section>
 
   <section>
-    <div class="eyebrow">§ 6 — Principi falsificabili</div>
+    <div class="eyebrow">§ 6 - Principi falsificabili</div>
     <h2>Nove regole che un giudice può prendere in fallo su una cattura</h2>
     <ol style="max-width:72ch;font-size:16px;line-height:1.8;padding-left:22px">
-      <li><strong>La carta ha una tinta</strong> — un grigio o un nero desaturato = violazione.</li>
-      <li><strong>L'ornamento si merita</strong> — due elementi <em>song</em> insieme = violazione.</li>
-      <li><strong>Un motivo per elemento</strong> — più di 2 motivi mescolati = rifiutato.</li>
-      <li><strong>L'ottico è un gioiello, non della vernice</strong> — campitura larga o due apparizioni = violazione.</li>
-      <li><strong>Gli angoli hanno una causa</strong> — un raggio intermedio = violazione.</li>
-      <li><strong>Astrarre, mai illustrare</strong> — asset decorativo che raffigura una scena = violazione.</li>
+      <li><strong>La carta ha una tinta</strong> - un grigio o un nero desaturato = violazione.</li>
+      <li><strong>L'ornamento si merita</strong> - due elementi <em>song</em> insieme = violazione.</li>
+      <li><strong>Un motivo per elemento</strong> - più di 2 motivi mescolati = rifiutato.</li>
+      <li><strong>L'ottico è un gioiello, non della vernice</strong> - campitura larga o due apparizioni = violazione.</li>
+      <li><strong>Gli angoli hanno una causa</strong> - un raggio intermedio = violazione.</li>
+      <li><strong>Astrarre, mai illustrare</strong> - asset decorativo che raffigura una scena = violazione.</li>
       <li><strong>La materia alle superfici, il tratto agli ornamenti</strong>.</li>
-      <li><strong>Il movimento ha una causa</strong> — un loop decorativo permanente = violazione.</li>
-      <li><strong>Niente scoreboard</strong> — maiuscolo nero corsivo, glow neon, bordo luminoso = violazione.</li>
+      <li><strong>Il movimento ha una causa</strong> - un loop decorativo permanente = violazione.</li>
+      <li><strong>Niente scoreboard</strong> - maiuscolo nero corsivo, glow neon, bordo luminoso = violazione.</li>
     </ol>
   </section>
 

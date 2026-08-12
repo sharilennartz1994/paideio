@@ -148,7 +148,7 @@ export default async function CoachAdminDashboard() {
           <Star className="absolute -right-4 -bottom-4 size-32 text-on-surface opacity-5 transition-transform duration-500 group-hover:scale-110" />
           <p className="mb-2 font-mono text-label-caps text-on-surface-variant uppercase">Valutazione media</p>
           <p className="font-heading text-headline-lg text-on-surface">
-            {stats.rating.average != null ? stats.rating.average.toFixed(1) : "—"}
+            {stats.rating.average != null ? stats.rating.average.toFixed(1) : "-"}
           </p>
           <p className="mt-1 text-xs text-on-surface-variant">
             {stats.rating.count === 0 ? "nessuna recensione ancora" : `su ${stats.rating.count} recensioni`}

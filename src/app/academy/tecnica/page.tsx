@@ -11,7 +11,7 @@ import {
 import { GameBadge, GameCta } from "@/components/design";
 import { SHOTS } from "@/lib/editorial-content";
 
-export const metadata: Metadata = { title: "Tecnica e colpi del padel — Paideio Academy" };
+export const metadata: Metadata = { title: "Tecnica e colpi del padel - Paideio Academy" };
 
 export default function TecnicaPage() {
   return (

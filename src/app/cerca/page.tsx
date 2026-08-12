@@ -217,7 +217,7 @@ export default async function CercaPage({ searchParams }: { searchParams: Search
                   <p className="text-xs text-nebbia">Lezione da</p>
                   <p className="mt-1 flex items-center gap-1 font-heading text-2xl text-calce">
                     <Euro className="size-4 text-vetro" aria-hidden />
-                    {profile.pricePerLesson ?? "—"}
+                    {profile.pricePerLesson ?? "-"}
                   </p>
                 </div>
                 <GameCta href={`/coach/${coach.id}#prenota`} tone="ball" showBall arrow className="flex-1 md:flex-none">

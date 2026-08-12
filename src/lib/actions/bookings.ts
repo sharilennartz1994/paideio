@@ -46,7 +46,7 @@ export async function createBooking(input: {
     return err("Devi accedere come giocatore per prenotare.");
   }
 
-  // Data valida (YYYY-MM-DD) e non nel passato — le stringhe in questo formato
+  // Data valida (YYYY-MM-DD) e non nel passato - le stringhe in questo formato
   // sono ordinabili lessicograficamente.
   const today = toLocalDateString(new Date());
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date) || input.date < today) {

@@ -16,9 +16,9 @@ export const coachProfiles = pgTable("coach_profiles", {
     .primaryKey()
     .references(() => users.id, { onDelete: "cascade" }),
   bio: text("bio").notNull().default(""),
-  // JSON-encoded string[] — e.g. ["principiante","intermedio"]
+  // JSON-encoded string[] - e.g. ["principiante","intermedio"]
   levels: text("levels").notNull().default("[]"),
-  // JSON-encoded string[] — subset of ["singolo","gruppo"]
+  // JSON-encoded string[] - subset of ["singolo","gruppo"]
   trainingTypes: text("training_types").notNull().default("[]"),
   // URL Vercel Blob; null finché il coach non carica una foto (fallback iniziali)
   avatarUrl: text("avatar_url"),

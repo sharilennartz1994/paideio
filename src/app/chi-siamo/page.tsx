@@ -10,7 +10,7 @@ import {
 import { GameAsset, GameCta, GameDivider } from "@/components/design";
 
 export const metadata: Metadata = {
-  title: "Paideio — Il gioco si impara insieme",
+  title: "Paideio - Il gioco si impara insieme",
   description:
     "Paideio nasce dalla paideia: formazione attraverso pratica, guida e comunità. Oggi rende più semplice trovare un coach di padel.",
 };

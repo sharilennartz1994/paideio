@@ -12,7 +12,7 @@ PARCHMENT = (244, 234, 213)
 
 
 def edge_mismatch(im):
-    """Écart moyen (0-255) entre bords opposés — 0 = tuilage parfait."""
+    """Écart moyen (0-255) entre bords opposés - 0 = tuilage parfait."""
     rgb = im.convert('RGB')
     w, h = rgb.size
     px = rgb.load()

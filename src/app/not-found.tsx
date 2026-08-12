@@ -12,7 +12,7 @@ export default function NotFound() {
       <p className="mt-6 font-mono text-label-caps text-primary uppercase">Errore 404</p>
       <h1 className="mt-2 font-heading text-headline-lg-mobile text-on-surface">Fuori campo!</h1>
       <p className="mt-3 font-sans text-on-surface-variant">
-        Questa pagina non esiste o è stata spostata — hai mandato la pallina fuori.
+        Questa pagina non esiste o è stata spostata - hai mandato la pallina fuori.
       </p>
       <GameCta href="/" tone="ball" showBall className="mt-6">
         Torna in campo

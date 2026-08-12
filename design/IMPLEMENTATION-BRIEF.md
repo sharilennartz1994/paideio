@@ -1,4 +1,4 @@
-# Brief d’implementazione — Campo Centrale / Game Mode
+# Brief d’implementazione - Campo Centrale / Game Mode
 
 > Aggiornamento 26 luglio 2026: le tavole incise descritte più sotto sono
 > archiviate. Le superfici narrative usano ora i PNG comic/cel-shaded
@@ -85,7 +85,7 @@ ma non mischiare nello stesso gruppo Lucide arrotondate e nuove icone squadrate.
 
 ## 3. Composizione per superficie
 
-### Home — modalità “persuadere”
+### Home - modalità “persuadere”
 
 - Hero asimmetrico: testo 6/12, tavola scatola 5/12, una colonna d’aria.
 - Eyebrow sans breve; H1 Instrument Serif, sentence case, 40 mobile / 62 desktop. Una sola parola
@@ -98,7 +98,7 @@ ma non mischiare nello stesso gruppo Lucide arrotondate e nuove icone squadrate.
 - Un solo blocco invertito `--sabbia` per pagina, destinato alla prova/argomento “Perché Paideio”.
   Testo blu `--carta`; nessun giallo dentro.
 
-### Cerca — modalità “operare”
+### Cerca - modalità “operare”
 
 - Filtri desktop in colonna stabile; risultati dominanti. Mobile: filtri in Sheet accessibile,
   con riepilogo dei filtri applicati e pulsante persistente solo quando serve.
@@ -107,7 +107,7 @@ ma non mischiare nello stesso gruppo Lucide arrotondate e nuove icone squadrate.
   avatar che ruota.
 - Stato zero: copy esistente + `plate-palla-rete`; nessuna emoji tennis.
 
-### Profilo coach — modalità “leggere → agire”
+### Profilo coach - modalità “leggere → agire”
 
 - Testata con avatar reale, nome serif, rating e località; `plate-pala` è contrappunto editoriale,
   non sostituto del coach.
@@ -115,7 +115,7 @@ ma non mischiare nello stesso gruppo Lucide arrotondate e nuove icone squadrate.
   devono precedere dettagli secondari.
 - Sezioni bio, campi, recensioni con ritmo editoriale e un divisore massimo tra capitoli.
 
-### Prenotazioni e coach-admin — modalità “operare”
+### Prenotazioni e coach-admin - modalità “operare”
 
 - Densità maggiore, decorazione minore. Una sola tavola può vivere nell’empty state, mai tra righe
   attive.

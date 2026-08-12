@@ -1,4 +1,4 @@
-# Paideio Game Mode — componenti
+# Paideio Game Mode - componenti
 
 Catalogo visuale locale: `http://localhost:3000/design-system`.
 

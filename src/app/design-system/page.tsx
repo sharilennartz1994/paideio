@@ -18,7 +18,7 @@ import {
 } from "@/components/design";
 
 export const metadata: Metadata = {
-  title: "Game Mode — Design system Paideio",
+  title: "Game Mode - Design system Paideio",
   description: "Componenti, token e asset del design system comic/cel-shaded di Paideio.",
 };
 

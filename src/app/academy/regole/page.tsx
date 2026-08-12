@@ -10,7 +10,7 @@ import {
 import { GameBadge, GamePanel } from "@/components/design";
 
 export const metadata: Metadata = {
-  title: "Regole del padel 2026 — Paideio Academy",
+  title: "Regole del padel 2026 - Paideio Academy",
   description: "Guida aggiornata alle regole FIP 2026 e ai regolamenti delle competizioni FITP.",
 };
 

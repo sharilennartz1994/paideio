@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { EditorialHero, EditorialSectionGrid } from "@/components/editorial-layout";
 import { CIRCUIT_SECTIONS } from "@/lib/editorial-content";
 
-export const metadata: Metadata = { title: "Circuito professionistico di padel — Paideio" };
+export const metadata: Metadata = { title: "Circuito professionistico di padel - Paideio" };
 
 export default function CircuitoPage() {
   return (

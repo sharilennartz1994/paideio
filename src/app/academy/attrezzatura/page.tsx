@@ -9,7 +9,7 @@ import {
 } from "@/components/academy/academy-ui";
 import { GameBadge } from "@/components/design";
 
-export const metadata: Metadata = { title: "Attrezzatura da padel — Paideio Academy" };
+export const metadata: Metadata = { title: "Attrezzatura da padel - Paideio Academy" };
 
 export default function AttrezzaturaPage() {
   return (

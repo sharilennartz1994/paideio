@@ -3,12 +3,12 @@ name: paideio-dev
 description: Avvia l'ambiente di sviluppo di Paideio (reset+seed del database, dev server) e riepiloga le convenzioni correnti del progetto. Usare all'inizio di una sessione di lavoro su Paideio, o quando serve un promemoria sulle scelte architetturali già prese.
 ---
 
-# Paideio — dev workflow e convenzioni
+# Paideio - dev workflow e convenzioni
 
 Questa skill ha due scopi: (1) avviare rapidamente l'ambiente locale, (2) tenere le
 sessioni di sviluppo coerenti con le decisioni già prese sul progetto. Le convenzioni
 qui sotto sono uno specchio di `AGENTS.md` (root del repo, sempre caricato in
-contesto) — se noti una discrepanza tra questa skill e `AGENTS.md`, **AGENTS.md
+contesto) - se noti una discrepanza tra questa skill e `AGENTS.md`, **AGENTS.md
 vince** ed è il file da correggere.
 
 ## Avvio rapido
@@ -19,7 +19,7 @@ npm run dev        # avvia il dev server (porta 3000, o la prima libera)
 ```
 
 **Attenzione**: sviluppo locale e produzione (https://playpaideio.com)
-condividono lo stesso database Neon — `npm run db:seed` scrive anche in
+condividono lo stesso database Neon - `npm run db:seed` scrive anche in
 quello che vedono gli utenti reali. Vedi AGENTS.md sezioni "Dati demo" e
 "Deploy in produzione" prima di rilanciarlo.
 
@@ -40,22 +40,22 @@ giocatore a coach dopo la registrazione.
   `base-nova`, primitive **Base UI**, non Radix).
 - Drizzle ORM su **Postgres (Neon)**, driver `drizzle-orm/node-postgres` + `pg.Pool`
   a module scope in `src/lib/db/index.ts` (scelto per Vercel Fluid Compute, non
-  neon-http/neon-serverless — vedi AGENTS.md sezione Stack per il perché).
-- `src/lib/db/schema.ts` — schema Drizzle. `src/lib/db/seed.ts` — dati demo.
-- `src/lib/action-result.ts` — tipo `ActionResult<T>` che tutte le Server Action
+  neon-http/neon-serverless - vedi AGENTS.md sezione Stack per il perché).
+- `src/lib/db/schema.ts` - schema Drizzle. `src/lib/db/seed.ts` - dati demo.
+- `src/lib/action-result.ts` - tipo `ActionResult<T>` che tutte le Server Action
   ritornano invece di `throw`: in produzione Next.js oscura i messaggi di un throw
   non gestito da una Server Action, non i valori di ritorno normali. I client
   controllano `result.ok`, non try/catch.
-- `src/lib/queries.ts` — letture lato server, marcato `"server-only"`: **mai
+- `src/lib/queries.ts` - letture lato server, marcato `"server-only"`: **mai
   importarlo da un client component**, trascinerebbe il driver `pg` nel bundle
   browser (è già successo con better-sqlite3 prima della migrazione, vedi commit
   di fix storico).
-- `src/lib/constants.ts` — costanti/tipi condivisi tra server e client (`LEVELS`,
+- `src/lib/constants.ts` - costanti/tipi condivisi tra server e client (`LEVELS`,
   `TRAINING_TYPES`, `dayName`, `parseJsonArray`, `toLocalDateString`): importare da
   qui nei client component, non da `queries.ts`.
-- `src/lib/actions/` — Server Actions (`bookings.ts`, `coach-admin.ts`, `auth.ts`).
-- `src/app/coach-admin/` — area riservata coach, layout con guard sul ruolo utente.
-- `src/app/coach/[id]` — profilo pubblico coach, calendario e richiesta prenotazione.
+- `src/lib/actions/` - Server Actions (`bookings.ts`, `coach-admin.ts`, `auth.ts`).
+- `src/app/coach-admin/` - area riservata coach, layout con guard sul ruolo utente.
+- `src/app/coach/[id]` - profilo pubblico coach, calendario e richiesta prenotazione.
 
 ## Design system "Game Arena" (tema giorno/notte)
 
@@ -63,7 +63,7 @@ Il tema giorno `Court Daylight` è predefinito; `.dark` attiva l’arena
 notturna. La preferenza `paideio-theme` viene applicata prima del paint senza
 `next-themes`. Oxanium è il font display/UI sportivo; Hanken Grotesk è il
 font di lettura. Gli accenti sul tema giorno usano i token `accent-*-ink`
-(`accent-cyan-ink`, `accent-ball-ink`, `accent-orange-ink`) — **non solo per il
+(`accent-cyan-ink`, `accent-ball-ink`, `accent-orange-ink`) - **non solo per il
 testo ma anche per bordi, pallini, barre e riempimenti**. I token `game-*`
 (ink, blue, cyan, ball, white) sono fissi e valgono soltanto dove la superficie
 è a sua volta fissa: topbar, sidebar, bottom nav, sheet di navigazione, hero
@@ -99,7 +99,7 @@ esclusiva; le lezioni di gruppo condividono lo slot fino a
 `/coach-admin/profilo`); raggiunta la capienza lo slot sparisce. Uno slot già
 aperto come gruppo resta di gruppo. La capienza non è esprimibile come indice
 unico: `createBooking()` usa `pg_advisory_xact_lock` per serializzare gli
-scrittori sullo stesso slot — non sostituirlo con un `count(*)` nudo.
+scrittori sullo stesso slot - non sostituirlo con un `count(*)` nudo.
 
 Test: `npm run test:capienza`, da lanciare **solo** contro un Postgres locale
 usa-e-getta (lo script rifiuta URL non locali). Istruzioni complete
@@ -150,7 +150,7 @@ applicano quel filtro, e `FavoriteButton` prende `viewerRole` con varianti
 ## Chiusure calendario
 
 `availability_slots` è ricorrente settimanale; `availability_closures` è
-l'eccezione su una data precisa — un singolo turno oppure l'intera giornata
+l'eccezione su una data precisa - un singolo turno oppure l'intera giornata
 (`location_id`/`start_time`/`end_time` a `null`). Non modifica mai la
 ricorrenza. Regola condivisa in `closureKey()`/`isSlotClosed()`
 (`constants.ts`), usata da `buildCoachSchedule()` e da `createBooking()` dentro
@@ -160,7 +160,7 @@ Test: `npm run test:chiusure`. Dettagli in `AGENTS.md`.
 ## Conferme
 
 Usare `ConfirmDialog` (`components/confirm-dialog.tsx`), mai `window.confirm()`
-— nel codice non ne resta nessuno. `onConfirm` ritorna un booleano: `true`
+- nel codice non ne resta nessuno. `onConfirm` ritorna un booleano: `true`
 chiude, `false` tiene aperto per far leggere l'errore. Il bottone di conferma è
 **neutro** (`variant="default"`), mai rosso: il rosso è per gli errori, non per
 un'azione scelta dall'utente. Il rischio sta nei riquadri `reassurance` (ciano,
@@ -239,10 +239,10 @@ icone aggiornare generatore, PNG e alias semantici senza introdurre SVG.
 
 - Testi UI sempre in italiano.
 - Date "solo giorno" (`YYYY-MM-DD`): usare `toLocalDateString()` da
-  `src/lib/constants.ts`, **mai** `date.toISOString().slice(0,10)` — sfasa di un
+  `src/lib/constants.ts`, **mai** `date.toISOString().slice(0,10)` - sfasa di un
   giorno nei fusi orari UTC+ (bug reale già corretto una volta, non reintrodurlo).
 - Bottoni che devono comportarsi da link:
-  `<Button render={<Link href="..." />} nativeButton={false}>` — è la sintassi
+  `<Button render={<Link href="..." />} nativeButton={false}>` - è la sintassi
   Base UI di questo progetto, non `asChild` (quello è Radix).
 - Un booking corrisponde a uno slot settimanale intero del coach (non si spezzano
   in sotto-slot orari); il coach conferma/rifiuta manualmente dalla sua area.
@@ -252,27 +252,27 @@ icone aggiornare generatore, PNG e alias semantici senza introdurre SVG.
 Aggiorna questa sezione (e lo specchio in `AGENTS.md`) ogni volta che una di queste
 voci cambia stato, così le sessioni future partono dal punto giusto.
 
-- [x] Autenticazione reale con Clerk — vedi `AGENTS.md` per i dettagli
+- [x] Autenticazione reale con Clerk - vedi `AGENTS.md` per i dettagli
       (provisioning lazy dell'utente, `becomeCoach()`, proxy public-first)
-- [x] Ricerca coach per posizione/geolocalizzazione — vedi `AGENTS.md` per i
+- [x] Ricerca coach per posizione/geolocalizzazione - vedi `AGENTS.md` per i
       dettagli implementativi
-- [x] Rifinitura design e responsività mobile — form di prenotazione
+- [x] Rifinitura design e responsività mobile - form di prenotazione
       riordinato su schermi piccoli, shell sidebar/topbar/bottom-nav
-- [x] Redesign "Agonistic Pulse", replica export Stitch — vedi `AGENTS.md`
+- [x] Redesign "Agonistic Pulse", replica export Stitch - vedi `AGENTS.md`
       sezione Design system; home/cerca/coach/dashboard allineate 1:1,
       resto del sito su token nuovi ma decorazioni non ancora riportate
 - [x] Recensioni/voti coach, preferiti, traguardi giocatore, foto profilo
-      coach (Vercel Blob, progetto già collegato — vedi `AGENTS.md` per i
+      coach (Vercel Blob, progetto già collegato - vedi `AGENTS.md` per i
       dettagli e il token già configurato)
 - [x] Hardening backend (validazione prenotazioni, transizioni di stato,
       cancellazione campo sicura, transazioni atomiche) + ricchezza frontend
       (prezzo, statistiche coach, loading/error states, dashboard coach-admin,
-      ordinamento ricerca) — vedi sezione "Round squadra di agenti" in
+      ordinamento ricerca) - vedi sezione "Round squadra di agenti" in
       `AGENTS.md` per l'elenco completo e cosa è stato deliberatamente
       rimandato
 - [x] Migrazione a Postgres (Neon), Clerk production e dominio
       (https://playpaideio.com) + refactor errori Server Action da
-      `throw` a `ActionResult` strutturato — vedi `AGENTS.md` sezione
+      `throw` a `ActionResult` strutturato - vedi `AGENTS.md` sezione
       "Deploy in produzione" e `docs/PRODUCTION-HANDOFF.md`
 - [ ] Decisione su integrazione pagamenti (al momento assente)
 - [ ] PWA: manifest + icone + installabilità
@@ -285,7 +285,7 @@ Ogni componente polimorfico Base UI (`Button`, `SheetTrigger`, `SheetClose`, …
 un prop `nativeButton` (default `true`). Impostalo a `false` **solo** quando il
 `render` punta a un elemento non-`<button>` (es. `<Link>`). Se il `render` è esso
 stesso un `Button` senza `render` proprio (quindi renderizza un `<button>` vero),
-**non** toccare `nativeButton` — altrimenti si genera il warning opposto. L'overlay
+**non** toccare `nativeButton` - altrimenti si genera il warning opposto. L'overlay
 dev di Next.js segnala subito l'errore in console se sbagliato: controllarlo dopo
 ogni componente nuovo che usa `render`.
 

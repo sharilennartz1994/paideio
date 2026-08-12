@@ -1,9 +1,9 @@
-# Lotto 01 — Ornamenti capostipite (registro TRATTO)
+# Lotto 01 - Ornamenti capostipite (registro TRATTO)
 
 **Registro**: TRATTO (`SYSTEM.md` § 2a, versione congelata post-ancrage).
 **Referenza immagine**: `design/assets/00-anchor/anchor-sheet-v1.png` su **tutti** i prompt di
 questo lotto (sono tutti oggetti disegnati, nessun prompt « vuoto »).
-**Destinazione**: `design/assets/motifs/` — grezzi in `design/assets/_raw/`.
+**Destinazione**: `design/assets/motifs/` - grezzi in `design/assets/_raw/`.
 
 Regola di sequenziamento del metodo: **l'ornamento capostipite di un motivo si genera prima delle
 sue declinazioni**, e poi serve lui stesso da referenza per quelle. Questo lotto produce i quattro
@@ -33,25 +33,25 @@ timeless.
 
 ---
 
-## Asset 1 — `cucitura-divisore.png` (motivo 01)
+## Asset 1 - `cucitura-divisore.png` (motivo 01)
 
 ```
 <STYLE BLOCK>
 
 A single horizontal ornament: one continuous S-shaped curve with two symmetrical lobes, the seam
 of a padel ball abstracted into pure line. The stroke keeps exactly the same width along its
-whole length. Both ends are cut square. It is NOT a closed circle and NOT a ball — only the seam
+whole length. Both ends are cut square. It is NOT a closed circle and NOT a ball - only the seam
 curve, alone, centred, on an empty background with generous margin above and below.
 
 Wide image, one thousand six hundred pixels wide by four hundred pixels tall.
 ```
 
-## Asset 2 — `linea-servizio-divisore.png` (motivo 04)
+## Asset 2 - `linea-servizio-divisore.png` (motivo 04)
 
 ```
 <STYLE BLOCK>
 
-A single ornament: two straight strokes meeting at a right angle to form a T — one long
+A single ornament: two straight strokes meeting at a right angle to form a T - one long
 horizontal stroke, one short vertical stroke descending from its exact centre. The strokes have
 the slightly irregular edges of painted court lines, as if brushed onto a surface. The ends are
 cut square, never rounded. Nothing else in the image, centred, generous empty margin.
@@ -59,7 +59,7 @@ cut square, never rounded. Nothing else in the image, centred, generous empty ma
 Wide image, one thousand six hundred pixels wide by four hundred pixels tall.
 ```
 
-## Asset 3 — `rete-fascia.png` (motivo 05)
+## Asset 3 - `rete-fascia.png` (motivo 05)
 
 ```
 <STYLE BLOCK>
@@ -73,13 +73,13 @@ left and right.
 Wide image, one thousand six hundred pixels wide by four hundred pixels tall.
 ```
 
-## Asset 4 — `grip-banda.png` (motivo 06)
+## Asset 4 - `grip-banda.png` (motivo 06)
 
 ```
 <STYLE BLOCK>
 
 A single ornamental band of parallel diagonal stripes, all inclined at twenty-five degrees, each
-stripe carrying one thinner line along one edge where the wrapping overlaps — the abstraction of
+stripe carrying one thinner line along one edge where the wrapping overlaps - the abstraction of
 grip tape spiralling around a handle. Uniform stripe width, uniform spacing. The band spans the
 full width of the image, edge to edge, and must tile seamlessly left and right.
 
@@ -110,7 +110,7 @@ Wide image, one thousand six hundred pixels wide by four hundred pixels tall.
 
 ---
 
-## Rapporto di generazione e verifica — 25 luglio 2026
+## Rapporto di generazione e verifica - 25 luglio 2026
 
 Generazione eseguita con `image_gen.imagegen`, usando
 `/Users/shari/Progetti/Paideio/design/assets/00-anchor/anchor-sheet-v1.png` come immagine di
@@ -120,16 +120,16 @@ ritagliati o corretti.
 
 ### File scritti e dimensioni reali
 
-- `/Users/shari/Progetti/Paideio/design/assets/motifs/cucitura-divisore.png` — **1983 × 793 px**
-- `/Users/shari/Progetti/Paideio/design/assets/_raw/cucitura-divisore.png` — **1983 × 793 px**
-- `/Users/shari/Progetti/Paideio/design/assets/motifs/linea-servizio-divisore.png` —
+- `/Users/shari/Progetti/Paideio/design/assets/motifs/cucitura-divisore.png` - **1983 × 793 px**
+- `/Users/shari/Progetti/Paideio/design/assets/_raw/cucitura-divisore.png` - **1983 × 793 px**
+- `/Users/shari/Progetti/Paideio/design/assets/motifs/linea-servizio-divisore.png` -
   **1983 × 793 px**
-- `/Users/shari/Progetti/Paideio/design/assets/_raw/linea-servizio-divisore.png` —
+- `/Users/shari/Progetti/Paideio/design/assets/_raw/linea-servizio-divisore.png` -
   **1983 × 793 px**
-- `/Users/shari/Progetti/Paideio/design/assets/motifs/rete-fascia.png` — **1774 × 887 px**
-- `/Users/shari/Progetti/Paideio/design/assets/_raw/rete-fascia.png` — **1774 × 887 px**
-- `/Users/shari/Progetti/Paideio/design/assets/motifs/grip-banda.png` — **1774 × 887 px**
-- `/Users/shari/Progetti/Paideio/design/assets/_raw/grip-banda.png` — **1774 × 887 px**
+- `/Users/shari/Progetti/Paideio/design/assets/motifs/rete-fascia.png` - **1774 × 887 px**
+- `/Users/shari/Progetti/Paideio/design/assets/_raw/rete-fascia.png` - **1774 × 887 px**
+- `/Users/shari/Progetti/Paideio/design/assets/motifs/grip-banda.png` - **1774 × 887 px**
+- `/Users/shari/Progetti/Paideio/design/assets/_raw/grip-banda.png` - **1774 × 887 px**
 
 Nessun output rispetta la dimensione richiesta di 1600 × 400 px.
 

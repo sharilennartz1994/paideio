@@ -63,7 +63,7 @@ def main() -> None:
         row = f"{name:14}"
         for f in FONDI:
             if name == f:
-                row += f"{'—':>13}"
+                row += f"{'-':>13}"
                 continue
             r = ratio(hexc, PALETTE[f])
             row += f"{r:>8.2f} {tag(r):<4}"

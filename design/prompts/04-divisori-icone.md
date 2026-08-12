@@ -1,10 +1,10 @@
-# Lotto 04 — Divisori (declinazioni) + tavola-campione delle icone
+# Lotto 04 - Divisori (declinazioni) + tavola-campione delle icone
 
 **Registro**: TRATTO (`SYSTEM.md` § 2a, congelato) per tutti e cinque.
 **Destinazione**: divisori in `design/assets/dividers/`, tavola icone in `design/assets/icons/`
-— grezzi in `design/assets/_raw/`.
+- grezzi in `design/assets/_raw/`.
 
-**Referenze, diverse per asset** — regola di sequenziamento del metodo: *l'ornamento capostipite di
+**Referenze, diverse per asset** - regola di sequenziamento del metodo: *l'ornamento capostipite di
 un motivo serve da referenza alle sue declinazioni*, non la planche d'ancrage.
 
 | Asset | Referenza |
@@ -30,7 +30,7 @@ timeless.
 
 ---
 
-## Asset 1 — `dividers/divider-sezione.png`
+## Asset 1 - `dividers/divider-sezione.png`
 
 Divisore di sezione a piena larghezza: la frontiera fra due sezioni della home.
 
@@ -45,7 +45,7 @@ ends of the rule are cut square. Nothing else in the image; generous empty space
 Very wide landscape composition, many times wider than tall.
 ```
 
-## Asset 2 — `dividers/divider-corto.png`
+## Asset 2 - `dividers/divider-corto.png`
 
 Ornamento breve centrato, rango « gioiello »: punteggia, non separa.
 
@@ -60,7 +60,7 @@ else; wide empty margins all around.
 Wide landscape composition.
 ```
 
-## Asset 3 — `dividers/divider-t-larga.png`
+## Asset 3 - `dividers/divider-t-larga.png`
 
 Frontiera di sezione derivata dalla T del campo.
 
@@ -68,14 +68,14 @@ Frontiera di sezione derivata dalla T del campo.
 <STYLE BLOCK>
 
 A horizontal section divider built from painted court lines: one long straight rule running the
-full width of the image, with three short vertical strokes descending from it — one at the exact
+full width of the image, with three short vertical strokes descending from it - one at the exact
 centre, longer, and one on each side at equal distance, shorter. All strokes share the same width
 and all ends are cut square, never rounded. Nothing else in the image.
 
 Very wide landscape composition, many times wider than tall.
 ```
 
-## Asset 4 — `dividers/divider-fine.png`
+## Asset 4 - `dividers/divider-fine.png`
 
 Marca di fine contenuto.
 
@@ -89,10 +89,10 @@ three are exactly the same size and the same stroke width.
 Wide landscape composition.
 ```
 
-## Asset 5 — `icons/icone-tavola.png`
+## Asset 5 - `icons/icone-tavola.png`
 
 **Tavola-campione**, non icone da spedire. Fissa il disegno e il vocabolario formale; il ritaglio
-a 24 px non si fa da qui — le icone finali si ridisegnano in SVG su griglia (vedi § Limiti).
+a 24 px non si fa da qui - le icone finali si ridisegnano in SVG su griglia (vedi § Limiti).
 
 ```
 <STYLE BLOCK>
@@ -124,16 +124,16 @@ Square composition.
 
 ## Verifica prima dell'ingestione
 
-- [ ] **Asset 1, 3** — la riga arriva davvero **da bordo a bordo**? Se il modello la centra
+- [ ] **Asset 1, 3** - la riga arriva davvero **da bordo a bordo**? Se il modello la centra
       lasciando margini, il divisore non è a piena larghezza e va ritagliato o rifatto.
-- [ ] **Asset 1** — la curva e la riga hanno **lo stesso spessore**. Se la curva è più grassa,
+- [ ] **Asset 1** - la curva e la riga hanno **lo stesso spessore**. Se la curva è più grassa,
       l'ornamento litiga con la riga.
-- [ ] **Asset 2, 4** — nessun bordo, nessuna cornice attorno all'ornamento.
-- [ ] **Asset 4** — **tre** ornamenti, identici fra loro, non due né quattro.
-- [ ] **Asset 5** — **dodici** icone, 3 righe × 4. Spessore di tratto **identico** fra tutte:
+- [ ] **Asset 2, 4** - nessun bordo, nessuna cornice attorno all'ornamento.
+- [ ] **Asset 4** - **tre** ornamenti, identici fra loro, non due né quattro.
+- [ ] **Asset 5** - **dodici** icone, 3 righe × 4. Spessore di tratto **identico** fra tutte:
       è il difetto atteso di una tavola di icone generata.
-- [ ] **Asset 5, icona 10** — la pala è una lastra forata, **senza corde**.
-- [ ] **Tutti** — estremi tagliati netti, nessuna scritta, nessun numero.
+- [ ] **Asset 5, icona 10** - la pala è una lastra forata, **senza corde**.
+- [ ] **Tutti** - estremi tagliati netti, nessuna scritta, nessun numero.
 
 ## Trappole e falsi positivi noti
 

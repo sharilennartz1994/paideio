@@ -1,8 +1,8 @@
-# Changelog — identità visiva Paideio
+# Changelog - identità visiva Paideio
 
 Una voce datata per sessione. Obbligatorio.
 
-## 2026-07-25 (e) — Fase 2 : lotti 02, 03, 04 — biblioteca quasi completa
+## 2026-07-25 (e) - Fase 2 : lotti 02, 03, 04 - biblioteca quasi completa
 
 14 asset generati in tre lotti paralleli. Audit: `audits/audit-lotti02-03-04.md`.
 **13 accettati, 1 rifiutato.**
@@ -18,21 +18,21 @@ Una voce datata per sessione. Obbligatorio.
 it is wide` + `strict top-down orthographic view` ha portato il campo da 1,24-1,66 in assonometria
 (errore al 100 % sulle quattro varianti dell'ancrage) a **1,94:1 zenitale**.
 
-**Rifiutato — `grip-banda-v2`**: doveva essere una fascia astratta di bande a 25°, il modello ha
+**Rifiutato - `grip-banda-v2`**: doveva essere una fascia astratta di bande a 25°, il modello ha
 disegnato **l'impugnatura di una racchetta**, oggetto isolato al centro. Doppia violazione: non è
 una fascia, e infrange il principio § 6.6 « astrarre, mai illustrare ». Causa probabile: la
 referenza `anchor-sheet-v1.png` contiene un rotolo di grip e una racchetta, e su una richiesta
-astratta ha tirato verso l'oggetto — variante attenuata della trappola del prompt « vuoto ».
+astratta ha tirato verso l'oggetto - variante attenuata della trappola del prompt « vuoto ».
 Da rigenerare **senza ancrage in referenza**. Resta valida la v1 (angolo sbagliato ma vera fascia).
 
 **Due volte ho quasi riportato un difetto sbagliato, entrambe corrette dalla misura o dallo
-sguardo**: (a) su `grip-banda-v2` avevo misurato « 89,6°, strisce verticali » — guardando
+sguardo**: (a) su `grip-banda-v2` avevo misurato « 89,6°, strisce verticali » - guardando
 l'immagine il difetto era tutt'altro e assai più grave: **la misura non sostituisce lo sguardo**;
 (b) su `plate-palla-rete` avevo stimato a occhio ~10 % di giallo, misurato è **2,33 %** contro un
 limite del 2 %, sforamento marginale accettato: **lo sguardo non sostituisce la misura**.
 
 **Difetti misurati e trattati**: contrasto texture 13,7-16,9 % (p2-p98) contro il limite dichiarato
-dell'8 % — sulla deviazione standard (3,3-5,2 %) rientrano, quindi `granulo` va già bene come
+dell'8 % - sulla deviazione standard (3,3-5,2 %) rientrano, quindi `granulo` va già bene come
 whisper e le altre tre andranno applicate a opacità ridotta, da misurare sui componenti reali;
 `foratura` tuilage 13,0 → **0,6** per ritaglio su periodo intero (originale in `_archive-materia/`).
 
@@ -41,19 +41,19 @@ comportamento del tool. Smesso di chiederle.
 
 ---
 
-## 2026-07-25 (d) — Fase 2 : ancrage scelto + lotto 01 (ornamenti al tratto)
+## 2026-07-25 (d) - Fase 2 : ancrage scelto + lotto 01 (ornamenti al tratto)
 
 **Planche d'ancrage**: l'utente sceglie la **V4** → `assets/00-anchor/anchor-sheet-v1.png`.
 Le altre tre restano come candidate, nulla cancellato.
 
 **STYLE BLOCK corretti e da qui in avanti congelati** (`SYSTEM.md` § 2, unica finestra prevista dal
-metodo — dopo l'ancrage, prima del primo lotto): aggiunto `no embossing, no repoussé, no metallic
+metodo - dopo l'ancrage, prima del primo lotto): aggiunto `no embossing, no repoussé, no metallic
 sheen, no brushed metal` a tutti e tre i registri; il limite del giallo passa da « at most one
 small area » (non misurabile, letto come tre palline piene da due varianti su quattro) a **un solo
 oggetto, max 2 % della superficie**. Invariante § 8.3 rinforzato con proporzione 2:1 e vista
 zenitale imposte in lettere per la futura tavola del campo.
 
-**Lotto 01** — 4 ornamenti capostipite al tratto in `assets/motifs/`, audit in
+**Lotto 01** - 4 ornamenti capostipite al tratto in `assets/motifs/`, audit in
 `audits/audit-lotto01-tratto.md`:
 - **La correzione anti-rilievo ha preso, misurata**: deviazione standard della luminanza interna
   al tratto (bordi antialiasati esclusi per erosione) fra **0,75 e 1,33** su 255. Uno sbalzo
@@ -73,11 +73,11 @@ zenitale imposte in lettere per la futura tavola del campo.
 
 ---
 
-## 2026-07-25 (c) — Fase 2 avviata : planche d'ancrage
+## 2026-07-25 (c) - Fase 2 avviata : planche d'ancrage
 
 Grammatica revisione 2 approvata dall'utente (« già meglio »). Avvio della generazione asset.
 
-- `prompts/00-anchor.md` — prompt della planche d'ancrage: STYLE BLOCK INCISIONE verbatim + 8
+- `prompts/00-anchor.md` - prompt della planche d'ancrage: STYLE BLOCK INCISIONE verbatim + 8
   oggetti emblematici del padel in griglia 2×4, nessuna immagine di riferimento (è la prima).
   Include la checklist degli invarianti da verificare oggetto per oggetto e le trappole note.
 - Lanciato `codex:codex-rescue` → `image_gen.imagegen` per 4 varianti.
@@ -94,7 +94,7 @@ Grammatica revisione 2 approvata dall'utente (« già meglio »). Avvio della ge
   campo è visto dall'alto come chiesto, tutti in assonometria). Confermata la regola d'oro n° 1
   del metodo: verificare da sé prima di far correggere.
 - Correzioni allo STYLE BLOCK identificate per il lotto 1 (rilievo metallico, giallo quantificato,
-  proporzione e vista del campo) — vedi § 5 dell'audit. **Non ancora applicate**: si applicano
+  proporzione e vista del campo) - vedi § 5 dell'audit. **Non ancora applicate**: si applicano
   dopo la scelta della variante, con le correzioni dell'utente insieme.
 - **Trappola d'ambiente incontrata e documentata** (vedi `HANDOFF.md` § 8): lo stato dei job
   Codex sta in `~/.claude/plugins/data/codex-openai-codex/state/…`, non in `codex-inline/` come
@@ -105,9 +105,9 @@ Grammatica revisione 2 approvata dall'utente (« già meglio »). Avvio della ge
 
 ---
 
-## 2026-07-25 (b) — Fase 1, revisione 2 : redirezione dell'utente alla porta di validazione
+## 2026-07-25 (b) - Fase 1, revisione 2 : redirezione dell'utente alla porta di validazione
 
-Prima passata alla porta: **tre proposte su quattro rifiutate**. La porta ha funzionato — le
+Prima passata alla porta: **tre proposte su quattro rifiutate**. La porta ha funzionato - le
 correzioni costano un'ora adesso, sarebbero costate novanta asset dopo.
 
 **Verdetto dell'utente sulla revisione 1**
@@ -140,7 +140,7 @@ della Fase 5 non sa citarli guardando una schermata, il sistema ha fallito su qu
   è il blu della carta; nessun testo chiaro sul giallo, mai).
 
 **Prodotto**: `SYSTEM.md` riscritto · `planche-stile.html` rifatta · `audits/planche-stile-v2.png`
-· `tools/contrast.py` aggiornato sulla nuova palette. La v1 è in `audits/_archive/` — non si
+· `tools/contrast.py` aggiornato sulla nuova palette. La v1 è in `audits/_archive/` - non si
 cancella nulla.
 
 **Non fatto**: il divisore « linea di servizio » nella card coach resta poco convincente in CSS
@@ -149,26 +149,26 @@ giudicato sull'incisione vera, non sul segnaposto.
 
 ---
 
-## 2026-07-25 (a) — Fase 0 + Fase 1 : grammatica « Campo Centrale »
+## 2026-07-25 (a) - Fase 0 + Fase 1 : grammatica « Campo Centrale »
 
 Avvio del quarto giro di design, questa volta con il metodo `site-identite-generative`
 (identità generativa: grammatica → asset → boucle critique).
 
 **Decisioni dell'utente (porta di validazione, non riaprire senza di lui)**
-- Ampiezza: **identità nuova da zero**. Il sistema « Agonistic Pulse » — replica 1:1 dell'export
-  Google Stitch, dark-only — è archiviato. La regola « non toccare i valori Stitch » di AGENTS.md
+- Ampiezza: **identità nuova da zero**. Il sistema « Agonistic Pulse » - replica 1:1 dell'export
+  Google Stitch, dark-only - è archiviato. La regola « non toccare i valori Stitch » di AGENTS.md
   è formalmente revocata da questa decisione.
 - Fase 2 asset: **pipeline completa** (Codex → `image_gen.imagegen`), non CSS a mano.
-- Dark-only: **abbandonato**. Direzione scelta « Campo Centrale — luce di mezzogiorno », su
+- Dark-only: **abbandonato**. Direzione scelta « Campo Centrale - luce di mezzogiorno », su
   proposta motivata: il dark-neon è il cliché della categoria padel (Playtomic, Matchi e simili),
   quindi lo slop di categoria.
 
 **Prodotto**
-- `SYSTEM.md` — alfabeto chiuso di 8 motivi ricavati da materia reale del padel (cucitura,
+- `SYSTEM.md` - alfabeto chiuso di 8 motivi ricavati da materia reale del padel (cucitura,
   foratura, malla, linea di servizio, rete, grip, granulo, vetro) ; 3 STYLE BLOCK verbatim
   (TRATTO / INCISIONE / MATERIA) con cartografia ; palette a 10 token ; 8 principi falsificabili ;
   7 invarianti del soggetto ; scala ornamenti a 3 ranghi ; livello motion separato dall'alfabeto.
-- `tools/contrast.py` — matrice WCAG della palette, riproducibile.
+- `tools/contrast.py` - matrice WCAG della palette, riproducibile.
 - Struttura cartelle: `assets/{00-anchor,motifs,patterns,dividers,plates,icons,_raw}`,
   `prompts/`, `audits/screens/`, `_backups/`, `tools/`.
 

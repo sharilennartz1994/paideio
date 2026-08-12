@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Checklist, EditorialHero, SourceNote } from "@/components/editorial-layout";
 
-export const metadata: Metadata = { title: "Calendario Premier Padel 2026 — Paideio" };
+export const metadata: Metadata = { title: "Calendario Premier Padel 2026 - Paideio" };
 
 export default function CalendarioPage() {
   return (

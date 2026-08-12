@@ -1,4 +1,4 @@
-# Paideio Game Mode — asset system
+# Paideio Game Mode - asset system
 
 Stato: libreria PNG comic/cel-shaded, luglio 2026.
 

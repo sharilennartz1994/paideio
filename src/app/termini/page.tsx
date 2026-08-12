@@ -11,7 +11,7 @@ import {
 } from "@/components/legal-layout";
 
 export const metadata: Metadata = {
-  title: "Termini di servizio — Paideio",
+  title: "Termini di servizio - Paideio",
   description:
     "Le condizioni che regolano l’uso di Paideio per giocatori e coach: ruolo della piattaforma, obblighi, prenotazioni e responsabilità.",
 };
@@ -120,8 +120,8 @@ export default function TerminiPage() {
             </>,
             <>
               <strong className="text-calce">Veridicità del profilo.</strong> Le informazioni
-              che pubblichi — biografia, qualifiche eventualmente indicate, livelli, tipo di
-              allenamento, campi, prezzo — sono vere e verificabili. Non attribuirti titoli,
+              che pubblichi - biografia, qualifiche eventualmente indicate, livelli, tipo di
+              allenamento, campi, prezzo - sono vere e verificabili. Non attribuirti titoli,
               abilitazioni o affiliazioni che non possiedi.
             </>,
             <>
@@ -155,8 +155,8 @@ export default function TerminiPage() {
           dichiarate dai coach stessi e pubblicate senza controllo preventivo.
         </LegalHighlight>
         <p>
-          Gli elementi mostrati sul profilo pubblico — come l’anzianità sulla piattaforma, il
-          numero di lezioni svolte tramite Paideio o le valutazioni ricevute — descrivono
+          Gli elementi mostrati sul profilo pubblico - come l’anzianità sulla piattaforma, il
+          numero di lezioni svolte tramite Paideio o le valutazioni ricevute - descrivono
           l’attività registrata sulla piattaforma. Non sono un giudizio sulla competenza, né
           una certificazione o un accreditamento da parte nostra.
         </p>
@@ -234,7 +234,7 @@ export default function TerminiPage() {
         </p>
         <LegalHighlight>
           Nessuna clausola di questi termini esclude o limita la responsabilità che, secondo
-          la legge applicabile, non può essere esclusa o limitata — in particolare nei
+          la legge applicabile, non può essere esclusa o limitata - in particolare nei
           confronti dei consumatori e nei casi di dolo o colpa grave.
         </LegalHighlight>
       </LegalSection>

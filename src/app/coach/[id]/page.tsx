@@ -33,7 +33,7 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
   // genera sempre qualche slot nella finestra di 21 giorni: calendario vuoto
   // equivale a "non ancora prenotabile". Questi coach non compaiono in /cerca
   // (vedi `searchCoaches`), ma la pagina resta raggiungibile da link diretto e
-  // dai preferiti già salvati — lì la CTA diventa "Salva tra i preferiti".
+  // dai preferiti già salvati - lì la CTA diventa "Salva tra i preferiti".
   const isBookable = calendar.length > 0;
 
   return (
@@ -176,7 +176,7 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
               </div>
             </div>
             {reviews.length === 0 && (
-              <p className="text-sm text-on-surface-variant">Nessuna recensione ancora — sii il primo a lasciarne una!</p>
+              <p className="text-sm text-on-surface-variant">Nessuna recensione ancora - sii il primo a lasciarne una!</p>
             )}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {reviews.map(({ review, player }) => (

@@ -63,7 +63,7 @@ export function FavoriteButton({
       const result = await toggleFavorite(coachId);
       if (result.ok) {
         setIsFavorite(result.data);
-        if (result.data) toast.success("Aggiunto ai preferiti — lo ritrovi in “Preferiti”");
+        if (result.data) toast.success("Aggiunto ai preferiti - lo ritrovi in “Preferiti”");
         else toast("Rimosso dai preferiti");
       } else {
         setIsFavorite(!next);

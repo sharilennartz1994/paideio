@@ -60,7 +60,7 @@ let totale = 0;
 for (const tabella of ORDINE) {
   const righe = dati[tabella] ?? [];
   if (righe.length === 0) {
-    console.log(`  ${tabella.padEnd(22)} —`);
+    console.log(`  ${tabella.padEnd(22)} -`);
     continue;
   }
 

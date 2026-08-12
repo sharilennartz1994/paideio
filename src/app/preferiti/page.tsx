@@ -87,7 +87,7 @@ export default async function PreferitiPage() {
             {!hasPublishedAvailability && (
               <p className="flex items-center gap-2 border border-nebbia/30 bg-carta-bassa px-3 py-2 text-xs text-nebbia">
                 <Clock className="size-3.5 shrink-0 text-accent-ball-ink" aria-hidden />
-                Non ha ancora pubblicato orari — torna a controllare, lo trovi sempre qui.
+                Non ha ancora pubblicato orari - torna a controllare, lo trovi sempre qui.
               </p>
             )}
             <Link
