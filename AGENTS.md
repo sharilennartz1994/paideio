@@ -777,15 +777,38 @@ Le conseguenze, da tenere allineate se tocchi una di queste superfici:
 - Un booking = uno slot settimanale intero del coach (no sotto-slot orari); il
   coach conferma/rifiuta manualmente.
 
+### Collegamento fra identità Clerk e riga locale
+
+`linkOrCreateLocalUser()` in `session.ts` traduce un'identità Clerk nella riga
+`users`. È estratta da `getCurrentUser()` apposta per essere provabile senza
+Clerk (`npm run test:identita`), perché conteneva un bug silenzioso.
+
+**Il bug**: se esisteva già una riga con quella email ma con un `clerk_id`
+diverso (o nullo), `onConflictDoNothing()` ingoiava il conflitto e la
+ri-select per `clerk_id` tornava `null`. L'utente risultava autenticato su
+Clerk e inesistente per l'app: le rotte protette lo rimbalzavano in home senza
+alcun messaggio. Capitava a chi ricreava l'account Clerk, e **sempre** a chi
+accedeva in locale trovando la riga creata dall'istanza di produzione.
+
+**La correzione**: quando l'insert va in conflitto sull'email, la riga
+esistente viene *adottata* impostandole il nuovo `clerk_id`, **solo se Clerk ha
+verificato l'indirizzo**. Senza quel controllo basterebbe registrarsi con
+l'email di qualcun altro per prenderne il posto; con esso serve accesso alla
+casella, che è la stessa condizione di un recupero password — non apre una
+strada nuova. L'adozione conserva ruolo, `id` e `createdAt`: una riga coach non
+viene degradata a player, e un profilo demo del seed può essere rivendicato dal
+coach vero.
+
+L'`UPDATE` è guardato da `clerk_id IS NULL OR clerk_id <> nuovo`, quindi è
+idempotente rispetto alle richieste concorrenti; se un'altra richiesta ha già
+adottato la riga, si rilegge per `clerk_id`. Entrambi i rami loggano.
+
 ## Sviluppo in locale con un database separato
 
-Storicamente locale e produzione condividevano lo stesso database Neon. Due
-conseguenze fastidiose: ogni `db:seed` scriveva in ciò che vedono gli utenti
-reali, e **fare login in locale era di fatto impossibile** — il proprio utente
-ha il `clerk_id` dell'istanza Clerk di *produzione*, quindi accedendo con
-l'istanza di sviluppo si ottiene un id diverso, l'insert in `getCurrentUser()`
-va in conflitto su `users_email_unique`, `onConflictDoNothing()` lo ingoia e la
-funzione ritorna `null`: risulti autenticato su Clerk ma inesistente per l'app.
+Storicamente locale e produzione condividevano lo stesso database Neon, e ogni
+`db:seed` scriveva in ciò che vedono gli utenti reali. (Il secondo effetto —
+l'impossibilità di fare login in locale — è stato risolto separatamente: vedi
+"Collegamento fra identità Clerk e riga locale".)
 
 Dal 12 agosto 2026 c'è un Postgres locale in `docker-compose.yml`:
 
@@ -801,8 +824,9 @@ alta di `.env.local` ma continua a leggere anche quello, quindi **le chiavi
 Clerk di sviluppo restano valide**: si sovrascrive soltanto il database. Per
 tornare a lavorare contro Neon basta rinominare o cancellare quel file.
 
-Con il database locale il login funziona: l'utente Clerk viene provisionato da
-zero come `player`, e i coach demo del seed sono già prenotabili. La prima
+Con il database locale il login funziona da subito: l'utente Clerk viene
+provisionato da zero come `player`, e i coach demo del seed sono già
+prenotabili. La prima
 fascia di Elena Ferraro è lunedì 09:00-20:00 apposta, per provare il caso
 "giornata intera".
 
