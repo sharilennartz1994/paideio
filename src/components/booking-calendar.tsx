@@ -189,7 +189,12 @@ export function BookingCalendar({
       </header>
 
       <div className="grid lg:grid-cols-2">
-        <div className="border-b border-nebbia/20 p-5 md:p-7 lg:border-r lg:border-b-0">
+        {/* `min-w-0`: un elemento di griglia ha `min-width: auto`, quindi non
+            scende sotto la larghezza min-content del contenuto. Senza, la
+            striscia dei giorni (che è già `overflow-x-auto`) non scorreva:
+            allargava l'intero pannello a 452px dentro 337px disponibili, e il
+            resto dello step veniva tagliato dall'`overflow-hidden` esterno. */}
+        <div className="min-w-0 border-b border-nebbia/20 p-5 md:p-7 lg:border-r lg:border-b-0">
           <div className="flex items-end justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-calce">1. Quando vuoi allenarti?</p>
@@ -287,7 +292,7 @@ export function BookingCalendar({
           </div>
         </div>
 
-        <div className="flex flex-col p-5 md:p-7">
+        <div className="flex min-w-0 flex-col p-5 md:p-7">
           <div>
             <p className="text-sm font-semibold text-calce">2. Personalizza l’allenamento</p>
             <p className="mt-1 text-sm text-nebbia">Il coach userà questi dettagli per prepararsi.</p>
@@ -413,7 +418,10 @@ export function BookingCalendar({
                 </p>
               )}
 
-              <div className="flex items-center justify-between gap-4">
+              {/* Prezzo e CTA affiancati non stanno in 297px: la CTA ha
+                  `whitespace-nowrap` e non si comprime. Su mobile vanno
+                  impilati, con il bottone a piena larghezza. */}
+              <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <div>
                   <span className="block text-xs text-nebbia">Totale stimato</span>
                   <strong className="font-heading text-2xl text-calce">
@@ -422,7 +430,9 @@ export function BookingCalendar({
                 </div>
                 {viewerRole === null ? (
                   <SignInButton mode="modal">
-                    <GameCta tone="ball" showBall arrow>Accedi e prenota</GameCta>
+                    <GameCta tone="ball" showBall arrow className="w-full sm:w-auto">
+                      Accedi e prenota
+                    </GameCta>
                   </SignInButton>
                 ) : (
                   <GameCta
@@ -431,6 +441,7 @@ export function BookingCalendar({
                     tone="ball"
                     showBall
                     arrow
+                    className="w-full sm:w-auto"
                   >
                     Invia richiesta
                   </GameCta>

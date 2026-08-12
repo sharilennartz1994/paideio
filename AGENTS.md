@@ -205,6 +205,37 @@ parser ingenuo produce una valanga di falsi positivi. Risolvere i colori
 passandoli a un canvas 1×1 e comporre anche il primo layer di
 `background-image` quando è un gradiente piatto.
 
+### Overflow orizzontale: `min-w-0` sui figli di grid e flex
+
+Un figlio di grid o flex ha `min-width: auto`, quindi **non scende sotto la
+larghezza min-content del proprio contenuto**. È la causa di quasi tutte le
+rotture responsive trovate finora, e il sintomo inganna: il contenitore esterno
+ha `overflow-hidden`, quindi non vedi una scrollbar, vedi del testo tagliato a
+metà e pensi a un problema di larghezza fissa.
+
+Casi corretti il 12 agosto 2026, tutti a 375px (iPhone SE):
+
+- `booking-calendar.tsx`, `grid lg:grid-cols-2`: la striscia dei giorni è già
+  `overflow-x-auto`, ma senza `min-w-0` sui due figli **non scorreva** —
+  allargava il pannello a 452px dentro 337px, e lo step "Personalizza
+  l'allenamento" veniva tagliato. Un `overflow-x-auto` dentro una griglia non
+  serve a niente se il suo antenato non può stringersi.
+- Riga finale prezzo + CTA: la CTA ha `whitespace-nowrap` e `shrink-0`, insieme
+  facevano 351px in 297px. Impilata sotto `sm`, bottone a piena larghezza.
+- `coach/[id]`, `h1` del nome: un username o una email non hanno spazi e a 40px
+  sfondano. Servono `min-w-0` sul contenitore e `break-words hyphens-auto` sul
+  titolo.
+- `location-manager.tsx`: il `Badge` "Non geolocalizzato…" è `shrink-0` con
+  testo su una riga e spingeva la card 117px oltre il viewport — **l'unico caso
+  con scroll orizzontale visibile di tutta l'app**. Sostituito con un paragrafo
+  che va a capo: un badge non è il componente giusto per una frase.
+
+Per verificare, non fidarsi dell'occhio: caricare la pagina in un iframe largo
+375px (le media query dentro un iframe usano il suo viewport) e cercare gli
+elementi con `scrollWidth - clientWidth > 2` che non siano `overflow-x:auto`.
+Attenzione ai falsi positivi legittimi: `.truncate` sfora per definizione, e le
+icone decorative posizionate `-right-4` sono ritagliate apposta.
+
 ### Navigazione mobile
 
 `app-bottom-nav.tsx` è solo il guscio server (ruolo + contatore notifiche);

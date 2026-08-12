@@ -51,8 +51,11 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
               <CoachAvatar name={detail.coach.name} src={detail.profile.avatarUrl} className="size-full text-5xl" />
             </div>
           </div>
-          <div className="flex-grow pb-4 text-center md:text-left">
-            <h1 className="font-heading text-[40px] text-calce md:text-[62px]">
+          {/* `min-w-0` + `break-words`: un nome lungo senza spazi (username o
+              email) non si spezza da solo e a 40px sfonda il contenitore, che
+              l'hero poi taglia con `overflow-hidden`. */}
+          <div className="min-w-0 flex-grow pb-4 text-center md:text-left">
+            <h1 className="font-heading text-[40px] break-words hyphens-auto text-calce md:text-[62px]">
               {detail.coach.name}
             </h1>
             <div className="mt-4 flex flex-wrap justify-center gap-3 md:justify-start">

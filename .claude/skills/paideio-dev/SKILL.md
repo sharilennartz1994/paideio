@@ -162,6 +162,17 @@ ricorrenza. Regola condivisa in `closureKey()`/`isSlotClosed()`
 l'advisory lock. Chiudere annulla e notifica le prenotazioni attive sulla data.
 Test: `npm run test:chiusure`. Dettagli in `AGENTS.md`.
 
+## Overflow orizzontale
+
+Un figlio di grid o flex ha `min-width: auto` e non scende sotto la larghezza
+min-content del contenuto: serve `min-w-0`. È la causa di quasi tutte le
+rotture responsive trovate, e il sintomo inganna — l'`overflow-hidden` esterno
+nasconde la scrollbar e mostra solo testo tagliato. Un `overflow-x-auto` dentro
+una griglia non scorre se l'antenato non può stringersi. Per i testi senza spazi
+(username, email) servono `break-words`/`hyphens-auto`. Verificare in un iframe
+da 375px cercando `scrollWidth - clientWidth > 2`; `.truncate` e le icone
+decorative `-right-4` sono falsi positivi legittimi. Dettagli in `AGENTS.md`.
+
 ## Conferme
 
 Usare `ConfirmDialog` (`components/confirm-dialog.tsx`), mai `window.confirm()`
