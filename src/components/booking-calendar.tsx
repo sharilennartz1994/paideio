@@ -80,7 +80,16 @@ export function BookingCalendar({
   const [type, setType] = useState<string>(trainingTypes[0] ?? "singolo");
   const [level, setLevel] = useState(levels[0] ?? "");
   const [notes, setNotes] = useState("");
+  const [tutteLeDate, setTutteLeDate] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  // Le date vanno a capo invece di scorrere, quindi mostrarle tutte subito
+  // allungava il passo 1 a 5 righe su mobile. Si parte dalla prima settimana,
+  // ma la data selezionata resta sempre visibile anche se si richiude.
+  const DATE_INIZIALI = 7;
+  const visibleDates = tutteLeDate
+    ? dates
+    : dates.slice(0, Math.max(DATE_INIZIALI, dates.indexOf(activeDate) + 1));
 
   const daySlots = slots.filter((slot) => slot.date === activeDate);
   const step = selected ? 2 : 1;
@@ -210,8 +219,13 @@ export function BookingCalendar({
             )}
           </div>
 
-          <div className="-mx-1 mt-6 flex gap-2 overflow-x-auto px-1 pb-2" aria-label="Giorni disponibili">
-            {dates.map((date) => {
+          {/* Niente `overflow-x-auto`: con il mouse serve shift+rotella e su
+              macOS la scrollbar è a scomparsa, quindi le date oltre la sesta
+              erano irraggiungibili senza alcun indizio. Stessa scelta fatta per
+              i tab di `coach-admin-nav`: si va a capo, così ogni data resta
+              visibile e cliccabile a qualunque larghezza. */}
+          <div className="mt-6 grid grid-cols-[repeat(auto-fill,minmax(76px,1fr))] gap-2" aria-label="Giorni disponibili">
+            {visibleDates.map((date) => {
               const stamp = dateStamp(date);
               const available = slots.filter((slot) => slot.date === date && !slot.booked).length;
               return (
@@ -231,7 +245,7 @@ export function BookingCalendar({
                     if (selected?.date !== date) setSelected(null);
                   }}
                   className={cn(
-                    "min-h-20 min-w-[76px] shrink-0 border px-3 py-2 text-center transition-[background-color,color,border-color,transform] duration-150",
+                    "min-h-20 border px-2 py-2 text-center transition-[background-color,color,border-color,transform] duration-150",
                     activeDate === date
                       ? "border-vetro bg-vetro text-carta"
                       : "border-nebbia/25 bg-carta-bassa text-calce hover:border-vetro"
@@ -244,6 +258,18 @@ export function BookingCalendar({
               );
             })}
           </div>
+
+          {dates.length > visibleDates.length || tutteLeDate ? (
+            <button
+              type="button"
+              onClick={() => setTutteLeDate((v) => !v)}
+              className="mt-3 min-h-11 text-sm font-semibold text-vetro underline underline-offset-4 hover:text-calce"
+            >
+              {tutteLeDate
+                ? "Mostra solo i prossimi giorni"
+                : `Mostra tutte le ${dates.length} date disponibili`}
+            </button>
+          ) : null}
 
           <div className="mt-5">
             <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-calce">

@@ -215,11 +215,9 @@ metà e pensi a un problema di larghezza fissa.
 
 Casi corretti il 12 agosto 2026, tutti a 375px (iPhone SE):
 
-- `booking-calendar.tsx`, `grid lg:grid-cols-2`: la striscia dei giorni è già
-  `overflow-x-auto`, ma senza `min-w-0` sui due figli **non scorreva** —
-  allargava il pannello a 452px dentro 337px, e lo step "Personalizza
-  l'allenamento" veniva tagliato. Un `overflow-x-auto` dentro una griglia non
-  serve a niente se il suo antenato non può stringersi.
+- `booking-calendar.tsx`, `grid lg:grid-cols-2`: senza `min-w-0` sui due figli
+  il pannello si allargava a 452px dentro 337px e lo step "Personalizza
+  l'allenamento" veniva tagliato.
 - Riga finale prezzo + CTA: la CTA ha `whitespace-nowrap` e `shrink-0`, insieme
   facevano 351px in 297px. Impilata sotto `sm`, bottone a piena larghezza.
 - `coach/[id]`, `h1` del nome: un username o una email non hanno spazi e a 40px
@@ -229,6 +227,16 @@ Casi corretti il 12 agosto 2026, tutti a 375px (iPhone SE):
   testo su una riga e spingeva la card 117px oltre il viewport — **l'unico caso
   con scroll orizzontale visibile di tutta l'app**. Sostituito con un paragrafo
   che va a capo: un badge non è il componente giusto per una frase.
+
+**Corollario: niente scroll orizzontale nascosto.** La striscia dei giorni in
+`booking-calendar.tsx` era `overflow-x-auto`: tecnicamente scorreva, ma con il
+mouse serve shift+rotella e su macOS la scrollbar è a scomparsa, quindi le date
+oltre la sesta erano irraggiungibili senza alcun indizio — lo stesso difetto
+dei tab di `coach-admin-nav`. Ora è una griglia `auto-fill` che va a capo, con
+le prime 7 date visibili e un "Mostra tutte le N date disponibili" (la data
+selezionata resta sempre visibile anche richiudendo). In questo prodotto
+**l'unico `overflow-x-auto` accettabile è quello con un'affordance esplicita**:
+in mancanza, far andare a capo.
 
 Per verificare, non fidarsi dell'occhio: caricare la pagina in un iframe largo
 375px (le media query dentro un iframe usano il suo viewport) e cercare gli
