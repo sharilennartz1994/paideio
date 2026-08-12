@@ -9,6 +9,7 @@ import { celebrate } from "@/lib/confetti";
 import type { CalendarSlot } from "@/lib/queries";
 import type { TrainingType } from "@/lib/constants";
 import { Textarea } from "@/components/ui/textarea";
+import { FavoriteButton } from "@/components/favorite-button";
 import { FullScreenGameLoader, GameBadge, GameCta, GameEmptyState } from "@/components/design";
 import { cn } from "@/lib/utils";
 
@@ -55,6 +56,8 @@ export function BookingCalendar({
   levels,
   viewerRole,
   pricePerLesson,
+  initialFavorite = false,
+  offersLessons = true,
 }: {
   coachId: string;
   slots: CalendarSlot[];
@@ -62,6 +65,10 @@ export function BookingCalendar({
   levels: string[];
   viewerRole: "player" | "coach" | null;
   pricePerLesson?: number | null;
+  /** Serve solo allo stato vuoto, che propone di salvare il coach. */
+  initialFavorite?: boolean;
+  /** Il coach ha dichiarato tipi di lezione e livelli. */
+  offersLessons?: boolean;
 }) {
   const availableSlots = useMemo(() => slots.filter((slot) => !slot.booked), [slots]);
   const dates = useMemo(
@@ -73,7 +80,16 @@ export function BookingCalendar({
   const [type, setType] = useState<string>(trainingTypes[0] ?? "singolo");
   const [level, setLevel] = useState(levels[0] ?? "");
   const [notes, setNotes] = useState("");
+  const [tutteLeDate, setTutteLeDate] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  // Le date vanno a capo invece di scorrere, quindi mostrarle tutte subito
+  // allungava il passo 1 a 5 righe su mobile. Si parte dalla prima settimana,
+  // ma la data selezionata resta sempre visibile anche se si richiude.
+  const DATE_INIZIALI = 7;
+  const visibleDates = tutteLeDate
+    ? dates
+    : dates.slice(0, Math.max(DATE_INIZIALI, dates.indexOf(activeDate) + 1));
 
   const daySlots = slots.filter((slot) => slot.date === activeDate);
   const step = selected ? 2 : 1;
@@ -116,12 +132,26 @@ export function BookingCalendar({
     });
   }
 
-  if (slots.length === 0) {
+  // Senza tipi di lezione e livelli ogni slot risulterebbe pieno: meglio uno
+  // stato vuoto esplicito che un calendario di caselle tutte grigie.
+  if (slots.length === 0 || !offersLessons) {
     return (
       <GameEmptyState
         asset="pickupTube"
-        title="Nuovi orari in arrivo"
-        description="Il coach non ha ancora pubblicato disponibilità. Salva il profilo tra i preferiti e torna presto."
+        title={offersLessons ? "Nuovi orari in arrivo" : "Prenotazioni non ancora aperte"}
+        description={
+          offersLessons
+            ? "Il coach non ha ancora pubblicato disponibilità. Salvalo tra i preferiti: lo ritrovi nella tua lista e puoi tornare a controllare."
+            : "Il coach deve ancora indicare che tipo di lezioni tiene e per quali livelli. Salvalo tra i preferiti: lo ritrovi nella tua lista e puoi tornare a controllare."
+        }
+        action={
+          <FavoriteButton
+            coachId={coachId}
+            initialFavorite={initialFavorite}
+            viewerRole={viewerRole}
+            variant="cta"
+          />
+        }
       />
     );
   }
@@ -168,7 +198,12 @@ export function BookingCalendar({
       </header>
 
       <div className="grid lg:grid-cols-2">
-        <div className="border-b border-nebbia/20 p-5 md:p-7 lg:border-r lg:border-b-0">
+        {/* `min-w-0`: un elemento di griglia ha `min-width: auto`, quindi non
+            scende sotto la larghezza min-content del contenuto. Senza, la
+            striscia dei giorni (che è già `overflow-x-auto`) non scorreva:
+            allargava l'intero pannello a 452px dentro 337px disponibili, e il
+            resto dello step veniva tagliato dall'`overflow-hidden` esterno. */}
+        <div className="min-w-0 border-b border-nebbia/20 p-5 md:p-7 lg:border-r lg:border-b-0">
           <div className="flex items-end justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-calce">1. Quando vuoi allenarti?</p>
@@ -184,8 +219,13 @@ export function BookingCalendar({
             )}
           </div>
 
-          <div className="-mx-1 mt-6 flex gap-2 overflow-x-auto px-1 pb-2" aria-label="Giorni disponibili">
-            {dates.map((date) => {
+          {/* Niente `overflow-x-auto`: con il mouse serve shift+rotella e su
+              macOS la scrollbar è a scomparsa, quindi le date oltre la sesta
+              erano irraggiungibili senza alcun indizio. Stessa scelta fatta per
+              i tab di `coach-admin-nav`: si va a capo, così ogni data resta
+              visibile e cliccabile a qualunque larghezza. */}
+          <div className="mt-6 grid grid-cols-[repeat(auto-fill,minmax(76px,1fr))] gap-2" aria-label="Giorni disponibili">
+            {visibleDates.map((date) => {
               const stamp = dateStamp(date);
               const available = slots.filter((slot) => slot.date === date && !slot.booked).length;
               return (
@@ -205,7 +245,7 @@ export function BookingCalendar({
                     if (selected?.date !== date) setSelected(null);
                   }}
                   className={cn(
-                    "min-h-20 min-w-[76px] shrink-0 border px-3 py-2 text-center transition-[background-color,color,border-color,transform] duration-150",
+                    "min-h-20 border px-2 py-2 text-center transition-[background-color,color,border-color,transform] duration-150",
                     activeDate === date
                       ? "border-vetro bg-vetro text-carta"
                       : "border-nebbia/25 bg-carta-bassa text-calce hover:border-vetro"
@@ -218,6 +258,18 @@ export function BookingCalendar({
               );
             })}
           </div>
+
+          {dates.length > visibleDates.length || tutteLeDate ? (
+            <button
+              type="button"
+              onClick={() => setTutteLeDate((v) => !v)}
+              className="mt-3 min-h-11 text-sm font-semibold text-vetro underline underline-offset-4 hover:text-calce"
+            >
+              {tutteLeDate
+                ? "Mostra solo i prossimi giorni"
+                : `Mostra tutte le ${dates.length} date disponibili`}
+            </button>
+          ) : null}
 
           <div className="mt-5">
             <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-calce">
@@ -266,7 +318,7 @@ export function BookingCalendar({
           </div>
         </div>
 
-        <div className="flex flex-col p-5 md:p-7">
+        <div className="flex min-w-0 flex-col p-5 md:p-7">
           <div>
             <p className="text-sm font-semibold text-calce">2. Personalizza l’allenamento</p>
             <p className="mt-1 text-sm text-nebbia">Il coach userà questi dettagli per prepararsi.</p>
@@ -392,7 +444,10 @@ export function BookingCalendar({
                 </p>
               )}
 
-              <div className="flex items-center justify-between gap-4">
+              {/* Prezzo e CTA affiancati non stanno in 297px: la CTA ha
+                  `whitespace-nowrap` e non si comprime. Su mobile vanno
+                  impilati, con il bottone a piena larghezza. */}
+              <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <div>
                   <span className="block text-xs text-nebbia">Totale stimato</span>
                   <strong className="font-heading text-2xl text-calce">
@@ -401,7 +456,9 @@ export function BookingCalendar({
                 </div>
                 {viewerRole === null ? (
                   <SignInButton mode="modal">
-                    <GameCta tone="ball" showBall arrow>Accedi e prenota</GameCta>
+                    <GameCta tone="ball" showBall arrow className="w-full sm:w-auto">
+                      Accedi e prenota
+                    </GameCta>
                   </SignInButton>
                 ) : (
                   <GameCta
@@ -410,6 +467,7 @@ export function BookingCalendar({
                     tone="ball"
                     showBall
                     arrow
+                    className="w-full sm:w-auto"
                   >
                     Invia richiesta
                   </GameCta>

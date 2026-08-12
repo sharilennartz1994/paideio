@@ -3,10 +3,10 @@
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { addLocation, removeLocation } from "@/lib/actions/coach-admin";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { FullScreenGameLoader, GameCta, GameEmptyState } from "@/components/design";
 
 type Location = { id: string; name: string; address: string; city: string; lat: number | null; lng: number | null };
@@ -55,16 +55,14 @@ export function LocationManager({ initialLocations }: { initialLocations: Locati
     });
   }
 
-  function handleRemove(id: string) {
-    if (!window.confirm("Rimuovere questo campo? Le prenotazioni future collegate verranno annullate.")) return;
-    startTransition(async () => {
-      const result = await removeLocation(id);
-      if (result.ok) {
-        toast("Campo rimosso.");
-      } else {
-        toast.error(result.error);
-      }
-    });
+  async function handleRemove(id: string): Promise<boolean> {
+    const result = await removeLocation(id);
+    if (result.ok) {
+      toast("Campo rimosso.");
+      return true;
+    }
+    toast.error(result.error);
+    return false;
   }
 
   return (
@@ -82,22 +80,46 @@ export function LocationManager({ initialLocations }: { initialLocations: Locati
         {initialLocations.map((loc) => (
           <div
             key={loc.id}
-            className="card-clip flex items-center justify-between border-t-2 border-vetro bg-surface-container-high p-4"
+            className="card-clip flex flex-col items-start gap-3 border-t-2 border-vetro bg-surface-container-high p-4 sm:flex-row sm:items-center sm:justify-between"
           >
-            <div>
-              <p className="font-heading text-headline-md text-on-surface">{loc.name}</p>
-              <p className="font-sans text-sm text-on-surface-variant">
+            {/* `min-w-0` + `break-words`: nome e indirizzo di un club possono
+                essere lunghi e `Badge` è `shrink-0` con testo su una riga, così
+                la card sfondava il viewport di 117px a 375px. */}
+            <div className="min-w-0">
+              <p className="font-heading text-headline-md break-words text-on-surface">{loc.name}</p>
+              <p className="font-sans text-sm break-words text-on-surface-variant">
                 {loc.address}, {loc.city}
               </p>
               {loc.lat == null && (
-                <Badge variant="outline" className="mt-1.5">
-                  Non geolocalizzato — non comparirà nella ricerca &quot;vicino a me&quot;
-                </Badge>
+                // Non un Badge: il testo è una frase, e un badge a riga singola
+                // non può contenerla su mobile.
+                <p className="mt-1.5 border border-outline-variant/40 px-2 py-1 text-xs leading-relaxed text-on-surface-variant">
+                  Non geolocalizzato - non comparirà nella ricerca &quot;vicino a me&quot;
+                </p>
               )}
             </div>
-            <Button size="sm" variant="outline" disabled={isPending} onClick={() => handleRemove(loc.id)}>
-              Rimuovi
-            </Button>
+            {/* Il cascade della FK cancella anche gli availability_slots del
+                campo: se non lo diciamo, il coach si ritrova il calendario
+                svuotato senza capire perché. */}
+            <ConfirmDialog
+              trigger={
+                <Button size="sm" variant="outline">
+                  Rimuovi
+                </Button>
+              }
+              disabled={isPending}
+              kicker="Campo di allenamento"
+              title="Vuoi davvero rimuovere questo campo?"
+              description={
+                <>
+                  <strong className="text-calce">{loc.name}</strong> sparirà dal tuo profilo
+                  pubblico.
+                </>
+              }
+              warning="Questa non è reversibile: verranno eliminati anche tutti i turni settimanali pubblicati su questo campo, e le prenotazioni future collegate verranno annullate con notifica ai giocatori. Potrai riaggiungere il campo, ma dovrai ricostruire gli orari da capo."
+              confirmLabel="Rimuovi il campo"
+              onConfirm={() => handleRemove(loc.id)}
+            />
           </div>
         ))}
       </div>

@@ -1,7 +1,7 @@
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+This version has breaking changes - APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
 # Paideio
@@ -15,24 +15,24 @@ allenamento, livelli, richieste).
 - Next.js 16 (App Router, Turbopack), TypeScript, Tailwind v4
 - shadcn/ui, style `base-nova`, primitive **Base UI** (non Radix): i bottoni
   polimorfici usano `render={<Link .../>}` + `nativeButton={false}`, non `asChild`
-- Drizzle ORM su **Postgres (Neon, via Vercel Marketplace)** — migrato da
+- Drizzle ORM su **Postgres (Neon, via Vercel Marketplace)** - migrato da
   SQLite locale prima del primo deploy in produzione. Driver
   `drizzle-orm/node-postgres` + `pg.Pool` creato una volta a module scope in
   `src/lib/db/index.ts` (non `neon-http`/`neon-serverless`: Vercel gira su
   Fluid Compute, che tiene vivo il runtime tra le richieste, quindi un pool
-  TCP riutilizzabile è la scelta giusta — vedi skill `neon-postgres`).
+  TCP riutilizzabile è la scelta giusta - vedi skill `neon-postgres`).
   `attachDatabasePool` da `@vercel/functions` lascia che il runtime dreni le
   connessioni prima che l'istanza vada in sospensione. Il progetto Neon è
   `paideio-eu`, regione **`aws-eu-central-1` (Francoforte)**: la regione di un
   progetto Neon non è modificabile dopo la creazione, quindi spostarla ha
   richiesto un progetto nuovo e il travaso dei dati (28 luglio 2026, vedi
   `docs/PRODUCTION-HANDOFF.md`). **Un solo database Neon condiviso tra
-  sviluppo locale e produzione** (nessun branch dedicato ancora) — vedi
+  sviluppo locale e produzione** (nessun branch dedicato ancora) - vedi
   "Stato e prossimi passi".
 - Autenticazione: Clerk (`@clerk/nextjs`). `src/proxy.ts` protegge
   `/coach-admin(.*)` e `/prenotazioni(.*)`; le altre rotte sono pubbliche
   (pattern "public-first"). `getCurrentUser()` in `src/lib/session.ts` fa da
-  ponte tra l'utente Clerk e la riga locale in `users` — al primo accesso la
+  ponte tra l'utente Clerk e la riga locale in `users` - al primo accesso la
   crea automaticamente con ruolo `player` (provisioning lazy, nessun
   webhook). `src/lib/actions/account.ts` (`becomeCoach()`) fa l'upgrade a
   coach e crea il `coachProfiles` vuoto. Tema shadcn + localizzazione
@@ -41,30 +41,31 @@ allenamento, livelli, richieste).
 
 ## Struttura
 
-- `src/lib/db/schema.ts` — schema Drizzle (users, coachProfiles, locations,
-  availabilitySlots, bookings, notifications, productFeedback)
-- `src/lib/db/seed.ts` — dati demo (`npm run db:seed`)
-- `src/lib/queries.ts` — query lato server, marcato `"server-only"`: **non
+- `src/lib/db/schema.ts` - schema Drizzle (users, coachProfiles, locations,
+  availabilitySlots, availabilityClosures, bookings, notifications,
+  productFeedback)
+- `src/lib/db/seed.ts` - dati demo (`npm run db:seed`)
+- `src/lib/queries.ts` - query lato server, marcato `"server-only"`: **non
   importarlo da client component** (trascinerebbe il driver `pg` nel bundle
   browser)
-- `src/lib/action-result.ts` — tipo `ActionResult<T>` (`{ok:true,data} |
+- `src/lib/action-result.ts` - tipo `ActionResult<T>` (`{ok:true,data} |
   {ok:false,error}`) che tutte le Server Action in `lib/actions/*` ritornano
   invece di lanciare eccezioni per gli errori attesi (validazione, permessi,
   limiti). **Non tornare a `throw new Error(...)` per errori che l'utente
   deve vedere**: Next.js in produzione oscura il messaggio di un throw non
   gestito da una Server Action (mostra un generico "An error occurred"), ma
-  non tocca un valore di ritorno normale — è per questo che il refactor è
+  non tocca un valore di ritorno normale - è per questo che il refactor è
   stato fatto. I client caller controllano `result.ok` invece di
   try/catch. Fa eccezione `becomeCoach()` in `actions/account.ts`: chiamata
   da un `<form action={...}>` diretto via `useActionState`
   (`components/become-coach-form.tsx`), stessa idea ma firma
   `(prevState, formData) => ActionResult` richiesta dall'hook.
-- `src/lib/constants.ts` — costanti/tipi condivisi (`LEVELS`, `TRAINING_TYPES`,
-  `dayName`, `parseJsonArray`, `toLocalDateString`) — usare questo import nei
+- `src/lib/constants.ts` - costanti/tipi condivisi (`LEVELS`, `TRAINING_TYPES`,
+  `dayName`, `parseJsonArray`, `toLocalDateString`) - usare questo import nei
   client component
-- `src/lib/actions/` — Server Actions (`bookings.ts`, `coach-admin.ts`, `auth.ts`)
-- `src/app/coach-admin/` — area riservata coach (layout con guard sul ruolo)
-- `src/app/coach/[id]` — profilo pubblico coach + calendario/prenotazione
+- `src/lib/actions/` - Server Actions (`bookings.ts`, `coach-admin.ts`, `auth.ts`)
+- `src/app/coach-admin/` - area riservata coach (layout con guard sul ruolo)
+- `src/app/coach/[id]` - profilo pubblico coach + calendario/prenotazione
 
 ## Design system attuale "Game Arena" (dal 26 luglio 2026)
 
@@ -157,10 +158,96 @@ Corollari già applicati:
   proprio: `.game-cta` lo risolve con l’ombra netta, altrove serve
   `border-game-ink` esplicito.
 
+### La regola inversa: superficie fissa ⇒ testo fisso
+
+Sopra c’è la regola “su superficie tematizzata usa accenti theme-aware”. Vale
+anche al contrario, ed è quella che si era rotta: **se lo sfondo è un colore
+FISSO, il testo che ci sta sopra deve essere fisso.** I colori fissi sono
+`--ottico`, `--ruggine`, `--sabbia` e tutti i `--game-*`; quelli che cambiano
+con il tema sono `--carta`, `--carta-alta`, `--carta-bassa`, `--calce`,
+`--nebbia`, `--vetro` e i tre `--accent-*-ink`. Accoppiarli fa funzionare il
+componente in una modalità sola su due, e il difetto passa inosservato perché
+chi sviluppa sta quasi sempre in modalità notte.
+
+Casi trovati e corretti (12 agosto 2026, misurati in entrambi i temi):
+
+- Tutti gli `on-*` in `@theme inline` erano `var(--carta)` su sfondi fissi.
+  `text-ball-foreground` e `text-on-secondary-fixed` sul giallo davano
+  **1,01:1 di giorno** - il bottone “Salva profilo” era un rettangolo giallo
+  vuoto. Ora `--color-ball-foreground`, `--color-on-secondary*`,
+  `--color-on-tertiary*` e `--color-on-error*` puntano a `var(--game-ink)`
+  (15,01:1 sul giallo, 6,32:1 sull’arancio, uguali nei due temi). Con lo stesso
+  bug erano illeggibili il bottone “Conferma” di `booking-request-actions`, i
+  badge traguardo e il contatore richieste in `coach-admin-nav`.
+- `--secondary-foreground` era `--carta` su `--sabbia` fisso: 4,26:1 di giorno e
+  3,42:1 di notte, sotto AA in entrambi. Ora `--game-white`, 4,79:1 fisso.
+  **Attenzione**: esistono due definizioni parallele, `--color-secondary-*` in
+  `@theme inline` (sorgente delle utility Tailwind) e `--secondary-*` in
+  `:root` (sorgente delle variabili shadcn). Vanno cambiate a coppie -
+  modificarne una sola non ha effetto sulle utility.
+- `GameCta tone="danger"` usava `text-ruggine`, fisso, su superficie
+  tematizzata: 2,13:1 di giorno (bottone “Rifiuta”). Ora
+  `text-accent-orange-ink`, che è theme-aware; il riempimento in hover resta
+  ruggine pieno con `game-ink` sopra.
+- `GameCta tone="outline"` usa `--vetro`, corretto sulle superfici
+  tematizzate ma **non** sulle arene fisse: in modalità giorno `--vetro` è un
+  verdeazzurro scuro e su `.net-texture` scendeva a 2,32:1. Per quei casi c’è
+  ora **`tone="arena"`** (`--game-cyan`, 8,51:1 di giorno e 9,75:1 di notte),
+  usato in `home/coach-path.tsx`, `chi-siamo` e nell’`EditorialHero` di
+  `/academy`. Non sostituire `outline` con `arena` ovunque: su una card chiara
+  il ciano fisso scende a ~1,9:1.
+
+Per verificare, non fidarsi dell’occhio in modalità notte: aprire la pagina in
+modalità giorno e misurare. Nota per chi scrive script di audit: molti colori
+calcolati escono in `oklab()` e le texture (`.net-texture`, `.paper-grain`)
+dipingono il fondo con `background-image`, non con `background-color` - un
+parser ingenuo produce una valanga di falsi positivi. Risolvere i colori
+passandoli a un canvas 1×1 e comporre anche il primo layer di
+`background-image` quando è un gradiente piatto.
+
+### Overflow orizzontale: `min-w-0` sui figli di grid e flex
+
+Un figlio di grid o flex ha `min-width: auto`, quindi **non scende sotto la
+larghezza min-content del proprio contenuto**. È la causa di quasi tutte le
+rotture responsive trovate finora, e il sintomo inganna: il contenitore esterno
+ha `overflow-hidden`, quindi non vedi una scrollbar, vedi del testo tagliato a
+metà e pensi a un problema di larghezza fissa.
+
+Casi corretti il 12 agosto 2026, tutti a 375px (iPhone SE):
+
+- `booking-calendar.tsx`, `grid lg:grid-cols-2`: senza `min-w-0` sui due figli
+  il pannello si allargava a 452px dentro 337px e lo step "Personalizza
+  l'allenamento" veniva tagliato.
+- Riga finale prezzo + CTA: la CTA ha `whitespace-nowrap` e `shrink-0`, insieme
+  facevano 351px in 297px. Impilata sotto `sm`, bottone a piena larghezza.
+- `coach/[id]`, `h1` del nome: un username o una email non hanno spazi e a 40px
+  sfondano. Servono `min-w-0` sul contenitore e `break-words hyphens-auto` sul
+  titolo.
+- `location-manager.tsx`: il `Badge` "Non geolocalizzato…" è `shrink-0` con
+  testo su una riga e spingeva la card 117px oltre il viewport — **l'unico caso
+  con scroll orizzontale visibile di tutta l'app**. Sostituito con un paragrafo
+  che va a capo: un badge non è il componente giusto per una frase.
+
+**Corollario: niente scroll orizzontale nascosto.** La striscia dei giorni in
+`booking-calendar.tsx` era `overflow-x-auto`: tecnicamente scorreva, ma con il
+mouse serve shift+rotella e su macOS la scrollbar è a scomparsa, quindi le date
+oltre la sesta erano irraggiungibili senza alcun indizio — lo stesso difetto
+dei tab di `coach-admin-nav`. Ora è una griglia `auto-fill` che va a capo, con
+le prime 7 date visibili e un "Mostra tutte le N date disponibili" (la data
+selezionata resta sempre visibile anche richiudendo). In questo prodotto
+**l'unico `overflow-x-auto` accettabile è quello con un'affordance esplicita**:
+in mancanza, far andare a capo.
+
+Per verificare, non fidarsi dell'occhio: caricare la pagina in un iframe largo
+375px (le media query dentro un iframe usano il suo viewport) e cercare gli
+elementi con `scrollWidth - clientWidth > 2` che non siano `overflow-x:auto`.
+Attenzione ai falsi positivi legittimi: `.truncate` sfora per definizione, e le
+icone decorative posizionate `-right-4` sono ritagliate apposta.
+
 ### Navigazione mobile
 
 `app-bottom-nav.tsx` è solo il guscio server (ruolo + contatore notifiche);
-l’interfaccia sta in `mobile-nav.tsx` (client). Quattro schede — Home, Cerca,
+l’interfaccia sta in `mobile-nav.tsx` (client). Quattro schede - Home, Cerca,
 una terza che cambia con il ruolo (Lezioni / Coach / Academy per gli anonimi) e
 **Altro**, che apre uno Sheet Base UI con il resto della navigazione (Academy,
 Circuito, Preferiti, Notifiche, Diventa coach, Il concept, Prossime release).
@@ -194,15 +281,15 @@ sistema è fatto così:
    detto di preferire di gran lunga l'export di **Google Stitch** (stesso
    brief, generato indipendentemente) e di **rifare il sito identico a
    quello**, screenshot alla mano (5 schermate: home, ricerca coach, profilo
-   coach, dashboard coach, le mie prenotazioni — cartella
+   coach, dashboard coach, le mie prenotazioni - cartella
    `stitch_paideio_padel_coaching_marketplace/*/code.html` fuori dal repo,
    in `~/Downloads`, tenuta come riferimento durante l'implementazione).
 3. **Stato attuale**: porting 1:1 dei token colore/tipografia esatti letti
    dai `code.html` di Stitch, poi ricostruiti con i componenti reali
-   (non è più un'interpretazione libera — i valori sotto sono quelli
+   (non è più un'interpretazione libera - i valori sotto sono quelli
    dell'export, non vanno "migliorati" senza che l'utente lo chieda di
    nuovo). Un dettaglio del tentativo 2 **è tornato utile** ed è stato
-   riusato: il font `Anybody` corsivo/maiuscolo per i titoli — Stitch lo
+   riusato: il font `Anybody` corsivo/maiuscolo per i titoli - Stitch lo
    usa a sua volta, quindi coincide.
 
 - **Tema giorno/notte** senza dipendenze: il giorno è il default
@@ -214,12 +301,12 @@ sistema è fatto così:
   `text-accent-orange-ink`; i corrispondenti `text-game-*` brillanti sono
   riservati alle superfici scure.
 - **Font**, esattamente come nell'export Stitch (`next/font/google` in
-  `layout.tsx`, nomi letterali in `@theme inline` — mai `var()` diretto,
+  `layout.tsx`, nomi letterali in `@theme inline` - mai `var()` diretto,
   stesso pattern del bug Geist):
   - `Anybody` → `--font-heading`. Titoli **maiuscoli e/o corsivi**
     (`uppercase italic`), pesante (`font-black`/800-900) per i momenti
     "scoreboard" (hero, nomi coach, "Bentornato Coach"). Il logo/wordmark è
-    sempre "PAIDEIO" — mai "Paideia" (quello è il termine greco del
+    sempre "PAIDEIO" - mai "Paideia" (quello è il termine greco del
     concept, errore di naming trovato nell'export originale di Stitch, non
     ripeterlo).
   - `Hanken Grotesk` → `--font-sans`, corpo del testo.
@@ -231,12 +318,12 @@ sistema è fatto così:
     `display-hero` (80px/900, hero desktop), `headline-lg` (48px/800),
     `headline-lg-mobile` (32px/800, hero mobile e fallback headline-lg),
     `headline-md` (24px/700), `label-caps` (12px/700/tracked, sempre
-    uppercase), `body-lg` (18px), `body-md` (16px) — usarle come
+    uppercase), `body-lg` (18px), `body-md` (16px) - usarle come
     `text-headline-lg` ecc., non reinventare dimensioni ad-hoc per i titoli.
 - **Palette M3 esatta** (Material Design 3 color roles, nomi e valori hex
   presi identici dai `code.html` di Stitch, registrati in `globals.css` sia
   come token raw (`--primary-container`, `--surface-container-high`, ecc.)
-  sia come utility Tailwind via `@theme inline` — si può scrivere
+  sia come utility Tailwind via `@theme inline` - si può scrivere
   `bg-primary-container`, `text-on-surface-variant`, `border-outline-variant`
   ecc. **esattamente come nell'HTML di Stitch**, non tradurre a mano):
   - `background`/`surface` `#111316` → base più scura; `surface-container-*`
@@ -244,9 +331,9 @@ sistema è fatto così:
     di elevazione (card, sidebar, pannelli).
   - `on-surface` `#e2e2e6` (testo principale), `on-surface-variant`
     `#c3c5d9` (testo secondario), `outline`/`outline-variant` per bordi.
-  - `primary` `#b6c4ff` (blu periwinkle chiaro — testo/icone/bottoni
+  - `primary` `#b6c4ff` (blu periwinkle chiaro - testo/icone/bottoni
     "normali", è il valore di `--primary` shadcn) vs `primary-container`
-    `#0057ff` (blu acceso pieno — blocchi CTA ad alto impatto, es. sezione
+    `#0057ff` (blu acceso pieno - blocchi CTA ad alto impatto, es. sezione
     "Sei un Coach?" in home, bottone sidebar). **Sono due token diversi con
     ruoli diversi, non intercambiabili.**
   - `secondary-container`/`secondary-fixed` `#d2f000` (giallo neon pallina)
@@ -260,11 +347,11 @@ sistema è fatto così:
     (la superficie più scura), per fasce hero decorative.
   - `error`/`error-container` → `--destructive` shadcn.
   - Badge di livello: `levelBadgeClass()` in `constants.ts`, invariati.
-- `--radius: 0.5rem` (non più zero) — Stitch usa arrotondamenti moderati
+- `--radius: 0.5rem` (non più zero) - Stitch usa arrotondamenti moderati
   (`rounded-lg`/`rounded-full`) mescolati a tagli `clip-path` netti per gli
   elementi ad alto impatto. Non tornare a zero-radius globale.
 - Utility decorative in `globals.css` (`@layer utilities`), nomi presi da
-  Stitch — riusare, non reinventare varianti:
+  Stitch - riusare, non reinventare varianti:
   - `.hex-texture` (alias `.hex-tex`) → texture a puntini per sfondi scuri
     (sostituisce l'asset esterno `transparenttextures.com` che Stitch usava
     in una pagina: stesso effetto, self-hosted via `radial-gradient`).
@@ -280,19 +367,19 @@ sistema è fatto così:
     profilo coach).
   - `.cut-cta` / `.cut-corner` → **rimossi** (erano gli alias del tentativo
     2). Tutte le pagine sono state riportate 1:1 su Stitch (vedi "Round
-    completamento design system" più sotto); non reintrodurli — per i
+    completamento design system" più sotto); non reintrodurli - per i
     bottoni CTA usare `.neo-shadow bg-secondary-fixed` (o `bg-ball`/alias),
     per i contenitori `.card-clip`.
 - **Shell dell'app cambiata**: non più header in cima soltanto. Ora
   `src/components/app-topbar.tsx` (barra fissa in alto, solo logo + notifica
   + profilo) + `src/components/app-sidebar.tsx` (sidebar fissa a sinistra,
-  desktop, `w-64`, nav + CTA in fondo — usa `src/components/sidebar-nav.tsx`,
+  desktop, `w-64`, nav + CTA in fondo - usa `src/components/sidebar-nav.tsx`,
   client, per lo stato attivo via `usePathname`) + `src/components/
   app-bottom-nav.tsx` (barra fissa in basso, mobile, 4 icone). `layout.tsx`
   applica `md:pl-64 pt-16 pb-24 md:pb-0` al `<main>` per lo spazio della
   sidebar/barre fisse. `site-header.tsx` e `mobile-nav.tsx` **rimossi**,
   sostituiti da questi tre. (Nota: `mobile-nav.tsx` esiste di nuovo oggi, ma è
-  un file diverso — vedi "Navigazione mobile" nel design system corrente.)
+  un file diverso - vedi "Navigazione mobile" nel design system corrente.)
   `site-footer.tsx` ha la fascia inclinata
   `-skew-y-1` con `md:pl-64` per allinearsi alla sidebar.
 - `src/components/coach-avatar.tsx` → **tornato circolare** (`rounded-full`,
@@ -302,16 +389,16 @@ sistema è fatto così:
   `secondary-fixed-dim`).
 - **Niente fotografie reali**: l'export di Stitch usa foto AI-generate
   ospitate su URL temporanei Google (`lh3.googleusercontent.com/aida-public/
-  ...`) — non riusabili in produzione (non stabili, probabilmente non
+  ...`) - non riusabili in produzione (non stabili, probabilmente non
   licenziate per embedding permanente). Ovunque Stitch aveva una foto (hero,
   card coach, sfondo profilo) qui c'è un blocco gradiente/texture al suo
   posto (stesso spazio/proporzioni, stesso mood cromatico). Se in futuro
   arrivano foto vere (coach reali via `avatarUrl` esistente, o asset del
-  brand), vanno agganciate in quegli stessi punti — non è un placeholder da
+  brand), vanno agganciate in quegli stessi punti - non è un placeholder da
   "completare con altro stile", è la stessa griglia in attesa dell'immagine.
 - Bottoni "ball" invariati:
   `className="bg-secondary-fixed font-mono text-label-caps text-on-secondary-fixed uppercase"`
-  (o l'alias `bg-ball`/`text-ball-foreground`, stesso colore) — nessuna
+  (o l'alias `bg-ball`/`text-ball-foreground`, stesso colore) - nessuna
   variant dedicata in `button.tsx`, per non toccare il file vendored shadcn.
 - **Icone proprietarie Paideio**: Lucide è stato rimosso. Le 56 forme
   originali sono PNG trasparenti in `public/design/icons`, generate in modo
@@ -332,7 +419,7 @@ sistema è fatto così:
   `prefers-reduced-motion: reduce`.
 - `Button` (`components/ui/button.tsx`) ha un leggero "schiacciamento" al
   click (`active:scale-[0.97]`) oltre al `translate-y-px` originale di
-  shadcn — voluto, non rimuovere.
+  shadcn - voluto, non rimuovere.
 - Toast (`sonner`, componente `ui/sonner.tsx`) + coriandoli
   (`src/lib/confetti.ts`, `canvas-confetti`) sostituiscono gli `Alert`
   statici per il feedback di successo su: prenotazione richiesta
@@ -343,7 +430,7 @@ sistema è fatto così:
 - Copy a tema padel nei messaggi di feedback e negli stati vuoti (es. "Palla
   a rete!" quando la ricerca non trova risultati, "Fuori campo!" nella 404
   in `not-found.tsx`, messaggi di successo prenotazione randomizzati in
-  `SUCCESS_MESSAGES` in `booking-calendar.tsx`) — mantenere questo tono
+  `SUCCESS_MESSAGES` in `booking-calendar.tsx`) - mantenere questo tono
   quando si aggiungono nuovi stati vuoti/di successo, non tornare a un tono
   neutro "di sistema".
 
@@ -370,7 +457,7 @@ l'action poi rifiuta: tenerle sulla stessa funzione è il punto.
 Difese, dal più esterno al più interno:
 1. `booking-calendar.tsx` disabilita gli slot pieni e restringe il selettore
    "tipo di lezione" a `slot.availableTypes`;
-2. `createBooking()` ricontrolla dentro una transazione — la UI può essere
+2. `createBooking()` ricontrolla dentro una transazione - la UI può essere
    stantia;
 3. due indici unici parziali su `bookings`: `bookings_active_single_slot_idx`
    (una sola singola attiva per slot) e `bookings_active_player_slot_idx` (un
@@ -383,6 +470,53 @@ questo `createBooking()` apre la transazione con
 gli scrittori su quello slot e si rilascia da solo a commit o rollback. Non
 sostituirlo con un semplice `SELECT count(*)`: il lock è ciò che rende corretto
 il conteggio.
+
+## Chiusure del calendario (eccezioni alla ricorrenza)
+
+I turni in `availability_slots` sono **ricorrenti settimanali**: "ogni lunedì
+18-19". Serviva poter dire "questo lunedì no" senza smontare la ricorrenza, da
+cui la tabella **`availability_closures`** (12 agosto 2026).
+
+- `locationId`/`startTime`/`endTime` valorizzati → chiude quella singola
+  istanza (giorno + campo + fascia).
+- tutti e tre `null` → chiude l'**intera giornata**, compresi i turni
+  pubblicati *dopo* la chiusura.
+- Una chiusura **non tocca** `availability_slots`: la ricorrenza resta intatta
+  e riaprire è una `DELETE`, non una ricostruzione.
+
+Come per la capienza, la regola sta in **un solo posto**: `closureKey()` e
+`isSlotClosed()` in `constants.ts`, usate sia dal calendario sia dall'action.
+La chiave di una chiusura giornaliera è `<data>|*|*`, ed è per questo che copre
+anche i turni futuri. Se le due strade divergono, il giocatore prenota una data
+che il coach ha chiuso.
+
+Difese, dal più esterno al più interno:
+1. `buildCoachSchedule()` in `queries.ts` genera le istanze concrete annotate;
+   `getCoachCalendar()` **scarta** le chiuse (il giocatore non le vede),
+   `getCoachSchedule()` le **tiene** (il coach deve poterle riaprire). Stessa
+   sorgente apposta.
+2. `createBooking()` ricontrolla **dentro l'advisory lock**, insieme alla
+   capienza: la UI può essere stantia.
+3. Due indici unici parziali, `availability_closures_day_idx` (dove
+   `location_id IS NULL`) e `availability_closures_slot_idx` (dove non lo è).
+   Servono due indici separati perché in Postgres i NULL sono distinti tra
+   loro: un indice unico solo su colonne nullable lascerebbe passare chiusure
+   giornaliere duplicate.
+
+**Chiudere una data annulla le prenotazioni attive che ci stanno sopra**, nella
+stessa transazione, con notifica al giocatore e al coach. Bloccare la chiusura
+sarebbe inutile proprio nel caso che serve (il coach sa già che non ci sarà), e
+lasciare le prenotazioni in piedi creerebbe lezioni fantasma. `closeAvailability
+Date()` ritorna quante ne ha annullate, e la UI lo dice nel `confirm()` prima di
+procedere. La riapertura **non** le ripristina: sono già state comunicate come
+annullate.
+
+`getCoachClosedDays()` esiste per un caso preciso: una giornata chiusa in cui
+non c'è nessun turno ricorrente non produrrebbe istanze, sparirebbe
+dall'interfaccia e non sarebbe più riapribile.
+
+Test: `npm run test:chiusure` (stesso Postgres usa-e-getta di
+`test:capienza`, istruzioni in testa allo script).
 
 ## Notifiche prenotazioni
 
@@ -397,6 +531,40 @@ il conteggio.
 - Le mutazioni notifiche invalidano il root layout con
   `revalidatePath("/", "layout")`, così il contatore della campanella si
   aggiorna immediatamente.
+
+### Conferme: `ConfirmDialog`, mai `window.confirm()`
+
+`src/components/confirm-dialog.tsx` è la conferma canonica del prodotto,
+costruita sull’`AlertDialog` Base UI già usato da `CancelBookingButton`. Il
+dialog nativo del browser non rispetta il tema, non permette di evidenziare la
+conseguenza distruttiva e su iOS mostra il dominio in cima: **non
+reintrodurlo**. Al 12 agosto 2026 non resta nessun `window.confirm()` nel
+codice - rimozione di turno, rimozione di campo e le due chiusure calendario
+passano tutte da qui.
+
+- `onConfirm` ritorna un booleano: `true` chiude il dialog, `false` lo lascia
+  aperto perché l’utente legga l’errore nel toast. Le funzioni chiamate devono
+  quindi ritornare l’esito, non limitarsi a lanciare un toast.
+- `warning` è il riquadro per la conseguenza irreversibile (quante lezioni
+  verranno annullate, che il cascade cancella anche i turni). Va usato per il
+  danno collaterale, non per ripetere il titolo.
+- **Il bottone di conferma è neutro, mai rosso.** Il rosso significa errore o
+  allarme; qui l’utente sta facendo una cosa che ha scelto di fare, spesso
+  reversibile. Usa `variant="default"` (`--vetro` su `--carta`: 5,45:1 di
+  giorno, 9,82:1 di notte, i due token cambiano tema insieme). Da non
+  confondere con `variant="destructive"` di shadcn, che oltre a essere rosso è
+  un riempimento al 10-20% con testo `--destructive` e di notte dà 3,91:1.
+  Stessa scelta in `CancelBookingButton`.
+- Il rischio lo comunicano i **due riquadri**, non il colore del pulsante:
+  `reassurance` (ciano, icona `History`) dice come si torna indietro,
+  `warning` (arancio, icona `AlertTriangle`) dice cosa si perde. Le chiusure
+  calendario hanno solo il primo, la rimozione di un campo solo il secondo, la
+  rimozione di un turno il primo con il rimando alla chiusura. Affidare il
+  segnale al solo colore è debole comunque: meglio dire *cosa* succede.
+- I titoli sono in seconda persona e nominano l’oggetto - “Vuoi davvero
+  chiudere questo slot?”, non “Chiudere…?”.
+- Il `trigger` è un `Button` reale, quindi **non** va `nativeButton={false}`
+  (vedi “Note Base UI”).
 
 ## Riepilogo prenotazioni giocatore
 
@@ -444,6 +612,86 @@ il conteggio.
   contenuti; le etichette appaiono come tooltip. I `devIndicators` Next sono
   disabilitati per non sovrapporre il pulsante dev alla rail durante i test.
 
+### Le cinque schede coach devono stare tutte nello schermo
+
+`coach-admin-nav.tsx` è una **griglia a 5 colonne** (icona sopra etichetta,
+`text-[10px]`, `hyphens-auto`) sotto `md`, e torna alla riga di tab classica da
+`md` in su. Prima era una sola riga `overflow-x-auto`: a 390px i tab misuravano
+519px in 342px disponibili, quindi **"Orari" e "Richieste" restavano fuori
+schermo** e su iOS, dove la scrollbar non si vede, erano di fatto
+irraggiungibili. È il motivo per cui il primo coach reale ha compilato solo
+Profilo e non ha mai pubblicato disponibilità. Se aggiungi una scheda, verifica
+che tutte restino visibili a 320px e non introdurre di nuovo lo scroll
+orizzontale senza affordance.
+
+### `revalidateCoachSurfaces()`
+
+Campi, turni e profilo alimentano **cinque superfici**: la checklist di
+`/coach-admin`, `/coach-admin/campi`, `/coach-admin/orari`, il profilo pubblico
+`/coach/[id]` e `/cerca`. Le action in `actions/coach-admin.ts` rivalidavano
+solo la scheda da cui partiva la modifica, così un turno appena pubblicato non
+compariva né nella checklist né lato giocatore. Usare l'helper
+`revalidateCoachSurfaces(coachId)` per qualunque nuova mutazione del coach,
+invece di un singolo `revalidatePath`.
+
+### Nessun vicolo cieco su `/coach-admin/orari`
+
+Un turno è sempre legato a un campo, ma la pagina Orari non può limitarsi a
+dire "vai prima alla scheda Campi": quando `locations` è vuoto rende inline
+`<LocationManager initialLocations={[]} />`, così il primo campo si crea senza
+cambiare pagina e la rivalidazione riporta subito il form dei turni. Vale la
+regola generale: uno stato vuoto che dipende da un altro passo deve offrire
+quel passo, non solo nominarlo.
+
+Nota: `locations` ha `onDelete: "cascade"` verso `availability_slots`, quindi
+rimuovere un campo cancella anche i suoi turni - il `confirm()` in
+`location-manager.tsx` lo dice esplicitamente.
+
+### Un coach non prenotabile non compare in ricerca
+
+Due condizioni, entrambe necessarie. La seconda è quella che ha morso davvero.
+
+**1. Nessun turno pubblicato.** `searchCoaches()` scarta i coach senza righe in
+`availability_slots`
+(`loadCoachIdsWithAvailability()`, una query sola per tutta la ricerca).
+Mostrarli portava il giocatore su un calendario vuoto dopo aver premuto
+"Prenota". La soglia è **almeno un turno settimanale configurato**, non "almeno
+uno slot libero": un coach tutto esaurito resta in ricerca, come dev'essere.
+
+**2. Nessun tipo di lezione o nessun livello.** `becomeCoach()` crea un
+`coachProfiles` vuoto (`levels: "[]"`, `trainingTypes: "[]"`). Finché resta
+tale, `computeSlotOccupancy()` marca **ogni slot libero come pieno** — la riga
+è `full: offered.length === 0` — e `createBooking()` rifiuta qualunque livello.
+Il coach pubblica gli orari, li vede nel proprio calendario, e il giocatore li
+trova tutti "non disponibili": da fuori sembra un guasto del prodotto, non una
+configurazione incompleta. Il predicato condiviso è `coachOffersLessons()` in
+`constants.ts`, usato da ricerca, profilo pubblico, preferiti e area coach così
+che dicano tutti la stessa cosa.
+
+Le conseguenze, da tenere allineate se tocchi una di queste superfici:
+
+- `/coach/[id]` resta pubblico e raggiungibile da link diretto e dai preferiti.
+  Con `calendar.length === 0` la CTA dell'hero e lo stato vuoto del
+  `BookingCalendar` diventano **"Salva tra i preferiti"**, e il titolo della
+  sezione dice "Non ancora prenotabile" invece di promettere una prenotazione.
+- `getFavoriteCoaches()` **non** applica il filtro: un preferito salvato prima
+  che il coach aprisse il calendario deve restare consultabile - è l'unico modo
+  per ritrovarlo. La card mostra "Non ha ancora pubblicato orari".
+- `/coach-admin` avverte il coach indicando **quale** delle due condizioni
+  manca, e nel caso dei tipi/livelli dice esplicitamente che i turni già
+  pubblicati risultano non disponibili. Senza quell'avviso l'unico segnale
+  sarebbe il silenzio.
+- L'alert in `coach-profile-form.tsx` diceva solo "non comparirà nei risultati
+  di ricerca", il che **era falso** prima di questa modifica (il coach
+  compariva eccome) e comunque taceva l'effetto peggiore. Ora nomina il campo
+  mancante e l'effetto sugli orari.
+- `FavoriteButton` prende `viewerRole` (non più `isPlayer`) e ha due varianti:
+  `icon` (il cuoricino) e `cta` (bottone etichettato). Per i visitatori anonimi
+  apre il modale Clerk `SignInButton` invece di sparire: prima il salvataggio
+  era invisibile finché non avevi già un account, il che rendeva impossibile
+  usarlo come CTA principale. Per i coach resta nascosto, perché
+  `toggleFavorite()` accetta solo i player.
+
 ## Academy didattica e asset
 
 - `/academy` e le sottopagine usano moduli didattici riutilizzabili da
@@ -485,13 +733,15 @@ il conteggio.
 
 ## Comandi
 
-- `npm run dev` — dev server
-- `npm run db:seed` — resetta e ripopola il database demo (`dotenv -e
+- `npm run dev` - dev server
+- `npm run db:seed` - resetta e ripopola il database demo (`dotenv -e
   .env.local --` davanti: né `tsx` né `drizzle-kit` caricano `.env.local` da
   soli, vedi skill `vercel-storage`)
-- `npm run db:push` — applica lo schema Drizzle al database (stessa nota sul
+- `npm run db:push` - applica lo schema Drizzle al database (stessa nota sul
   dotenv, già nello script)
-- `npm run build` — build di produzione
+- `npm run test:capienza` / `npm run test:chiusure` - test end-to-end contro un
+  Postgres usa-e-getta (istruzioni in testa agli script in `scripts/`)
+- `npm run build` - build di produzione
 
 ## Dati demo
 
@@ -505,14 +755,14 @@ registrati con Clerk (bottone "Registrati") e usa "Diventa coach" da
 **Attenzione**: sviluppo locale e produzione condividono lo stesso database
 Neon (vedi sezione Stack). Il seed scrive quindi anche in quello che gli
 utenti reali vedono. La produzione è stata deliberatamente lanciata **vuota**
-(nessun dato demo, vedi sezione "Deploy in produzione") — se rilanci il seed
+(nessun dato demo, vedi sezione "Deploy in produzione") - se rilanci il seed
 per testare in locale, ricordati di ripulire prima di considerare la cosa di
 nuovo "live" per davvero, oppure crea un branch Neon dedicato allo sviluppo
 (vedi "Stato e prossimi passi").
 
 `npm run db:seed` è **sicuro da rilanciare**: cancella solo gli utenti con
 `clerkId` nullo (i coach demo), mai gli account Clerk reali collegati
-durante i test. In passato faceva `db.delete(users)` su tutta la tabella —
+durante i test. In passato faceva `db.delete(users)` su tutta la tabella -
 corretto perché avrebbe cancellato anche gli utenti reali ad ogni reseed. Se
 tocchi `seed.ts`, mantieni il filtro `isNull(users.clerkId)`.
 
@@ -529,9 +779,9 @@ il percorso reale `/diventa-coach`.
 ## Deploy in produzione
 
 Live su **https://playpaideio.com** (dominio proprio, registrato tramite
-Vercel — `paideio.com` non era disponibile, da cui il nome scelto; alias
+Vercel - `paideio.com` non era disponibile, da cui il nome scelto; alias
 anche su `https://paideio.vercel.app`). Progetto Vercel
-`sharilennartz1994s-projects/paideio`, deploy manuale via `vercel --prod` —
+`sharilennartz1994s-projects/paideio`, deploy manuale via `vercel --prod` -
 il collegamento Git per il deploy automatico su push a `main` non è ancora
 attivo, vedi sotto. Database Postgres su Neon, provisionato tramite Vercel
 Marketplace (`vercel integration add neon`, richiede accettazione termini
@@ -549,7 +799,7 @@ esterno da toccare):
 - `clk2._domainkey` → `dkim2.<id>.clerk.services`
 
 Le chiavi `pk_live_`/`sk_live_` sono impostate **solo sull'ambiente
-Production** di Vercel (`vercel env add ... production`) — Preview e
+Production** di Vercel (`vercel env add ... production`) - Preview e
 Development restano sulle chiavi dev, perché i deploy Preview girano su
 sottodomini `*.vercel.app` che l'istanza production di Clerk non riconosce
 come dominio verificato.
@@ -558,7 +808,7 @@ come dominio verificato.
 log**: non è detto sia la build. `vercel --prod` legge i metadati
 dell'autore dell'ultimo commit Git locale e Vercel **blocca silenziosamente
 il deploy** (mostra "Deployment Blocked" solo nella dashboard web, non in
-CLI) se quell'email non corrisponde a un account GitHub verificato — es. se
+CLI) se quell'email non corrisponde a un account GitHub verificato - es. se
 `git config user.email` non è mai stato impostato, git genera un'email
 placeholder tipo `utente@hostname.local` che fa scattare il blocco. Prima
 di sospettare un problema di build/codice, controlla la dashboard
@@ -571,13 +821,13 @@ bloccato) per un banner "Deployment Blocked" / "Fix Git Configuration".
   `sslmode=verify-full` nella connection string Neon. Vedi
   `docs/PRODUCTION-HANDOFF.md`.
 - **Un solo database Neon condiviso** tra sviluppo locale e produzione
-  (nessun branch dedicato) — vedi "Dati demo" sopra per le implicazioni
+  (nessun branch dedicato) - vedi "Dati demo" sopra per le implicazioni
   pratiche. Da separare con un branch Neon prima che ci siano utenti reali
   che contano.
 - **Deploy manuale via CLI**, non collegato a GitHub: `vercel git connect`
   ha fallito con "Make sure ... you have access to the repository" perché
   la GitHub App di Vercel non ha ancora accesso al repo privato
-  `sharilennartz1994s-projects/paideio` — va concesso dalla dashboard
+  `sharilennartz1994s-projects/paideio` - va concesso dalla dashboard
   GitHub (Settings → Integrations → Vercel) o rifacendo `vercel git connect`
   dopo aver installato/autorizzato l'app sul repo. Una volta collegato, ogni
   push su `main` farà deploy automatico e questa nota va rimossa.
@@ -585,28 +835,28 @@ bloccato) per un banner "Deployment Blocked" / "Fix Git Configuration".
 
 ## Stato e prossimi passi noti
 
-- [x] Autenticazione reale con Clerk — vedi sezione Stack. Login/registrazione
+- [x] Autenticazione reale con Clerk - vedi sezione Stack. Login/registrazione
       demo (`/accedi`, cookie stub) rimossi definitivamente. Nota: `proxy.ts`
       usa `createRouteMatcher`, che Clerk segnala come deprecato a favore di
-      controlli a livello di singola pagina/route — qui è comunque affiancato
+      controlli a livello di singola pagina/route - qui è comunque affiancato
       da controlli di ruolo espliciti in `coach-admin/layout.tsx` e
       `prenotazioni/page.tsx`, ma se Clerk rimuove l'API andrà migrato (vedi
       https://clerk.com/docs/guides/development/upgrading/upgrade-guides/migrate-from-create-route-matcher)
-- [x] Ricerca coach per posizione/geolocalizzazione — `haversineDistanceKm()` in
+- [x] Ricerca coach per posizione/geolocalizzazione - `haversineDistanceKm()` in
       `constants.ts`, filtro `near` in `searchCoaches()`, bottone
       `UseMyLocationButton`. `locations.lat/lng` nullable: i coach le impostano
       da `coach-admin/campi` rilevando la posizione del dispositivo (nessuna
       chiave di geocoding usata). Location senza coordinate non compaiono nella
       ricerca "vicino a me" ma restano cercabili per città.
-- [x] Rifinitura design e responsività mobile — vedi sezione Design system
+- [x] Rifinitura design e responsività mobile - vedi sezione Design system
       per la shell attuale (sidebar/topbar/bottom-nav); pannello prenotazione
       riordinato sopra il calendario su mobile e `sticky` su desktop
 - [x] Migrazione da SQLite locale a Postgres (Neon) + primo deploy in
-      produzione — vedi sezione "Deploy in produzione" per URL e limitazioni
+      produzione - vedi sezione "Deploy in produzione" per URL e limitazioni
       note (Clerk ancora su chiavi dev, DB condiviso dev/prod, deploy manuale
       non ancora collegato a Git)
 - [x] Refactor Server Action da `throw` a `ActionResult` strutturato
-      (`src/lib/action-result.ts`) — senza questo, in produzione Next.js
+      (`src/lib/action-result.ts`) - senza questo, in produzione Next.js
       oscura tutti i messaggi di errore lanciati da una Server Action
       mostrando un generico "An error occurred"; ora i messaggi italiani di
       validazione/permessi/limiti arrivano intatti al client. Tocca tutte le
@@ -617,9 +867,9 @@ bloccato) per un banner "Deployment Blocked" / "Fix Git Configuration".
       branch Neon dedicato (punto sotto), per non far transitare pagamenti
       reali sul DB condiviso con lo sviluppo locale.
 - [ ] Branch Neon dedicato allo sviluppo locale, separato dalla produzione
-      (oggi condividono lo stesso database — vedi "Dati demo" e "Deploy in
+      (oggi condividono lo stesso database - vedi "Dati demo" e "Deploy in
       produzione")
-- [x] Database in Unione europea — progetto `paideio-eu` a Francoforte
+- [x] Database in Unione europea - progetto `paideio-eu` a Francoforte
       (`aws-eu-central-1`) dal 28 luglio 2026. La regione non è modificabile:
       è stato creato un progetto nuovo e i dati sono stati travasati con
       `scripts/db-dump.mts` / `scripts/db-restore.mts`. Il vecchio progetto
@@ -627,53 +877,56 @@ bloccato) per un banner "Deployment Blocked" / "Fix Git Configuration".
 - [x] Termini di servizio e informativa privacy (`/termini`, `/privacy`),
       collegati dal footer. Restano marcati come bozza non validata finché
       un legale non conferma tempi di conservazione e tenuta della manleva.
-- [x] Capienza reale per le lezioni di gruppo — vedi la sezione "Capienza slot
+- [x] Capienza reale per le lezioni di gruppo - vedi la sezione "Capienza slot
       e prenotabilità". `coachProfiles.groupCapacity` configurabile dal
       coach, regola condivisa in `computeSlotOccupancy()`, indici parziali
       rifatti e advisory lock in `createBooking`. Test: `npm run test:capienza`.
+- [x] Chiusure del calendario: il coach può togliere una data precisa (un
+      turno o l'intera giornata) senza smontare la ricorrenza - vedi la
+      sezione "Chiusure del calendario". Test: `npm run test:chiusure`.
 - [ ] Policy di cancellazione: oggi un giocatore può annullare una
       prenotazione `confermata` in qualsiasi momento, senza finestra minima
       né conseguenze per il coach che ha bloccato lo slot.
 - [ ] Collegare il repo GitHub a Vercel per il deploy automatico su push a
-      `main` (oggi richiede `vercel --prod` manuale — vedi "Deploy in
+      `main` (oggi richiede `vercel --prod` manuale - vedi "Deploy in
       produzione" per il motivo)
-- [x] Dominio personalizzato (`playpaideio.com`, comprato tramite Vercel —
+- [x] Dominio personalizzato (`playpaideio.com`, comprato tramite Vercel -
       "paideio.com" non era libero) + istanza Clerk di produzione con DNS
-      verificato — vedi "Deploy in produzione" per i dettagli
-- [x] Pagina concept (`/chi-siamo`) — perché il nome "Paideio" (dal greco
+      verificato - vedi "Deploy in produzione" per i dettagli
+- [x] Pagina concept (`/chi-siamo`) - perché il nome "Paideio" (dal greco
       antico παιδεία), collegata da footer (`site-footer.tsx`, nuovo, presente
       su ogni pagina via `layout.tsx`) e da una sezione teaser in home
 - [x] Recensioni e voti coach (tabella `reviews`, `actions/reviews.ts`,
-      `star-rating.tsx`) — un giocatore può recensire solo prenotazioni
+      `star-rating.tsx`) - un giocatore può recensire solo prenotazioni
       `confermata` con data passata, una recensione per prenotazione. Media
       calcolata in JS su tutte le review del coach (dataset piccolo, non serve
       SQL aggregate). Il prompt "Lascia una recensione" appare in
       `/prenotazioni` (`getBookingsForPlayer` calcola `canReview`/`isReviewed`)
 - [x] Coach preferiti (tabella `favorites`, unique su `(playerId, coachId)`,
-      `actions/favorites.ts`, `favorite-button.tsx`) — nuova pagina protetta
+      `actions/favorites.ts`, `favorite-button.tsx`) - nuova pagina protetta
       `/preferiti`, aggiunta a `proxy.ts`
 - [x] Traguardi giocatore (`getPlayerAchievements` in `queries.ts`,
-      `achievements-panel.tsx`, mostrato in cima a `/prenotazioni`) — calcolati
+      `achievements-panel.tsx`, mostrato in cima a `/prenotazioni`) - calcolati
       al volo dalle prenotazioni confermate passate, nessuna tabella dedicata:
       soglie di lezioni completate, "fedelissimo" (3+ con lo stesso coach),
       streak di settimane consecutive con almeno una lezione
 - [x] Foto profilo coach reali (`coachProfiles.avatarUrl`, `@vercel/blob`,
       `avatar-upload.tsx`, action `updateCoachAvatar`). Progetto collegato a
       Vercel (`sharilennartz1994s-projects/paideio`) con Blob store pubblico
-      `paideio-avatars` — `BLOB_READ_WRITE_TOKEN` già in `.env.local` (girato
+      `paideio-avatars` - `BLOB_READ_WRITE_TOKEN` già in `.env.local` (girato
       con `vercel blob create-store ... --access public`, non serve rifarlo).
       `CoachAvatar` accetta `src` opzionale e mostra la foto reale se
       presente, altrimenti iniziali colorate come prima. Dominio
       `**.public.blob.vercel-storage.com` whitelistato in `next.config.ts`
       per `next/image`.
-- [x] Redesign "Agonistic Pulse" — vedi sezione Design system per la storia
+- [x] Redesign "Agonistic Pulse" - vedi sezione Design system per la storia
       completa (3 tentativi) e i dettagli tecnici. Replica il più
       fedelmente possibile l'export di Google Stitch (palette M3, font
       Anybody/Hanken Grotesk/Space Mono, shell con sidebar fissa). Portato
       su **tutte** le pagine, incluso il completamento successivo
       (`prenotazioni`, `preferiti`, `chi-siamo`, `diventa-coach`, i form in
       `coach-admin/campi|orari|profilo`, `coach-admin/richieste`,
-      `not-found`/`error`) — nessuna pagina usa più `.cut-cta`/`.cut-corner`.
+      `not-found`/`error`) - nessuna pagina usa più `.cut-cta`/`.cut-corner`.
 - [ ] PWA: manifest + icone + installabilità (non ancora affrontato)
 
 ## Round "squadra di agenti" (audit sicurezza + backend + frontend/design)
@@ -698,7 +951,7 @@ build + giro nel browser):
 - **`removeLocation`** non cancella più in silenzio le prenotazioni future
   via cascade FK: le annulla esplicitamente (transazione) prima di eliminare
   il campo. `bookings.locationId` è ora nullable con `onDelete: "set null"`
-  (deviazione dal piano originale — il cascade avrebbe comunque cancellato le
+  (deviazione dal piano originale - il cascade avrebbe comunque cancellato le
   righe appena annullate).
 - **`becomeCoach`** e il provisioning lazy in `session.ts` sono ora atomici
   (`db.transaction` sincrona, pattern better-sqlite3) con
@@ -713,14 +966,14 @@ build + giro nel browser):
   "Coach dal {anno}", numero recensioni) via `getCoachDetail`.
 - **Nuovo**: `loading.tsx` per `/cerca`, `/coach/[id]`, `/prenotazioni`,
   `/preferiti`; `error.tsx` radice in tono padel ("Siamo finiti in rete!").
-- **Nuovo**: `/coach-admin` non fa più un redirect nudo — è una vera dashboard
+- **Nuovo**: `/coach-admin` non fa più un redirect nudo - è una vera dashboard
   (richieste in attesa, lezioni confermate questa settimana, valutazione
   media), con badge sul tab "Richieste" quando ci sono richieste in sospeso, e
   header `bg-court`+`CourtLines` come il resto del brand.
 
 **Deliberatamente rimandato** (deciso dal Delivery Manager per tenere lo scope
 gestibile in una sessione, non dimenticato):
-- Refactor di tutte le action da `throw` a `{ok:false, error}` — i messaggi
+- Refactor di tutte le action da `throw` a `{ok:false, error}` - i messaggi
   d'errore italiani vengono oscurati da Next.js in produzione (Server Actions
   redigono i messaggi di errore lanciati); refactor cross-cutting troppo
   grande per questo giro, tocca ogni action + ogni chiamante client.
@@ -735,7 +988,7 @@ gestibile in una sessione, non dimenticato):
   location/orari coach), pannello traguardi sempre visibile (oggi sparisce se
   zero badge guadagnati). Il toggle dark mode non è più in roadmap: il sito
   è dark-only per scelta di design (vedi sezione Design system).
-- N+1 query pattern in `queries.ts` — non un problema reale su SQLite
+- N+1 query pattern in `queries.ts` - non un problema reale su SQLite
   in-process a questa scala, da affrontare insieme alla migrazione Postgres.
 
 ## Note Base UI da non dimenticare
@@ -744,7 +997,7 @@ gestibile in una sessione, non dimenticato):
   ha un prop `nativeButton` (default `true`). Va messo a `false` **solo** quando
   il `render` punta a un elemento che non è un `<button>` reale (es. `<Link>`).
   Se il `render` è a sua volta un `Button` (che di default renderizza un
-  `<button>`), **non** impostare `nativeButton={false}` — causerebbe il warning
+  `<button>`), **non** impostare `nativeButton={false}` - causerebbe il warning
   opposto. Sbagliare questo genera un warning in console visibile nell'overlay
   dev di Next.js, controllabile subito durante lo sviluppo.
 

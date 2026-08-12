@@ -17,10 +17,19 @@ const gameCtaVariants = cva(
           "[--game-cta-border:var(--game-ball)] bg-game-ball text-game-ink hover:[--game-cta-border:var(--game-white)] hover:bg-game-white",
         outline:
           "[--game-cta-border:var(--vetro)] bg-transparent text-vetro hover:bg-vetro hover:text-carta",
+        // Gemello di `outline` per le superfici arena FISSE (`.net-texture`,
+        // `bg-game-ink`, `bg-game-blue`): lì `--vetro` in modalità giorno è un
+        // verdeazzurro scuro su fondo scuro, 2,32:1. `--game-cyan` è fisso come
+        // la superficie e regge 8,51:1 di giorno, 9,75:1 di notte.
+        arena:
+          "[--game-cta-border:var(--game-cyan)] bg-transparent text-game-cyan hover:bg-game-cyan hover:text-game-ink",
         quiet:
           "[--game-cta-border:transparent] bg-transparent text-calce hover:[--game-cta-border:color-mix(in_srgb,var(--nebbia)_35%,transparent)] hover:bg-carta-alta",
+        // Testo e bordo usano l'accento *theme-aware*: `--ruggine` è fisso e su
+        // fondo chiaro dava 2,13:1 (testo) e 2,4:1 (bordo). Il riempimento in
+        // hover resta il ruggine pieno, dove `game-ink` regge 6,32:1.
         danger:
-          "[--game-cta-border:var(--ruggine)] bg-ruggine/12 text-ruggine hover:bg-ruggine hover:text-game-ink",
+          "[--game-cta-border:var(--accent-orange-ink)] bg-ruggine/12 text-accent-orange-ink hover:bg-ruggine hover:text-game-ink",
       },
       size: {
         default: "min-h-11 px-5 text-sm",

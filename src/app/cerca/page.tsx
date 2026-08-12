@@ -213,18 +213,29 @@ export default async function CercaPage({ searchParams }: { searchParams: Search
                 </div>
               </div>
               <div className="flex items-center justify-between gap-4 border-t border-nebbia/20 bg-carta-bassa p-5 md:w-52 md:flex-col md:items-stretch md:justify-center md:border-t-0 md:border-l">
+                {/* Un "€ -" sembra un prezzo mancante per errore: se il coach
+                    non l'ha indicato, dirlo è più utile del segnaposto. */}
                 <div>
-                  <p className="text-xs text-nebbia">Lezione da</p>
-                  <p className="mt-1 flex items-center gap-1 font-heading text-2xl text-calce">
-                    <Euro className="size-4 text-vetro" aria-hidden />
-                    {profile.pricePerLesson ?? "—"}
-                  </p>
+                  {profile.pricePerLesson != null ? (
+                    <>
+                      <p className="text-xs text-nebbia">Lezione da</p>
+                      <p className="mt-1 flex items-center gap-1 font-heading text-2xl text-calce">
+                        <Euro className="size-4 text-vetro" aria-hidden />
+                        {profile.pricePerLesson}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xs text-nebbia">Tariffa</p>
+                      <p className="mt-1 font-heading text-lg text-calce">Su richiesta</p>
+                    </>
+                  )}
                 </div>
                 <GameCta href={`/coach/${coach.id}#prenota`} tone="ball" showBall arrow className="flex-1 md:flex-none">
                   Prenota
                 </GameCta>
                 <div className="flex items-center justify-end">
-                  <FavoriteButton coachId={coach.id} initialFavorite={favoriteIds.has(coach.id)} isPlayer={isPlayer} />
+                  <FavoriteButton coachId={coach.id} initialFavorite={favoriteIds.has(coach.id)} viewerRole={user?.role ?? null} />
                 </div>
               </div>
             </article>

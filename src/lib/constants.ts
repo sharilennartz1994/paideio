@@ -8,6 +8,53 @@ export const DEFAULT_GROUP_CAPACITY = 4;
 export const MIN_GROUP_CAPACITY = 2;
 export const MAX_GROUP_CAPACITY = 12;
 
+/**
+ * Un coach è prenotabile solo se ha dichiarato **almeno un tipo di lezione e
+ * almeno un livello**: `becomeCoach()` crea un `coachProfiles` vuoto, e finché
+ * resta tale `computeSlotOccupancy()` marca ogni slot come pieno
+ * (`full: offered.length === 0`) e `createBooking()` rifiuta qualunque livello.
+ *
+ * Senza questo controllo il coach pubblica gli orari, li vede nel calendario e
+ * il giocatore li trova tutti non disponibili, senza che nessuno dei due capisca
+ * perché. Regola condivisa: la usano la ricerca, il profilo pubblico e l'area
+ * coach, così dicono tutte la stessa cosa.
+ */
+export function coachOffersLessons(
+  levels: readonly string[],
+  trainingTypes: readonly string[]
+): boolean {
+  return levels.length > 0 && trainingTypes.length > 0;
+}
+
+/**
+ * Chiavi di chiusura del calendario. Come `computeSlotOccupancy`, questa è la
+ * regola *unica*: la usano `getCoachCalendar` (per non disegnare gli slot
+ * chiusi) e `createBooking` (per rifiutarli). Se divergono, il giocatore
+ * prenota una data che il coach ha chiuso.
+ *
+ * Una chiusura di giornata usa `*` al posto di campo e orario, così copre
+ * anche i turni pubblicati dopo la chiusura.
+ */
+export function closureKey(
+  date: string,
+  locationId: string | null,
+  startTime: string | null
+): string {
+  return `${date}|${locationId ?? "*"}|${startTime ?? "*"}`;
+}
+
+export function isSlotClosed(
+  closedKeys: ReadonlySet<string>,
+  date: string,
+  locationId: string,
+  startTime: string
+): boolean {
+  return (
+    closedKeys.has(closureKey(date, null, null)) ||
+    closedKeys.has(closureKey(date, locationId, startTime))
+  );
+}
+
 export type SlotOccupancy = {
   /** Posti già occupati sullo slot. Una singola vale sempre 1. */
   seatsTaken: number;

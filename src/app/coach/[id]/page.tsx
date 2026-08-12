@@ -7,6 +7,7 @@ import {
   getFavoriteCoachIds,
   parseJsonArray,
 } from "@/lib/queries";
+import { coachOffersLessons } from "@/lib/constants";
 import { getCurrentUser } from "@/lib/session";
 import { BookingCalendar } from "@/components/booking-calendar";
 import { BookingHashScroll } from "@/components/booking-hash-scroll";
@@ -29,6 +30,15 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
   ]);
   const trainingTypes = parseJsonArray(detail.profile.trainingTypes);
   const levels = parseJsonArray(detail.profile.levels);
+  // Due condizioni distinte, entrambe necessarie. I turni sono settimanali,
+  // quindi un coach che ne ha pubblicato almeno uno genera sempre slot nella
+  // finestra di 21 giorni: calendario vuoto = nessun turno. Ma anche con i
+  // turni, senza tipi di lezione e livelli ogni slot risulta pieno (vedi
+  // `coachOffersLessons`). Questi coach non compaiono in /cerca, però la pagina
+  // resta raggiungibile da link diretto e preferiti: lì la CTA diventa
+  // "Salva tra i preferiti".
+  const offersLessons = coachOffersLessons(levels, trainingTypes);
+  const isBookable = offersLessons && calendar.length > 0;
 
   return (
     <div className="pb-32">
@@ -41,8 +51,11 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
               <CoachAvatar name={detail.coach.name} src={detail.profile.avatarUrl} className="size-full text-5xl" />
             </div>
           </div>
-          <div className="flex-grow pb-4 text-center md:text-left">
-            <h1 className="font-heading text-[40px] text-calce md:text-[62px]">
+          {/* `min-w-0` + `break-words`: un nome lungo senza spazi (username o
+              email) non si spezza da solo e a 40px sfonda il contenitore, che
+              l'hero poi taglia con `overflow-hidden`. */}
+          <div className="min-w-0 flex-grow pb-4 text-center md:text-left">
+            <h1 className="font-heading text-[40px] break-words hyphens-auto text-calce md:text-[62px]">
               {detail.coach.name}
             </h1>
             <div className="mt-4 flex flex-wrap justify-center gap-3 md:justify-start">
@@ -64,9 +77,18 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
               ))}
             </div>
             <div className="mt-7 flex flex-wrap justify-center gap-3 md:justify-start">
-              <GameCta href="#prenota" tone="ball" showBall arrow size="large">
-                Scegli giorno e orario
-              </GameCta>
+              {isBookable ? (
+                <GameCta href="#prenota" tone="ball" showBall arrow size="large">
+                  Scegli giorno e orario
+                </GameCta>
+              ) : (
+                <FavoriteButton
+                  coachId={id}
+                  initialFavorite={favoriteIds.has(id)}
+                  viewerRole={user?.role ?? null}
+                  variant="cta"
+                />
+              )}
               {detail.profile.pricePerLesson != null && (
                 <span className="flex min-h-13 items-center border border-nebbia/30 bg-carta-alta px-5 text-sm text-nebbia">
                   Da <strong className="ml-2 font-heading text-xl text-calce">€{detail.profile.pricePerLesson}</strong>
@@ -83,7 +105,7 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
           <FavoriteButton
             coachId={id}
             initialFavorite={favoriteIds.has(id)}
-            isPlayer={isPlayer}
+            viewerRole={user?.role ?? null}
             className="absolute top-4 right-4 border-outline-variant bg-surface-container/80 md:static"
           />
         </div>
@@ -102,12 +124,20 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
       <section id="prenota" className="scroll-mt-24 px-4 md:px-16">
         <div className="mx-auto mb-6 flex max-w-6xl flex-col justify-between gap-3 md:flex-row md:items-end">
           <div>
-            <p className="ui-kicker">Prenota con {detail.coach.name.split(" ")[0]}</p>
-            <h2 className="mt-2 font-heading text-3xl text-calce md:text-4xl">Trova il tuo momento in campo</h2>
+            <p className="ui-kicker">
+              {isBookable ? `Prenota con ${detail.coach.name.split(" ")[0]}` : "Non ancora prenotabile"}
+            </p>
+            <h2 className="mt-2 font-heading text-3xl text-calce md:text-4xl">
+              {isBookable ? "Trova il tuo momento in campo" : "Ancora nessun orario in calendario"}
+            </h2>
           </div>
           <p className="flex max-w-md items-start gap-2 text-sm leading-relaxed text-nebbia">
             <CalendarDays className="mt-0.5 size-5 shrink-0 text-vetro" aria-hidden />
-            Scegli uno slot, indica il tuo livello e invia la richiesta. Il coach dovrà confermarla.
+            {isBookable
+              ? "Scegli uno slot, indica il tuo livello e invia la richiesta. Il coach dovrà confermarla."
+              : offersLessons
+                ? "Questo coach non ha ancora pubblicato turni, quindi non compare nella ricerca. Salvalo tra i preferiti per ritrovarlo quando apre il calendario."
+                : "Questo coach sta ancora completando il profilo e non compare nella ricerca. Salvalo tra i preferiti per ritrovarlo quando apre le prenotazioni."}
           </p>
         </div>
         <div className="mx-auto max-w-6xl">
@@ -118,6 +148,8 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
             levels={levels}
             viewerRole={user?.role ?? null}
             pricePerLesson={detail.profile.pricePerLesson}
+            initialFavorite={favoriteIds.has(id)}
+            offersLessons={offersLessons}
           />
         </div>
       </section>
@@ -154,7 +186,7 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
               </div>
             </div>
             {reviews.length === 0 && (
-              <p className="text-sm text-on-surface-variant">Nessuna recensione ancora — sii il primo a lasciarne una!</p>
+              <p className="text-sm text-on-surface-variant">Nessuna recensione ancora - sii il primo a lasciarne una!</p>
             )}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {reviews.map(({ review, player }) => (

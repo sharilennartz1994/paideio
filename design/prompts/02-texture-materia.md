@@ -1,8 +1,8 @@
-# Lotto 02 — Texture tileabili (registro MATERIA)
+# Lotto 02 - Texture tileabili (registro MATERIA)
 
 **Registro**: MATERIA (`SYSTEM.md` § 2c, congelato).
 **Referenza immagine**: **NESSUNA. Su nessuno dei quattro prompt.**
-**Destinazione**: `design/assets/patterns/` — grezzi in `design/assets/_raw/`.
+**Destinazione**: `design/assets/patterns/` - grezzi in `design/assets/_raw/`.
 
 > **Perché nessuna referenza.** È la trappola più costosa della pipeline: su un prompt « vuoto »
 > (una texture senza soggetto) il modello riempie il vuoto con gli oggetti dell'immagine di
@@ -25,7 +25,7 @@ no objects, no illustration, no focal point, no neon. Quiet, material, timeless.
 
 ---
 
-## Asset 1 — `granulo.png` (motivo 07)
+## Asset 1 - `granulo.png` (motivo 07)
 
 ```
 <STYLE BLOCK>
@@ -38,7 +38,7 @@ almost plain surface.
 Square composition.
 ```
 
-## Asset 2 — `malla.png` (motivo 03)
+## Asset 2 - `malla.png` (motivo 03)
 
 ```
 <STYLE BLOCK>
@@ -50,7 +50,7 @@ marked with knots, dots or thickenings. Even spacing, the diamonds all identical
 Square composition.
 ```
 
-## Asset 3 — `foratura.png` (motivo 02)
+## Asset 3 - `foratura.png` (motivo 02)
 
 ```
 <STYLE BLOCK>
@@ -58,19 +58,19 @@ Square composition.
 A field of small circles of identical diameter arranged on a staggered grid, the abstraction of
 the drilled holes of a padel racket face. Each circle's diameter is about one third of the
 distance between circle centres. Even spacing in all directions, no variation in size, no
-silhouette containing them — the field runs edge to edge.
+silhouette containing them - the field runs edge to edge.
 
 Square composition.
 ```
 
-## Asset 4 — `rete-tessitura.png` (motivo 05)
+## Asset 4 - `rete-tessitura.png` (motivo 05)
 
 ```
 <STYLE BLOCK>
 
 A regular square weave, the abstraction of netting: two sets of parallel lines crossing at right
 angles, forming identical square cells. Single uniform line weight. No top band, no posts, no
-sag, no perspective — only the flat weave, running edge to edge with identical cells everywhere.
+sag, no perspective - only the flat weave, running edge to edge with identical cells everywhere.
 
 Square composition.
 ```
@@ -82,7 +82,7 @@ Square composition.
 - [ ] **Nessun oggetto riconoscibile** dentro la texture (vedi il riquadro sopra: sarebbe la
       referenza infiltrata).
 - [ ] **Contrasto ≤ 8 %** fra il valore più chiaro e il più scuro. Misurabile, non a occhio.
-- [ ] **Tuilage su tutti e quattro i bordi** — `tools/qa_assets.py tile`, soglia < 12/255.
+- [ ] **Tuilage su tutti e quattro i bordi** - `tools/qa_assets.py tile`, soglia < 12/255.
       Se fallisce, ritagliare a metà intervallo, mai al bordo.
 - [ ] **Densità uniforme**: nessun punto focale, nessun addensamento in un angolo.
 - [ ] **Nessuna scritta.**

@@ -1,4 +1,4 @@
-# Prompt di produzione — Paideio Game Mode
+# Prompt di produzione - Paideio Game Mode
 
 Tutti gli asset della libreria sono stati generati usando il `STYLE BLOCK`
 verbatim presente in `../SYSTEM.md` e `design/style-options/trial/comic-cel.png`

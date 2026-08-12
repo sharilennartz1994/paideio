@@ -37,7 +37,10 @@
   --color-primary: var(--vetro);
   --color-primary-foreground: var(--carta);
   --color-secondary: var(--sabbia);
-  --color-secondary-foreground: var(--carta);
+  /* Anche `--sabbia` è fisso: vedi la nota su `--secondary-foreground` sotto.
+     Questi `--color-*` sono la sorgente delle utility Tailwind, i `--*` più in
+     basso quella delle variabili shadcn: vanno tenuti allineati a coppie. */
+  --color-secondary-foreground: var(--game-white);
   --color-muted: var(--carta-bassa);
   --color-muted-foreground: var(--nebbia);
   --color-accent: var(--carta-alta);
@@ -47,7 +50,9 @@
   --color-input: color-mix(in srgb, var(--nebbia) 38%, transparent);
   --color-ring: var(--vetro);
   --color-ball: var(--ottico);
-  --color-ball-foreground: var(--carta);
+  /* Il giallo pallina è FISSO, quindi anche il suo testo deve esserlo: legato a
+     `--carta` diventava quasi-bianco su giallo in modalità giorno (1,01:1). */
+  --color-ball-foreground: var(--game-ink);
   --color-court: var(--carta);
   --color-court-foreground: var(--calce);
 
@@ -71,17 +76,22 @@
   --color-secondary-container: var(--ottico);
   --color-secondary-fixed: var(--ottico);
   --color-secondary-fixed-dim: var(--ottico);
-  --color-on-secondary: var(--carta);
-  --color-on-secondary-container: var(--carta);
-  --color-on-secondary-fixed: var(--carta);
+  /* Regola: se lo sfondo è un colore FISSO (ottico, ruggine, sabbia, game-*),
+     anche il suo `on-*` deve essere fisso. Legati a `--carta` questi testi
+     seguivano il tema mentre lo sfondo restava fermo, quindi funzionavano in
+     una sola modalità su due. Valori misurati in entrambi i temi:
+     game-ink su ottico 15,01:1 · game-ink su ruggine 6,32:1. */
+  --color-on-secondary: var(--game-ink);
+  --color-on-secondary-container: var(--game-ink);
+  --color-on-secondary-fixed: var(--game-ink);
   --color-tertiary: var(--ruggine);
   --color-tertiary-container: var(--ruggine);
-  --color-on-tertiary: var(--carta);
-  --color-on-tertiary-container: var(--carta);
+  --color-on-tertiary: var(--game-ink);
+  --color-on-tertiary-container: var(--game-ink);
   --color-error: var(--ruggine);
   --color-error-container: var(--ruggine);
-  --color-on-error: var(--carta);
-  --color-on-error-container: var(--carta);
+  --color-on-error: var(--game-ink);
+  --color-on-error-container: var(--game-ink);
 
   --color-sidebar: var(--carta-bassa);
   --color-sidebar-foreground: var(--calce);
@@ -154,7 +164,9 @@
   --primary: var(--vetro);
   --primary-foreground: var(--carta);
   --secondary: var(--sabbia);
-  --secondary-foreground: var(--carta);
+  /* `--sabbia` è il blu elettrico fisso: con `--carta` dava 4,26:1 di giorno e
+     3,42:1 di notte, sotto AA in entrambi. `--game-white` dà 4,79:1 fisso. */
+  --secondary-foreground: var(--game-white);
   --muted: var(--carta-bassa);
   --muted-foreground: var(--nebbia);
   --accent: var(--carta-alta);

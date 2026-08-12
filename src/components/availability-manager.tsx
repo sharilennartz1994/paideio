@@ -1,9 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { addAvailabilitySlot, removeAvailabilitySlot } from "@/lib/actions/coach-admin";
 import { dayName } from "@/lib/constants";
+import { LocationManager } from "@/components/location-manager";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -74,23 +77,37 @@ export function AvailabilityManager({
     });
   }
 
-  function handleRemove(id: string) {
-    if (!window.confirm("Rimuovere questo turno dalla disponibilità settimanale?")) return;
-    startTransition(async () => {
-      const result = await removeAvailabilitySlot(id);
-      if (result.ok) {
-        toast("Orario rimosso.");
-      } else {
-        toast.error(result.error);
-      }
-    });
+  async function handleRemove(id: string): Promise<boolean> {
+    const result = await removeAvailabilitySlot(id);
+    if (result.ok) {
+      toast("Orario rimosso.");
+      return true;
+    }
+    toast.error(result.error);
+    return false;
   }
 
+  // Senza campi non esiste un turno da pubblicare: prima qui c'era solo un
+  // avviso che rimandava a un'altra scheda, e il coach restava bloccato.
+  // Adesso il primo campo si crea direttamente da questa pagina.
   if (locations.length === 0) {
     return (
-      <Alert role="status">
-        <AlertDescription>Aggiungi prima almeno un campo nella scheda &quot;Campi&quot;.</AlertDescription>
-      </Alert>
+      <div className="flex flex-col gap-6">
+        <Alert role="status">
+          <AlertDescription>
+            Un turno è sempre legato a un campo: crea il primo qui sotto e poi torni subito a
+            pubblicare gli orari.
+          </AlertDescription>
+        </Alert>
+        <LocationManager initialLocations={[]} />
+        <p className="text-sm text-nebbia">
+          Preferisci gestirli tutti insieme?{" "}
+          <Link href="/coach-admin/campi" className="font-semibold text-vetro underline underline-offset-4">
+            Vai alla scheda Campi
+          </Link>
+          .
+        </p>
+      </div>
     );
   }
 
@@ -115,9 +132,26 @@ export function AvailabilityManager({
                     <p className="font-heading text-calce">{slot.startTime}–{slot.endTime}</p>
                     <p className="text-xs text-nebbia">{locationById.get(slot.locationId)?.name}</p>
                   </div>
-                  <Button size="sm" variant="ghost" disabled={isPending} onClick={() => handleRemove(slot.id)}>
-                    Rimuovi
-                  </Button>
+                  <ConfirmDialog
+                    trigger={
+                      <Button size="sm" variant="ghost">
+                        Rimuovi
+                      </Button>
+                    }
+                    disabled={isPending}
+                    kicker="Turno settimanale"
+                    title="Vuoi davvero rimuovere questo turno?"
+                    description={
+                      <>
+                        <strong className="text-calce capitalize">{dayName(group.day)}</strong>{" "}
+                        <strong className="text-calce">{slot.startTime}–{slot.endTime}</strong> non
+                        si ripeterà più su nessuna data.
+                      </>
+                    }
+                    reassurance="Puoi ricrearlo in qualsiasi momento dal modulo qui sotto. Se invece ti serve saltare una sola data, chiudila in “Le prossime date”: il turno resta e togli solo quel giorno."
+                    confirmLabel="Rimuovi il turno"
+                    onConfirm={() => handleRemove(slot.id)}
+                  />
                 </div>
               ))}
             </div>

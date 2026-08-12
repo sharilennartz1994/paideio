@@ -4,12 +4,21 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { bookings, availabilitySlots, coachProfiles, notifications, users } from "@/lib/db/schema";
+import {
+  bookings,
+  availabilitySlots,
+  availabilityClosures,
+  coachProfiles,
+  notifications,
+  users,
+} from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/session";
 import {
   parseJsonArray,
   toLocalDateString,
   computeSlotOccupancy,
+  closureKey,
+  isSlotClosed,
   DEFAULT_GROUP_CAPACITY,
 } from "@/lib/constants";
 import { type ActionResult, ok, err } from "@/lib/action-result";
@@ -37,7 +46,7 @@ export async function createBooking(input: {
     return err("Devi accedere come giocatore per prenotare.");
   }
 
-  // Data valida (YYYY-MM-DD) e non nel passato — le stringhe in questo formato
+  // Data valida (YYYY-MM-DD) e non nel passato - le stringhe in questo formato
   // sono ordinabili lessicograficamente.
   const today = toLocalDateString(new Date());
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date) || input.date < today) {
@@ -101,6 +110,20 @@ export async function createBooking(input: {
       // commit o al rollback.
       const lockKey = `paideio:slot:${input.coachId}|${input.locationId}|${input.date}|${input.startTime}`;
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`);
+
+      // Il turno ricorrente esiste, ma il coach può aver chiuso questa data
+      // precisa (o l'intera giornata). Controllo dentro il lock, come per la
+      // capienza: la UI può essere stantia.
+      const closures = await tx.query.availabilityClosures.findMany({
+        where: and(
+          eq(availabilityClosures.coachId, input.coachId),
+          eq(availabilityClosures.date, input.date)
+        ),
+      });
+      const closedKeys = new Set(closures.map((c) => closureKey(c.date, c.locationId, c.startTime)));
+      if (isSlotClosed(closedKeys, input.date, input.locationId, input.startTime)) {
+        return "Il coach ha chiuso questa data: scegli un altro orario.";
+      }
 
       const active = await tx.query.bookings.findMany({
         where: and(

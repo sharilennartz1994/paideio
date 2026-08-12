@@ -1,7 +1,7 @@
-# Lotto 00 — Planche d'ancrage
+# Lotto 00 - Planche d'ancrage
 
 **Obiettivo**: una sola immagine che raduna 8 oggetti emblematici del padel nello stile mirato.
-È lei — molto più delle parole dei prompt — che terrà la coerenza su tutta la biblioteca. Diventa
+È lei - molto più delle parole dei prompt - che terrà la coerenza su tutta la biblioteca. Diventa
 la `referenced_image_paths` di ogni generazione successiva.
 
 **Registro**: INCISIONE (`SYSTEM.md` § 2b).
@@ -33,7 +33,7 @@ negative space between the objects, no frame, no border, no captions, no numbers
 The eight objects, in this order:
 1. A padel racket seen face-on: a SOLID PERFORATED SLAB, teardrop silhouette, pierced by about
    forty round holes of equal size on a staggered grid, with a SHORT grip and a wrist cord.
-   It has NO STRINGS and NO STRUNG FACE — it is not a tennis racket.
+   It has NO STRINGS and NO STRUNG FACE - it is not a tennis racket.
 2. A padel ball, showing the two-lobed curved seam.
 3. A padel court seen from directly above: a rectangle twice as long as it is wide, ENCLOSED ON
    ALL FOUR SIDES by walls, with the painted service lines and centre line forming a T on each
@@ -55,21 +55,21 @@ Square image, two thousand forty-eight pixels by two thousand forty-eight pixels
 
 Da `SYSTEM.md` § 8. Il metodo è esplicito: mai in fiducia, un oggetto per volta.
 
-- [ ] **Oggetto 1** — la pala è una lastra piena forata, **senza corde**. Se ha un piatto
+- [ ] **Oggetto 1** - la pala è una lastra piena forata, **senza corde**. Se ha un piatto
       incordato è una racchetta da tennis → variante rifiutata su questo punto.
-- [ ] **Oggetto 1** — impugnatura **corta**, mai manico lungo da tennis.
-- [ ] **Oggetto 2** — cucitura a **due** lobi, mai tre, mai una linea dritta.
-- [ ] **Oggetto 3** — campo **chiuso su 4 lati**. Un campo aperto è rifiutato.
-- [ ] **Oggetto 3** — proporzione 2:1 (20 × 10 m).
-- [ ] **Oggetto 4** — **quattro** fissaggi, uno per angolo.
-- [ ] **Oggetto 7** — la rete **si abbassa al centro**, non ai pali.
-- [ ] **Tutti** — nessuna scritta, nessun numero, nessuna didascalia dentro l'immagine.
-- [ ] **Tutti** — spessore del tratto: contorni ~3× il tratteggio, **uniforme**. È il parametro
+- [ ] **Oggetto 1** - impugnatura **corta**, mai manico lungo da tennis.
+- [ ] **Oggetto 2** - cucitura a **due** lobi, mai tre, mai una linea dritta.
+- [ ] **Oggetto 3** - campo **chiuso su 4 lati**. Un campo aperto è rifiutato.
+- [ ] **Oggetto 3** - proporzione 2:1 (20 × 10 m).
+- [ ] **Oggetto 4** - **quattro** fissaggi, uno per angolo.
+- [ ] **Oggetto 7** - la rete **si abbassa al centro**, non ai pali.
+- [ ] **Tutti** - nessuna scritta, nessun numero, nessuna didascalia dentro l'immagine.
+- [ ] **Tutti** - spessore del tratto: contorni ~3× il tratteggio, **uniforme**. È il parametro
       che deriva di più e va validato **qui**, non al lotto 3.
 
 ## Trappole note (`references/2-generation-assets.md`)
 
 - `image_gen.imagegen` **non produce alpha nativo**. Non chiedere « PNG trasparente »: darebbe una
-  scacchiera dipinta dentro l'immagine. Il fondo blu pieno è voluto — serve al chroma-key dopo.
+  scacchiera dipinta dentro l'immagine. Il fondo blu pieno è voluto - serve al chroma-key dopo.
 - Esportare alla dimensione chiesta, non a miniatura.
 - Consegnare i grezzi in `_raw/`, non cancellare nulla.

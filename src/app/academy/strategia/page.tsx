@@ -10,7 +10,7 @@ import {
   NextLesson,
 } from "@/components/academy/academy-ui";
 
-export const metadata: Metadata = { title: "Strategia di padel — Paideio Academy" };
+export const metadata: Metadata = { title: "Strategia di padel - Paideio Academy" };
 
 export default function StrategiaPage() {
   return (

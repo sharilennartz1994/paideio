@@ -15,7 +15,7 @@ export async function AppTopbar() {
       <Link
         href="/"
         className="flex h-14 items-center md:hidden"
-        aria-label="Paideio — Home"
+        aria-label="Paideio - Home"
       >
         <Image
           src="/brand/paideio-wordmark-2026.png"

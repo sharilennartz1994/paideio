@@ -7,7 +7,7 @@
  *     scripts/pre-migrazione-check.mts
  *
  * Non scrive nulla. Verifica che nessuno slot abbia più di una lezione singola
- * attiva e che nessun giocatore occupi due posti nella stessa lezione — le due
+ * attiva e che nessun giocatore occupi due posti nella stessa lezione - le due
  * invarianti imposte dagli indici parziali su `bookings`.
  */
 import { sql } from "drizzle-orm";
@@ -56,12 +56,12 @@ console.log(`\ngroup_capacity già presente: ${colonna.rows.length > 0 ? "sì" :
 
 let bloccanti = 0;
 if (singoleDoppie.rows.length > 0) {
-  console.error("\nBLOCCANTE — slot con più di una lezione singola attiva:");
+  console.error("\nBLOCCANTE - slot con più di una lezione singola attiva:");
   console.table(singoleDoppie.rows);
   bloccanti++;
 }
 if (postiDoppi.rows.length > 0) {
-  console.error("\nBLOCCANTE — stesso giocatore con due posti sullo stesso slot:");
+  console.error("\nBLOCCANTE - stesso giocatore con due posti sullo stesso slot:");
   console.table(postiDoppi.rows);
   bloccanti++;
 }

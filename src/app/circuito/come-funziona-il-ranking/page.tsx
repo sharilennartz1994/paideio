@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { EditorialHero, SourceNote } from "@/components/editorial-layout";
 import { GamePanel } from "@/components/design";
 
-export const metadata: Metadata = { title: "Come funziona il ranking FIP 2026 — Paideio" };
+export const metadata: Metadata = { title: "Come funziona il ranking FIP 2026 - Paideio" };
 
 export default function RankingGuidePage() {
   return (

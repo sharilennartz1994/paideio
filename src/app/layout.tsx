@@ -22,7 +22,7 @@ const oxanium = Oxanium({
 });
 
 export const metadata: Metadata = {
-  title: "Paideio — Trova il tuo coach di padel",
+  title: "Paideio - Trova il tuo coach di padel",
   description: "Trova allenatori di padel nella tua zona e prenota lezioni singole o di gruppo.",
 };
 

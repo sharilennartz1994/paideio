@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { CoachClose, EditorialHero, SourceNote } from "@/components/editorial-layout";
 import { AcademyIntro, Callout, NextLesson } from "@/components/academy/academy-ui";
 
-export const metadata: Metadata = { title: "Storia e cultura del padel — Paideio Academy" };
+export const metadata: Metadata = { title: "Storia e cultura del padel - Paideio Academy" };
 
 const EVENTS = [
   ["1969", "Acapulco", "Enrique Corcuera adatta lo spazio della propria casa e dà forma al primo campo."],

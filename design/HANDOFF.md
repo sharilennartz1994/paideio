@@ -1,4 +1,4 @@
-# Handoff design — Paideio Game Arena
+# Handoff design - Paideio Game Arena
 
 Ultimo aggiornamento: 26 luglio 2026.
 
@@ -14,11 +14,11 @@ devono rispettare WCAG 2.2 AA.
 
 ## Fonti normative
 
-1. `PRODUCT.md` — verità di prodotto.
-2. `DESIGN.md` — tesi e regole visuali correnti.
-3. `design/SYSTEM.md` — token e grammatica completa.
-4. `design/IMPLEMENTATION-BRIEF.md` — traduzione tecnica.
-5. `AGENTS.md` — convenzioni architetturali e stato del prodotto.
+1. `PRODUCT.md` - verità di prodotto.
+2. `DESIGN.md` - tesi e regole visuali correnti.
+3. `design/SYSTEM.md` - token e grammatica completa.
+4. `design/IMPLEMENTATION-BRIEF.md` - traduzione tecnica.
+5. `AGENTS.md` - convenzioni architetturali e stato del prodotto.
 
 I documenti storici e gli screenshot di audit non sono parte della runtime.
 

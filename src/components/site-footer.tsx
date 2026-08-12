@@ -43,7 +43,7 @@ export function SiteFooter() {
             ))}
           </nav>
           {/* Documenti legali: separati e più quieti, ma sempre raggiungibili da
-              ogni pagina — è il posto in cui vengono cercati. */}
+              ogni pagina - è il posto in cui vengono cercati. */}
           <nav
             aria-label="Documenti legali"
             className="flex flex-wrap justify-center gap-2 md:justify-end"

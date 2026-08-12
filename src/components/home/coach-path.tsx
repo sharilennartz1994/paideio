@@ -37,7 +37,7 @@ export function CoachPath() {
             <GameCta href="/diventa-coach" tone="ball" showBall arrow size="large">
               Diventa coach
             </GameCta>
-            <GameCta href="/cerca" tone="outline" arrow size="large">
+            <GameCta href="/cerca" tone="arena" arrow size="large">
               Guarda i profili
             </GameCta>
           </div>

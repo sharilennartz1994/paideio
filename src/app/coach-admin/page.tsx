@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { Inbox, CalendarCheck, Star, ArrowRight, User, Clock, Check, Circle, Eye, Sparkles } from "@/components/icons/paideio-icons";
 import { getCurrentCoach } from "@/lib/session";
 import { getCoachAdminStats, getBookingsForCoach, parseJsonArray } from "@/lib/queries";
+import { coachOffersLessons } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { availabilitySlots, locations } from "@/lib/db/schema";
 import { BookingRequestActions } from "@/components/booking-request-actions";
@@ -44,6 +45,10 @@ export default async function CoachAdminDashboard() {
       done: slots.length > 0,
     },
   ];
+  const offersLessons = coachOffersLessons(
+    parseJsonArray(profile.levels),
+    parseJsonArray(profile.trainingTypes)
+  );
   const completedSetup = setup.filter((item) => item.done).length;
   const setupPercent = Math.round((completedSetup / setup.length) * 100);
   const nextSetup = setup.find((item) => !item.done);
@@ -79,6 +84,33 @@ export default async function CoachAdminDashboard() {
           <p className="mt-2 max-w-md text-sm leading-relaxed text-nebbia">
             Completa questi passaggi perché i giocatori possano trovarti, capire la tua proposta e scegliere un orario.
           </p>
+          {/* Senza turni il coach non compare in /cerca (vedi `searchCoaches`).
+              Se non glielo diciamo qui, l'unico segnale è il silenzio. */}
+          {!offersLessons ? (
+            <p className="mt-4 flex items-start gap-2 border border-accent-orange-ink/45 bg-carta-bassa p-3 text-sm leading-relaxed text-nebbia">
+              <Clock className="mt-0.5 size-4 shrink-0 text-accent-orange-ink" aria-hidden />
+              <span>
+                Non hai indicato tipo di lezione e livelli, quindi{" "}
+                <strong className="text-calce">non compari nella ricerca</strong>
+                {slots.length > 0 && (
+                  <>
+                    {" "}e i {slots.length === 1 ? "turno che hai" : `${slots.length} turni che hai`}{" "}
+                    pubblicato <strong className="text-calce">risultano non disponibili</strong> a chi
+                    apre il tuo profilo
+                  </>
+                )}
+                . Si sistema dal <Link href="/coach-admin/profilo" className="font-semibold text-vetro underline underline-offset-4">profilo</Link>.
+              </span>
+            </p>
+          ) : slots.length === 0 ? (
+            <p className="mt-4 flex items-start gap-2 border border-nebbia/30 bg-carta-bassa p-3 text-sm leading-relaxed text-nebbia">
+              <Clock className="mt-0.5 size-4 shrink-0 text-accent-ball-ink" aria-hidden />
+              <span>
+                Finché non pubblichi almeno un turno <strong className="text-calce">non compari nella ricerca</strong>:
+                chi arriva sul tuo profilo può solo salvarti tra i preferiti.
+              </span>
+            </p>
+          ) : null}
           <div
             className="mt-5 h-2 overflow-hidden bg-nebbia/15"
             role="progressbar"
@@ -136,12 +168,25 @@ export default async function CoachAdminDashboard() {
         <div className="group relative overflow-hidden border-t border-tertiary bg-surface-container-high p-6">
           <Star className="absolute -right-4 -bottom-4 size-32 text-on-surface opacity-5 transition-transform duration-500 group-hover:scale-110" />
           <p className="mb-2 font-mono text-label-caps text-on-surface-variant uppercase">Valutazione media</p>
-          <p className="font-heading text-headline-lg text-on-surface">
-            {stats.rating.average != null ? stats.rating.average.toFixed(1) : "—"}
-          </p>
-          <p className="mt-1 text-xs text-on-surface-variant">
-            {stats.rating.count === 0 ? "nessuna recensione ancora" : `su ${stats.rating.count} recensioni`}
-          </p>
+          {/* Senza recensioni il numero grande non ha nulla da mostrare: meglio
+              dire cosa manca che lasciare un segnaposto muto. */}
+          {stats.rating.average != null ? (
+            <>
+              <p className="font-heading text-headline-lg text-on-surface">
+                {stats.rating.average.toFixed(1)}
+              </p>
+              <p className="mt-1 text-xs text-on-surface-variant">
+                su {stats.rating.count} {stats.rating.count === 1 ? "recensione" : "recensioni"}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-heading text-2xl text-on-surface">Nessuna valutazione</p>
+              <p className="mt-1 text-xs text-on-surface-variant">
+                Arriva con la prima recensione dopo una lezione svolta.
+              </p>
+            </>
+          )}
         </div>
       </div>
 

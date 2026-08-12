@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { EditorialHero, SourceNote } from "@/components/editorial-layout";
 import { GameBadge } from "@/components/design";
 
-export const metadata: Metadata = { title: "Classifiche mondiali FIP 2026 — Paideio" };
+export const metadata: Metadata = { title: "Classifiche mondiali FIP 2026 - Paideio" };
 
 const MEN = [["1", "Arturo Coello", "21.337"], ["1", "Agustín Tapia", "21.337"], ["3", "Ale Galán", "17.394"], ["3", "Fede Chingotto", "17.394"]];
 const WOMEN = [["1", "Gemma Triay", "18.257"], ["1", "Delfi Brea", "18.257"], ["3", "Bea González", "14.469"], ["4", "Ari Sánchez", "14.274"]];

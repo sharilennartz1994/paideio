@@ -11,7 +11,7 @@ import { EditorialHero } from "@/components/editorial-layout";
 import { ReleaseFeedbackForm } from "@/components/release-feedback-form";
 
 export const metadata: Metadata = {
-  title: "Prossime release — Paideio",
+  title: "Prossime release - Paideio",
   description: "Scopri cosa stiamo preparando per coach e giocatori e proponi la prossima evoluzione di Paideio.",
 };
 

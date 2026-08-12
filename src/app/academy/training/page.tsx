@@ -10,7 +10,7 @@ import {
   SessionPlan,
 } from "@/components/academy/academy-ui";
 
-export const metadata: Metadata = { title: "Training e fitness per il padel — Paideio Academy" };
+export const metadata: Metadata = { title: "Training e fitness per il padel - Paideio Academy" };
 
 export default function TrainingPage() {
   return (

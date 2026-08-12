@@ -17,7 +17,7 @@ export const SEARCH_LOCATION_COOKIE = "paideio_pos";
 
 /**
  * Precisione volutamente ridotta a ~1,1 km (2 decimali). La ricerca lavora su
- * un raggio di decine di chilometri, quindi non serve di più — e una posizione
+ * un raggio di decine di chilometri, quindi non serve di più - e una posizione
  * arrotondata non individua un indirizzo di casa.
  */
 export const SEARCH_LOCATION_DECIMALI = 2;
