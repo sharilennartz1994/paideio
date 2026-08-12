@@ -147,12 +147,25 @@ export default async function CoachAdminDashboard() {
         <div className="group relative overflow-hidden border-t border-tertiary bg-surface-container-high p-6">
           <Star className="absolute -right-4 -bottom-4 size-32 text-on-surface opacity-5 transition-transform duration-500 group-hover:scale-110" />
           <p className="mb-2 font-mono text-label-caps text-on-surface-variant uppercase">Valutazione media</p>
-          <p className="font-heading text-headline-lg text-on-surface">
-            {stats.rating.average != null ? stats.rating.average.toFixed(1) : "-"}
-          </p>
-          <p className="mt-1 text-xs text-on-surface-variant">
-            {stats.rating.count === 0 ? "nessuna recensione ancora" : `su ${stats.rating.count} recensioni`}
-          </p>
+          {/* Senza recensioni il numero grande non ha nulla da mostrare: meglio
+              dire cosa manca che lasciare un segnaposto muto. */}
+          {stats.rating.average != null ? (
+            <>
+              <p className="font-heading text-headline-lg text-on-surface">
+                {stats.rating.average.toFixed(1)}
+              </p>
+              <p className="mt-1 text-xs text-on-surface-variant">
+                su {stats.rating.count} {stats.rating.count === 1 ? "recensione" : "recensioni"}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-heading text-2xl text-on-surface">Nessuna valutazione</p>
+              <p className="mt-1 text-xs text-on-surface-variant">
+                Arriva con la prima recensione dopo una lezione svolta.
+              </p>
+            </>
+          )}
         </div>
       </div>
 
