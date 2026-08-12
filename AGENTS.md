@@ -578,6 +578,36 @@ Test: `npm run test:chiusure` (stesso Postgres usa-e-getta di
   `revalidatePath("/", "layout")`, così il contatore della campanella si
   aggiorna immediatamente.
 
+### Email: un solo trasporto, sempre best-effort
+
+Ogni email del prodotto passa da `src/lib/email/index.ts`. `sendEmail()` chiama
+l'API HTTP di Resend con `fetch` (nessun SDK, come già faceva il form feedback),
+ha un timeout di 5 secondi e ritorna
+`"inviata" | "saltata" | "fallita"`: **non lancia mai**. Senza `RESEND_API_KEY`
+l'esito è `"saltata"` e l'applicazione si comporta esattamente come prima.
+Mittente `notifiche@playpaideio.com` (override con `EMAIL_FROM`), link assoluti
+via `absoluteUrl()`. Tabella delle variabili e setup in `docs/EMAIL-SETUP.md`.
+
+La notifica al coach di una nuova richiesta di lezione sta in
+`src/lib/email/booking-request.ts`, non in `actions/bookings.ts`. Tre vincoli da
+non perdere:
+
+1. **Fuori dalla transazione.** `createBooking()` chiama
+   `notifyCoachOfBookingRequest()` solo dopo il commit: la prenotazione e le due
+   notifiche in-app sono già salvate, un errore SMTP non può annullarle né
+   lasciarle a metà. Le notifiche in-app restano la fonte primaria, l'email è un
+   promemoria.
+2. **Niente attese nel percorso della richiesta.** La Server Action gira su
+   Fluid Compute: la promessa va a `waitUntil()` di `@vercel/functions`, che
+   tiene vivo il runtime senza far aspettare il giocatore. Fuori da Vercel è un
+   no-op e la promessa gira comunque in background.
+3. **Costruzione separata dall'invio.** `buildBookingRequestEmail()` è pura (né
+   rete né database) proprio per essere ispezionabile da un test;
+   `deliverBookingRequestEmail()` accetta un `EmailTransport` iniettabile.
+   Per un nuovo tipo di email replicare questa coppia, mai una `fetch` inline
+   dentro un'action. Test: `npm run test:email` (nessun database, nessuna posta
+   vera).
+
 ### Conferme: `ConfirmDialog`, mai `window.confirm()`
 
 `src/components/confirm-dialog.tsx` è la conferma canonica del prodotto,
@@ -846,6 +876,8 @@ sistema. `npm run db:push`, `db:seed` e `db:constraints` puntano ancora a
   dotenv, già nello script)
 - `npm run test:capienza` / `npm run test:chiusure` - test end-to-end contro un
   Postgres usa-e-getta (istruzioni in testa agli script in `scripts/`)
+- `npm run test:email` - verifica il contenuto della notifica email al coach e
+  il comportamento senza `RESEND_API_KEY` (nessun database, nessun invio reale)
 - `npm run build` - build di produzione
 
 ## Dati demo
@@ -989,6 +1021,15 @@ bloccato) per un banner "Deployment Blocked" / "Fix Git Configuration".
 - [x] Chiusure del calendario: il coach può togliere una data precisa (un
       turno o l'intera giornata) senza smontare la ricorrenza - vedi la
       sezione "Chiusure del calendario". Test: `npm run test:chiusure`.
+- [x] Email al coach quando arriva una richiesta di lezione - trasporto
+      condiviso `src/lib/email/`, invio best-effort dopo il commit via
+      `waitUntil`. Resta da impostare `RESEND_API_KEY` in produzione e da
+      verificare il mittente `notifiche@playpaideio.com` su Resend; senza
+      chiave l'app funziona come prima. Vedi "Email: un solo trasporto,
+      sempre best-effort" e `docs/EMAIL-SETUP.md`.
+- [ ] Email al giocatore quando il coach conferma o rifiuta (il trasporto c'è
+      già, manca il template: non fatto in questo giro per non toccare il
+      flusso di conferma/rifiuto)
 - [ ] Policy di cancellazione: oggi un giocatore può annullare una
       prenotazione `confermata` in qualsiasi momento, senza finestra minima
       né conseguenze per il coach che ha bloccato lo slot.

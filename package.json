@@ -15,7 +15,8 @@
     "db:local:up": "docker compose up -d db && docker compose exec -T db sh -c 'until pg_isready -U postgres -d paideio >/dev/null 2>&1; do sleep 1; done' && echo 'Postgres locale pronto su localhost:55433'",
     "db:local:down": "docker compose down",
     "db:local:reset": "dotenv -e .env.development.local -- sh -c 'drizzle-kit push --force && tsx --tsconfig tsconfig.scripts.json scripts/db-apply-overlap-constraint.mts && tsx src/lib/db/seed.ts'",
-    "test:identita": "tsx --tsconfig tsconfig.scripts.json scripts/e2e-identita.mts"
+    "test:identita": "tsx --tsconfig tsconfig.scripts.json scripts/e2e-identita.mts",
+    "test:email": "tsx --tsconfig tsconfig.scripts.json scripts/test-email-prenotazione.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
