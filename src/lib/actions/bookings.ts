@@ -22,6 +22,7 @@ import {
   DEFAULT_GROUP_CAPACITY,
 } from "@/lib/constants";
 import { type ActionResult, ok, err } from "@/lib/action-result";
+import { notifyCoachOfBookingRequest } from "@/lib/email/booking-request";
 
 const MAX_NOTES_LENGTH = 500;
 const MAX_OPEN_REQUESTS = 10;
@@ -197,6 +198,22 @@ export async function createBooking(input: {
     });
 
     if (rejection) return err(rejection);
+
+    // Email al coach: FUORI dalla transazione e best-effort. La prenotazione e
+    // le notifiche in-app sono già committate; un errore SMTP non deve toccarle.
+    // Non si attende: `waitUntil` porta avanti l'invio dopo la risposta.
+    notifyCoachOfBookingRequest({
+      bookingId,
+      coachId: input.coachId,
+      locationId: input.locationId,
+      playerName: user.name,
+      date: input.date,
+      startTime: input.startTime,
+      endTime: input.endTime,
+      type: input.type,
+      level: input.level,
+      notes,
+    });
   } catch (error) {
     // Backstop agli indici parziali: una singola già attiva sullo slot o lo
     // stesso giocatore due volte sulla stessa lezione.

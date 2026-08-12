@@ -244,6 +244,16 @@ La pagina pubblica `/prossime-release` raccoglie feedback persistenti in
 richiede `RESEND_API_KEY` e `FEEDBACK_RECIPIENT_EMAIL`. Usare esclusivamente
 indirizzi `@playpaideio.com`; dettagli in `docs/EMAIL-SETUP.md`.
 
+Ogni email del prodotto passa dal trasporto condiviso `src/lib/email/index.ts`
+(`sendEmail()`, `fetch` su Resend, timeout 5s, esito
+`"inviata" | "saltata" | "fallita"`, mai un throw). Senza `RESEND_API_KEY`
+l’esito è `"saltata"` e l’app si comporta come prima. La notifica al coach di
+una nuova richiesta sta in `src/lib/email/booking-request.ts`: si invia dopo il
+commit della prenotazione, fuori dalla transazione, e viene affidata a
+`waitUntil()` per non allungare la Server Action. Per un nuovo tipo di email:
+funzione pura che costruisce l’`EmailMessage` (testabile) + un wrapper
+best-effort, mai `fetch` inline dentro un’action. Test: `npm run test:email`.
+
 Le icone dell’interfaccia sono proprietarie Paideio: 56 PNG trasparenti in
 `public/design/icons`, generati da `scripts/generate-paideio-icons.mjs` e
 montati come CSS mask da `src/components/icons/paideio-icons.tsx` per
