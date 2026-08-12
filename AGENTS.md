@@ -777,6 +777,41 @@ Le conseguenze, da tenere allineate se tocchi una di queste superfici:
 - Un booking = uno slot settimanale intero del coach (no sotto-slot orari); il
   coach conferma/rifiuta manualmente.
 
+## Sviluppo in locale con un database separato
+
+Storicamente locale e produzione condividevano lo stesso database Neon. Due
+conseguenze fastidiose: ogni `db:seed` scriveva in ciò che vedono gli utenti
+reali, e **fare login in locale era di fatto impossibile** — il proprio utente
+ha il `clerk_id` dell'istanza Clerk di *produzione*, quindi accedendo con
+l'istanza di sviluppo si ottiene un id diverso, l'insert in `getCurrentUser()`
+va in conflitto su `users_email_unique`, `onConflictDoNothing()` lo ingoia e la
+funzione ritorna `null`: risulti autenticato su Clerk ma inesistente per l'app.
+
+Dal 12 agosto 2026 c'è un Postgres locale in `docker-compose.yml`:
+
+```bash
+npm run db:local:up      # container su localhost:55433
+npm run db:local:reset   # schema + vincoli GiST + dati demo
+npm run dev
+```
+
+Il ponte è **`.env.development.local`** (non versionato, `.gitignore` ha
+`.env*`), che contiene solo `DATABASE_URL`. Next lo carica con priorità più
+alta di `.env.local` ma continua a leggere anche quello, quindi **le chiavi
+Clerk di sviluppo restano valide**: si sovrascrive soltanto il database. Per
+tornare a lavorare contro Neon basta rinominare o cancellare quel file.
+
+Con il database locale il login funziona: l'utente Clerk viene provisionato da
+zero come `player`, e i coach demo del seed sono già prenotabili. La prima
+fascia di Elena Ferraro è lunedì 09:00-20:00 apposta, per provare il caso
+"giornata intera".
+
+Tre porte Postgres distinte, da non confondere: **55433** è lo sviluppo
+(persistente, docker-compose), **55432** è il Postgres usa-e-getta dei test
+e2e (`docker run`, da buttare dopo), **5432** è un eventuale Postgres di
+sistema. `npm run db:push`, `db:seed` e `db:constraints` puntano ancora a
+`.env.local`, cioè **a Neon**: le versioni locali sono `db:local:*`.
+
 ## Comandi
 
 - `npm run dev` - dev server

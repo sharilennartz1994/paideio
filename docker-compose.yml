@@ -1,0 +1,34 @@
+# Postgres locale per lo sviluppo, separato da Neon.
+#
+# Serve perché locale e produzione hanno sempre condiviso lo stesso database:
+# ogni `db:seed` scriveva anche in ciò che vedono gli utenti reali, e fare login
+# in locale era impossibile (il proprio utente ha il `clerk_id` dell'istanza di
+# produzione, quindi in dev l'insert va in conflitto sull'email e
+# `getCurrentUser()` torna null).
+#
+#   npm run db:local:up      # avvia il container
+#   npm run db:local:reset   # schema + vincoli + dati demo
+#   npm run dev              # usa il locale se esiste .env.development.local
+#
+# Porta 55433 per non collidere con il Postgres usa-e-getta dei test e2e
+# (55432) né con un eventuale Postgres di sistema (5432).
+services:
+  db:
+    image: postgres:17
+    container_name: paideio-dev-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: paideio
+      POSTGRES_DB: paideio
+    ports:
+      - "55433:5432"
+    volumes:
+      - paideio-dev-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d paideio"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  paideio-dev-db:
