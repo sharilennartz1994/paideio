@@ -125,16 +125,23 @@ export const bookings = pgTable(
   },
   (table) => [
     // Una lezione singola occupa il campo in esclusiva: al massimo una attiva
-    // per slot. Indice parziale, quindi rifiutate/annullate non bloccano nulla.
+    // con lo stesso inizio. Indice parziale, quindi rifiutate/annullate non
+    // bloccano nulla.
     uniqueIndex("bookings_active_single_slot_idx")
       .on(table.coachId, table.locationId, table.date, table.startTime)
       .where(sql`status IN ('richiesta', 'confermata') AND type = 'singolo'`),
-    // Le lezioni di gruppo condividono lo slot, ma un giocatore non può
-    // occupare due posti nella stessa lezione. La capienza massima non è
-    // esprimibile come indice: la impone `createBooking` sotto advisory lock.
+    // Le lezioni di gruppo condividono la lezione, ma un giocatore non può
+    // occupare due posti nella stessa. La capienza massima non è esprimibile
+    // come indice: la impone `createBooking` sotto advisory lock.
     uniqueIndex("bookings_active_player_slot_idx")
       .on(table.coachId, table.locationId, table.date, table.startTime, table.playerId)
       .where(sql`status IN ('richiesta', 'confermata')`),
+    // NOTA: il divieto di **sovrapposizione** tra lezioni di durata diversa non
+    // è esprimibile con un indice unico (una singola 9:00-10:30 e una
+    // 9:30-11:00 hanno inizi diversi ma si accavallano). Lo impone un vincolo
+    // di esclusione GiST che drizzle-kit non sa generare: vive in
+    // `scripts/db-apply-overlap-constraint.mts`, da rilanciare dopo ogni
+    // `db:push`. Vedi AGENTS.md, sezione "Finestre di disponibilità".
   ]
 );
 

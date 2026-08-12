@@ -173,6 +173,14 @@ una griglia non scorre se l'antenato non può stringersi. Per i testi senza spaz
 da 375px cercando `scrollWidth - clientWidth > 2`; `.truncate` e le icone
 decorative `-right-4` sono falsi positivi legittimi. Dettagli in `AGENTS.md`.
 
+## Identità Clerk
+
+`linkOrCreateLocalUser()` in `session.ts` collega l'identità Clerk alla riga
+`users`. Se l'email esiste già con un `clerk_id` diverso, la riga viene
+adottata **solo con email verificata da Clerk**, conservando ruolo e id: prima
+il conflitto veniva ingoiato e l'utente risultava autenticato ma inesistente
+per l'app. Test: `npm run test:identita`.
+
 ## Conferme
 
 Usare `ConfirmDialog` (`components/confirm-dialog.tsx`), mai `window.confirm()`

@@ -10,12 +10,16 @@ import {
   parseJsonArray,
   toLocalDateString,
   haversineDistanceKm,
-  computeSlotOccupancy,
   coachOffersLessons,
   closureKey,
   isSlotClosed,
+  minutesFromTime,
+  intervalsOverlap,
+  allowedStarts,
+  LESSON_DURATIONS,
   DEFAULT_GROUP_CAPACITY,
 } from "./constants";
+import type { BookedLesson } from "./constants";
 
 const DEFAULT_SEARCH_RADIUS_KM = 50;
 
@@ -233,19 +237,29 @@ export async function getCoachReviews(coachId: string) {
   return withPlayer.sort((a, b) => b.review.createdAt.localeCompare(a.review.createdAt));
 }
 
-export type CalendarSlot = {
+/**
+ * Una **finestra** pubblicata dal coach in una data concreta, con dentro le
+ * lezioni già fissate. Non è più un'unità prenotabile: il giocatore ci ritaglia
+ * dentro una lezione da 60 o 90 minuti, e gli inizi possibili li calcola
+ * `allowedStarts()` in `constants.ts` — la stessa funzione che usa
+ * `createBooking` per validare.
+ *
+ * Il calcolo non è precotto qui apposta: mandare al client tutte le
+ * combinazioni inizio×durata di una finestra 9-20 per 15 giorni sarebbero
+ * centinaia di righe. Il client riceve finestra + occupato e deriva il resto.
+ */
+export type CalendarWindow = {
   date: string; // YYYY-MM-DD
   dayOfWeek: number;
+  /** Estremi della finestra, non di una lezione. */
   startTime: string;
   endTime: string;
   locationId: string;
   locationName: string;
-  /** Non prenotabile: singola in esclusiva, gruppo al completo o niente offerto. */
-  booked: boolean;
-  bookedType: TrainingType | null;
-  seatsTaken: number;
-  capacity: number;
-  availableTypes: TrainingType[];
+  /** Lezioni già fissate dentro la finestra. */
+  busy: BookedLesson[];
+  /** Nessun ritaglio possibile: finestra piena o troppo corta. */
+  full: boolean;
 };
 
 /** Chiave di uno slot-istanza: giorno concreto + campo + fascia oraria. */
@@ -253,8 +267,8 @@ export function slotKey(date: string, locationId: string | null, startTime: stri
   return `${date}|${locationId}|${startTime}|${endTime}`;
 }
 
-/** Istanza concreta di uno slot, con lo stato di chiusura per l'area coach. */
-export type ScheduleSlot = CalendarSlot & {
+/** Finestra concreta con lo stato di chiusura, per l'area coach. */
+export type ScheduleSlot = CalendarWindow & {
   closed: boolean;
   /** Chiusa perché è chiusa l'intera giornata, non il singolo turno. */
   closedWholeDay: boolean;
@@ -297,14 +311,21 @@ async function buildCoachSchedule(coachId: string, daysAhead: number): Promise<S
   const existingBookings = await db.query.bookings.findMany({
     where: and(eq(bookings.coachId, coachId), inArray(bookings.status, ["richiesta", "confermata"])),
   });
-  // Uno slot può ospitare più prenotazioni (gruppo), quindi non basta un Set di
-  // chiavi occupate: serve la lista dei tipi attivi per calcolare i posti.
-  const activeTypesByKey = new Map<string, string[]>();
+  // Le prenotazioni non coincidono più con la finestra: sono intervalli
+  // qualsiasi al suo interno. Si raggruppano per giorno+campo, poi ogni
+  // finestra prende quelle che le cadono dentro.
+  const busyByDayLocation = new Map<string, BookedLesson[]>();
   for (const booking of existingBookings) {
-    const key = slotKey(booking.date, booking.locationId, booking.startTime, booking.endTime);
-    const current = activeTypesByKey.get(key);
-    if (current) current.push(booking.type);
-    else activeTypesByKey.set(key, [booking.type]);
+    const key = `${booking.date}|${booking.locationId}`;
+    const lesson: BookedLesson = {
+      start: minutesFromTime(booking.startTime),
+      end: minutesFromTime(booking.endTime),
+      type: booking.type,
+      playerId: booking.playerId,
+    };
+    const current = busyByDayLocation.get(key);
+    if (current) current.push(lesson);
+    else busyByDayLocation.set(key, [lesson]);
   }
 
   const result: ScheduleSlot[] = [];
@@ -330,8 +351,18 @@ async function buildCoachSchedule(coachId: string, daysAhead: number): Promise<S
       if (generatedKeys.has(key)) continue;
       generatedKeys.add(key);
 
-      const activeTypes = activeTypesByKey.get(key) ?? [];
-      const occupancy = computeSlotOccupancy(activeTypes, groupCapacity, coachTrainingTypes);
+      const windowInterval = {
+        start: minutesFromTime(slot.startTime),
+        end: minutesFromTime(slot.endTime),
+      };
+      const busy = (busyByDayLocation.get(`${dateStr}|${slot.locationId}`) ?? []).filter((b) =>
+        intervalsOverlap(b, windowInterval)
+      );
+      // Piena se nessuna durata offerta ci sta più da nessuna parte.
+      const full =
+        coachTrainingTypes.length === 0 ||
+        LESSON_DURATIONS.every((d) => allowedStarts(windowInterval, busy, d).length === 0);
+
       result.push({
         date: dateStr,
         dayOfWeek,
@@ -339,14 +370,11 @@ async function buildCoachSchedule(coachId: string, daysAhead: number): Promise<S
         endTime: slot.endTime,
         locationId: slot.locationId,
         locationName: location.name,
-        booked: occupancy.full,
-        bookedType: occupancy.bookedType,
-        seatsTaken: occupancy.seatsTaken,
-        capacity: occupancy.capacity,
-        availableTypes: occupancy.availableTypes,
+        busy,
+        full,
         closed: isSlotClosed(closedKeys, dateStr, slot.locationId, slot.startTime),
         closedWholeDay: wholeDayClosed.has(dateStr),
-        activeBookings: activeTypes.length,
+        activeBookings: busy.length,
       });
     }
   }
@@ -354,9 +382,9 @@ async function buildCoachSchedule(coachId: string, daysAhead: number): Promise<S
   return result.sort((a, b) => (a.date + a.startTime).localeCompare(b.date + b.startTime));
 }
 
-export async function getCoachCalendar(coachId: string, daysAhead = 21): Promise<CalendarSlot[]> {
+export async function getCoachCalendar(coachId: string, daysAhead = 21): Promise<CalendarWindow[]> {
   const schedule = await buildCoachSchedule(coachId, daysAhead);
-  return schedule.filter((slot) => !slot.closed);
+  return schedule.filter((w) => !w.closed);
 }
 
 /** Vista del coach: include le istanze chiuse, che deve poter riaprire. */

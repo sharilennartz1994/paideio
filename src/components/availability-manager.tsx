@@ -161,8 +161,11 @@ export function AvailabilityManager({
 
       <form ref={formRef} action={handleAdd} className="grid gap-4 border-t border-nebbia/20 pt-6 sm:grid-cols-4">
         <div className="sm:col-span-4">
-          <h3 className="font-heading text-lg text-calce">Pubblica un turno ricorrente</h3>
-          <p className="mt-1 text-sm text-nebbia">Esempio: ogni martedì dalle 18:00 alle 19:00 al tuo club.</p>
+          <h3 className="font-heading text-lg text-calce">Pubblica una fascia ricorrente</h3>
+          <p className="mt-1 text-sm text-nebbia">
+            Indica quando sei in campo, anche tutto il giorno: es. ogni martedì dalle 9:00 alle 20:00.
+            I giocatori ci prenoteranno dentro lezioni da un’ora o un’ora e mezza.
+          </p>
         </div>
         <div>
           <Label htmlFor="locationId" className="font-mono text-label-caps text-on-surface-variant uppercase">Campo</Label>

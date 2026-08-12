@@ -39,9 +39,10 @@ async function seed() {
       locations: [
         { name: "Padel Club Milano Nord", address: "Via dei Platani 12, Milano", lat: 45.5145, lng: 9.1755 },
       ],
+      // Fasce, non lezioni: il giocatore ci ritaglia dentro 60 o 90 minuti.
+      // La prima è volutamente lunga, per vedere il caso "giornata intera".
       slots: [
-        { dayOfWeek: 1, startTime: "09:00", endTime: "12:00" },
-        { dayOfWeek: 1, startTime: "17:00", endTime: "21:00" },
+        { dayOfWeek: 1, startTime: "09:00", endTime: "20:00" },
         { dayOfWeek: 3, startTime: "17:00", endTime: "21:00" },
         { dayOfWeek: 6, startTime: "09:00", endTime: "13:00" },
       ],

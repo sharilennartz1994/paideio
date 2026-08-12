@@ -1,19 +1,22 @@
 /**
- * Test end-to-end della capienza slot contro un database reale.
+ * Test end-to-end di capienza e sovrapposizioni contro un database reale.
  *
- * Da lanciare SOLO contro un Postgres usa-e-getta. Setup completo:
+ * Riscritto quando le lezioni sono passate da "slot = unità prenotabile" a
+ * "finestra ampia + ritaglio da 60 o 90 minuti": le invarianti sono le stesse,
+ * ma ora si esprimono su intervalli, non su un inizio uguale.
+ *
+ * Da lanciare SOLO contro un Postgres usa-e-getta:
  *
  *   docker run -d --name paideio-e2e -e POSTGRES_PASSWORD=paideio \
  *     -e POSTGRES_DB=paideio -p 55432:5432 postgres:17
  *   export DATABASE_URL='postgres://postgres:paideio@localhost:55432/paideio'
  *   npx drizzle-kit push --force
+ *   npx tsx --tsconfig tsconfig.scripts.json scripts/db-apply-overlap-constraint.mts
  *   npx tsx src/lib/db/seed.ts
  *   npm run test:capienza
  *   docker rm -f paideio-e2e
  *
- * Rifiuta di partire se DATABASE_URL non è locale, per non scrivere mai
- * prenotazioni finte nel database Neon condiviso con la produzione.
- * Esce con codice 1 se una verifica fallisce.
+ * Rifiuta di partire se DATABASE_URL non è locale.
  */
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -21,12 +24,17 @@ import { and, eq, inArray } from "drizzle-orm";
 import { db } from "../src/lib/db/index.ts";
 import { users, coachProfiles, locations, availabilitySlots, bookings } from "../src/lib/db/schema.ts";
 import { getCoachCalendar } from "../src/lib/queries.ts";
-import { toLocalDateString } from "../src/lib/constants.ts";
+import {
+  allowedStarts,
+  computeLessonAvailability,
+  minutesFromTime as M,
+  timeFromMinutes as T,
+  toLocalDateString,
+} from "../src/lib/constants.ts";
 
 const url = process.env.DATABASE_URL ?? "";
 if (!/localhost|127\.0\.0\.1/.test(url) || /neon\.tech/.test(url)) {
   console.error("RIFIUTO: DATABASE_URL deve puntare a un Postgres locale usa-e-getta.");
-  console.error(`Ricevuto: ${url.replace(/:[^:@]*@/, ":***@")}`);
   process.exit(1);
 }
 
@@ -37,299 +45,195 @@ function check(name: string, fn: () => void) {
   console.log(`  ok  ${name}`);
 }
 
-/**
- * Prima data futura, nel giorno della settimana dello slot, su cui non esiste
- * già una prenotazione attiva. Serve perché il database di test può contenere
- * prenotazioni create a mano o dal browser: senza questo il test dipenderebbe
- * dall'ordine in cui è stato lanciato.
- */
-async function firstFreeDateForDay(coachId: string, dayOfWeek: number, startTime: string): Promise<string> {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  for (let i = 1; i <= 20; i++) {
-    const candidate = new Date(d);
-    candidate.setDate(candidate.getDate() + i);
-    if (candidate.getDay() !== dayOfWeek) continue;
-    const dateStr = toLocalDateString(candidate);
-    const busy = await db.query.bookings.findFirst({
-      where: and(
-        eq(bookings.coachId, coachId),
-        eq(bookings.date, dateStr),
-        eq(bookings.startTime, startTime),
-        inArray(bookings.status, ["richiesta", "confermata"])
-      ),
-    });
-    if (!busy) return dateStr;
-  }
-  throw new Error(`nessuna data libera per il giorno ${dayOfWeek} alle ${startTime}`);
-}
+const CAPACITY = 3;
+const TYPES = ["singolo", "gruppo"];
+const WINDOW = { start: M("09:00"), end: M("13:00") };
 
-async function findSlot(coachId: string) {
-  const slot = await db.query.availabilitySlots.findFirst({
-    where: eq(availabilitySlots.coachId, coachId),
+async function main() {
+  const coach = await db.query.users.findFirst({ where: eq(users.role, "coach") });
+  assert.ok(coach, "serve un coach nel seed");
+  await db
+    .update(coachProfiles)
+    .set({ groupCapacity: CAPACITY, trainingTypes: JSON.stringify(TYPES) })
+    .where(eq(coachProfiles.userId, coach.id));
+
+  const location = await db.query.locations.findFirst({ where: eq(locations.coachId, coach.id) });
+  assert.ok(location, "serve un campo");
+
+  // Finestra pulita: un solo turno 09:00-13:00 su un giorno preciso.
+  const target = new Date();
+  target.setHours(0, 0, 0, 0);
+  target.setDate(target.getDate() + 3);
+  const dateStr = toLocalDateString(target);
+  const dayOfWeek = target.getDay();
+
+  await db.delete(availabilitySlots).where(eq(availabilitySlots.coachId, coach.id));
+  await db.insert(availabilitySlots).values({
+    id: randomUUID(),
+    coachId: coach.id,
+    locationId: location.id,
+    dayOfWeek,
+    startTime: "09:00",
+    endTime: "13:00",
   });
-  assert.ok(slot, "il coach deve avere almeno uno slot");
-  return slot;
-}
+  await db.delete(bookings).where(and(eq(bookings.coachId, coach.id), eq(bookings.date, dateStr)));
 
-async function calendarEntry(coachId: string, date: string, startTime: string) {
-  const calendar = await getCoachCalendar(coachId);
-  const entry = calendar.find((s) => s.date === date && s.startTime === startTime);
-  assert.ok(entry, `slot ${date} ${startTime} assente dal calendario`);
-  return entry;
-}
-
-async function addBooking(opts: {
-  playerId: string;
-  coachId: string;
-  locationId: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  type: "singolo" | "gruppo";
-  status?: "richiesta" | "confermata" | "annullata";
-}) {
-  const id = randomUUID();
-  await db.insert(bookings).values({
-    id,
-    playerId: opts.playerId,
-    coachId: opts.coachId,
-    locationId: opts.locationId,
-    date: opts.date,
-    startTime: opts.startTime,
-    endTime: opts.endTime,
-    type: opts.type,
-    level: "intermedio",
-    status: opts.status ?? "richiesta",
-    notes: "",
-    createdAt: new Date().toISOString(),
-  });
-  return id;
-}
-
-/** Giocatori finti extra, per simulare altri utenti che occupano i posti. */
-async function makePlayers(n: number) {
-  const ids: string[] = [];
-  for (let i = 0; i < n; i++) {
+  const playerIds: string[] = [];
+  for (let i = 0; i < CAPACITY + 1; i++) {
     const id = randomUUID();
     await db.insert(users).values({
       id,
       name: `Tester ${i + 1}`,
-      email: `e2e-tester-${i + 1}-${id.slice(0, 8)}@example.com`,
+      email: `e2e-${id.slice(0, 8)}@example.com`,
       role: "player",
       createdAt: new Date().toISOString(),
     });
-    ids.push(id);
+    playerIds.push(id);
   }
-  return ids;
+
+  async function book(playerId: string, s: string, e: string, type: string, status = "richiesta") {
+    await db.insert(bookings).values({
+      id: randomUUID(),
+      playerId,
+      coachId: coach!.id,
+      locationId: location!.id,
+      date: dateStr,
+      startTime: s,
+      endTime: e,
+      type: type as "singolo" | "gruppo",
+      level: "intermedio",
+      status: status as "richiesta",
+      notes: "",
+      createdAt: new Date().toISOString(),
+    });
+  }
+  async function busy() {
+    const rows = await db.query.bookings.findMany({
+      where: and(
+        eq(bookings.coachId, coach!.id),
+        eq(bookings.date, dateStr),
+        inArray(bookings.status, ["richiesta", "confermata"])
+      ),
+    });
+    return rows.map((b) => ({
+      start: M(b.startTime),
+      end: M(b.endTime),
+      type: b.type,
+      playerId: b.playerId,
+    }));
+  }
+  const av = async (s: string, e: string) =>
+    computeLessonAvailability({ start: M(s), end: M(e) }, await busy(), CAPACITY, TYPES);
+
+  console.log("\n1. La finestra genera ritagli, non è essa stessa prenotabile");
+  const starts60 = allowedStarts(WINDOW, [], 60).map(T);
+  const starts90 = allowedStarts(WINDOW, [], 90).map(T);
+  check("09:00-13:00 offre più inizi da 60 minuti", () => {
+    // 11:30 escluso di proposito: 11:30+60=12:30 lascerebbe 30 minuti
+    // invendibili prima delle 13:00.
+    assert.deepEqual(starts60, ["09:00", "10:00", "10:30", "11:00", "12:00"]);
+  });
+  check("e inizi diversi per la durata da 90", () => {
+    assert.deepEqual(starts90, ["09:00", "10:00", "10:30", "11:30"]);
+  });
+  check("nessun inizio lascia un buco più corto di un'ora", () => {
+    for (const s of starts90) {
+      const rest = WINDOW.end - (M(s) + 90);
+      assert.ok(rest === 0 || rest >= 60, `${s} lascerebbe ${rest} minuti invendibili`);
+    }
+  });
+
+  console.log("\n2. Lezione SINGOLA: esclusiva sul suo intervallo");
+  await book(playerIds[0], "10:00", "11:00", "singolo");
+  const overlap = await av("10:30", "11:30");
+  check("10:30-11:30 su 10:00-11:00 -> blocked", () => {
+    assert.equal(overlap.blocked, true);
+    assert.deepEqual(overlap.availableTypes, []);
+  });
+  const identical = await av("10:00", "11:00");
+  check("stesso intervallo -> occupato dalla singola", () => {
+    assert.equal(identical.bookedType, "singolo");
+    assert.deepEqual(identical.availableTypes, []);
+  });
+  const adjacent = await av("11:00", "12:00");
+  check("11:00-12:00 adiacente -> ancora libero", () => {
+    assert.equal(adjacent.blocked, false);
+    assert.deepEqual(adjacent.availableTypes, TYPES);
+  });
+  const afterSingle = allowedStarts(WINDOW, await busy(), 60).map(T);
+  check("09:00 e 11:00 restano, 10:30 sparisce", () => {
+    assert.ok(afterSingle.includes("09:00"));
+    assert.ok(afterSingle.includes("11:00"));
+    assert.ok(!afterSingle.includes("10:30"));
+  });
+
+  console.log("\n3. Lezione di GRUPPO: stesso intervallo, posti condivisi");
+  await db.delete(bookings).where(and(eq(bookings.coachId, coach.id), eq(bookings.date, dateStr)));
+  await book(playerIds[0], "09:00", "10:00", "gruppo");
+  const g1 = await av("09:00", "10:00");
+  check(`1 di ${CAPACITY}: ancora prenotabile, solo come gruppo`, () => {
+    assert.deepEqual(g1.availableTypes, ["gruppo"]);
+    assert.equal(g1.seatsTaken, 1);
+    assert.equal(g1.capacity, CAPACITY);
+  });
+  await book(playerIds[1], "09:00", "10:00", "gruppo");
+  await book(playerIds[2], "09:00", "10:00", "gruppo");
+  const gFull = await av("09:00", "10:00");
+  check(`${CAPACITY} di ${CAPACITY}: al completo`, () => {
+    assert.equal(gFull.full, true);
+    assert.deepEqual(gFull.availableTypes, []);
+  });
+  const otherDuration = await av("09:00", "10:30");
+  check("una durata diversa sullo stesso inizio è un conflitto", () => {
+    assert.equal(otherDuration.blocked, true);
+  });
+
+  console.log("\n4. Il database rifiuta ciò che l'applicazione non deve produrre");
+  await assert.rejects(
+    () => book(playerIds[3], "09:30", "10:30", "singolo"),
+    "una lezione che si accavalla deve essere respinta dal vincolo di esclusione"
+  );
+  passed++;
+  console.log("  ok  sovrapposizione respinta dal vincolo GiST");
+  await assert.rejects(
+    () => book(playerIds[0], "09:00", "10:00", "gruppo"),
+    "lo stesso giocatore non può prendere due posti nella stessa lezione"
+  );
+  passed++;
+  console.log("  ok  doppio posto allo stesso giocatore respinto");
+
+  console.log("\n5. Annullare libera davvero");
+  await db
+    .update(bookings)
+    .set({ status: "annullata" })
+    .where(and(eq(bookings.coachId, coach.id), eq(bookings.date, dateStr)));
+  const freed = await av("09:00", "10:00");
+  check("dopo l'annullamento il ritaglio torna libero", () => {
+    assert.equal(freed.blocked, false);
+    assert.deepEqual(freed.availableTypes, TYPES);
+  });
+
+  console.log("\n6. Il calendario pubblico espone la finestra, non i ritagli");
+  const calendar = await getCoachCalendar(coach.id, 21);
+  const entry = calendar.find((w) => w.date === dateStr);
+  check("la finestra compare una volta sola, con gli estremi pubblicati", () => {
+    assert.ok(entry, "la finestra deve essere nel calendario");
+    assert.equal(entry.startTime, "09:00");
+    assert.equal(entry.endTime, "13:00");
+    assert.equal(entry.full, false);
+  });
+
+  console.log("\nPulizia...");
+  await db.delete(bookings).where(and(eq(bookings.coachId, coach.id), eq(bookings.date, dateStr)));
+  await db.delete(users).where(inArray(users.id, playerIds));
+
+  console.log(`\n${passed} verifiche superate.`);
 }
 
-async function main() {
-  const createdBookingIds: string[] = [];
-  const createdPlayerIds: string[] = [];
-  // 1 = fallito, finché il percorso felice non arriva in fondo.
-  let esito = 1;
-
-  try {
-    const elena = await db.query.users.findFirst({ where: eq(users.email, "elena@example.com") });
-    const davide = await db.query.users.findFirst({ where: eq(users.email, "davide@example.com") });
-    assert.ok(elena && davide, "servono i coach demo (lancia prima il seed)");
-
-    const elenaProfile = await db.query.coachProfiles.findFirst({
-      where: eq(coachProfiles.userId, elena.id),
-    });
-    const davideProfile = await db.query.coachProfiles.findFirst({
-      where: eq(coachProfiles.userId, davide.id),
-    });
-    assert.equal(elenaProfile?.groupCapacity, 4, "Elena: capienza 4");
-    assert.equal(davideProfile?.groupCapacity, 2, "Davide: capienza 2");
-
-    const players = await makePlayers(4);
-    createdPlayerIds.push(...players);
-
-    // ---------------------------------------------------------------
-    console.log("\n1. Lezione SINGOLA → slot in esclusiva");
-    // ---------------------------------------------------------------
-    const eSlot = await findSlot(elena.id);
-    const eLoc = await db.query.locations.findFirst({ where: eq(locations.coachId, elena.id) });
-    assert.ok(eLoc);
-    const eDate = await firstFreeDateForDay(elena.id, eSlot.dayOfWeek, eSlot.startTime);
-
-    let entry = await calendarEntry(elena.id, eDate, eSlot.startTime);
-    check("prima: libero, entrambi i tipi prenotabili", () => {
-      assert.equal(entry.booked, false);
-      assert.deepEqual([...entry.availableTypes].sort(), ["gruppo", "singolo"]);
-    });
-
-    createdBookingIds.push(
-      await addBooking({
-        playerId: players[0],
-        coachId: elena.id,
-        locationId: eLoc.id,
-        date: eDate,
-        startTime: eSlot.startTime,
-        endTime: eSlot.endTime,
-        type: "singolo",
-      })
-    );
-
-    entry = await calendarEntry(elena.id, eDate, eSlot.startTime);
-    check("dopo una singola: slot chiuso a tutti", () => {
-      assert.equal(entry.booked, true);
-      assert.equal(entry.bookedType, "singolo");
-      assert.deepEqual(entry.availableTypes, []);
-    });
-
-    let secondSingleRejected = false;
-    try {
-      await addBooking({
-        playerId: players[1],
-        coachId: elena.id,
-        locationId: eLoc.id,
-        date: eDate,
-        startTime: eSlot.startTime,
-        endTime: eSlot.endTime,
-        type: "singolo",
-      });
-    } catch {
-      secondSingleRejected = true;
-    }
-    check("una seconda singola viene respinta dal database", () => {
-      assert.equal(secondSingleRejected, true);
-    });
-
-    // ---------------------------------------------------------------
-    console.log("\n2. Lezione di GRUPPO → posti condivisi fino alla capienza");
-    // ---------------------------------------------------------------
-    const dSlot = await findSlot(davide.id);
-    const dLoc = await db.query.locations.findFirst({ where: eq(locations.coachId, davide.id) });
-    assert.ok(dLoc);
-    const dDate = await firstFreeDateForDay(davide.id, dSlot.dayOfWeek, dSlot.startTime);
-
-    // Fotografia degli slot già chiusi da dati preesistenti: il test verifica la
-    // differenza, non il totale, così resta valido su un DB non vergine.
-    const chiusiPrima = new Set(
-      (await getCoachCalendar(davide.id))
-        .filter((s) => s.booked)
-        .map((s) => `${s.date}|${s.startTime}`)
-    );
-
-    entry = await calendarEntry(davide.id, dDate, dSlot.startTime);
-    check("prima: libero, 0 posti occupati su 2", () => {
-      assert.equal(entry.booked, false);
-      assert.equal(entry.seatsTaken, 0);
-      assert.equal(entry.capacity, 2);
-    });
-
-    createdBookingIds.push(
-      await addBooking({
-        playerId: players[0],
-        coachId: davide.id,
-        locationId: dLoc.id,
-        date: dDate,
-        startTime: dSlot.startTime,
-        endTime: dSlot.endTime,
-        type: "gruppo",
-      })
-    );
-
-    entry = await calendarEntry(davide.id, dDate, dSlot.startTime);
-    check("1 di 2: ancora prenotabile, ma solo come gruppo", () => {
-      assert.equal(entry.booked, false);
-      assert.equal(entry.seatsTaken, 1);
-      assert.deepEqual(entry.availableTypes, ["gruppo"]);
-    });
-
-    createdBookingIds.push(
-      await addBooking({
-        playerId: players[1],
-        coachId: davide.id,
-        locationId: dLoc.id,
-        date: dDate,
-        startTime: dSlot.startTime,
-        endTime: dSlot.endTime,
-        type: "gruppo",
-      })
-    );
-
-    entry = await calendarEntry(davide.id, dDate, dSlot.startTime);
-    check("2 di 2: slot al completo, sparisce dalle disponibilità", () => {
-      assert.equal(entry.booked, true);
-      assert.equal(entry.seatsTaken, 2);
-      assert.deepEqual(entry.availableTypes, []);
-    });
-
-    // ---------------------------------------------------------------
-    console.log("\n3. Solo QUELLO slot si chiude, non l'intera giornata");
-    // ---------------------------------------------------------------
-    const calendar = await getCoachCalendar(davide.id);
-    const chiusiDopo = new Set(
-      calendar.filter((s) => s.booked).map((s) => `${s.date}|${s.startTime}`)
-    );
-    const nuoviChiusi = [...chiusiDopo].filter((k) => !chiusiPrima.has(k));
-    check("si chiude solo lo slot riempito, nessun altro", () => {
-      assert.deepEqual(nuoviChiusi, [`${dDate}|${dSlot.startTime}`]);
-    });
-    check("restano altri orari prenotabili", () => {
-      assert.ok(calendar.some((s) => !s.booked), "devono restare slot liberi");
-    });
-
-    // ---------------------------------------------------------------
-    console.log("\n4. Annullare libera il posto");
-    // ---------------------------------------------------------------
-    await db
-      .update(bookings)
-      .set({ status: "annullata" })
-      .where(eq(bookings.id, createdBookingIds[createdBookingIds.length - 1]));
-
-    entry = await calendarEntry(davide.id, dDate, dSlot.startTime);
-    check("dopo un annullamento: 1 di 2, di nuovo prenotabile", () => {
-      assert.equal(entry.booked, false);
-      assert.equal(entry.seatsTaken, 1);
-      assert.deepEqual(entry.availableTypes, ["gruppo"]);
-    });
-
-    // ---------------------------------------------------------------
-    console.log("\n5. Lo stesso giocatore non prende due posti");
-    // ---------------------------------------------------------------
-    let duplicateRejected = false;
-    try {
-      await addBooking({
-        playerId: players[0],
-        coachId: davide.id,
-        locationId: dLoc.id,
-        date: dDate,
-        startTime: dSlot.startTime,
-        endTime: dSlot.endTime,
-        type: "gruppo",
-      });
-    } catch {
-      duplicateRejected = true;
-    }
-    check("secondo posto allo stesso giocatore: respinto dal database", () => {
-      assert.equal(duplicateRejected, true);
-    });
-
-    console.log(`\n${passed} verifiche superate\n`);
-    esito = 0;
-  } catch (error) {
-    console.error("\nFALLITO:", error instanceof Error ? error.message : error);
-    if (error instanceof Error && error.stack) console.error(error.stack.split("\n").slice(1, 4).join("\n"));
-  } finally {
-    console.log("\nPulizia dati di test...");
-    if (createdPlayerIds.length > 0) {
-      await db.delete(bookings).where(inArray(bookings.playerId, createdPlayerIds));
-      await db.delete(users).where(inArray(users.id, createdPlayerIds));
-    }
-    const leftovers = await db.query.bookings.findMany({
-      where: and(inArray(bookings.id, createdBookingIds.length ? createdBookingIds : ["-"])),
-    });
-    if (leftovers.length) {
-      await db.delete(bookings).where(inArray(bookings.id, leftovers.map((b) => b.id)));
-    }
-    console.log(esito === 0 ? "Esito: OK" : "Esito: FALLITO");
-    process.exit(esito);
+main().then(
+  () => process.exit(0),
+  (e) => {
+    console.error("\nFALLITO:", e);
+    process.exit(1);
   }
-}
-
-main();
+);
