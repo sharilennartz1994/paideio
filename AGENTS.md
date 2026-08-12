@@ -434,9 +434,55 @@ sistema è fatto così:
   quando si aggiungono nuovi stati vuoti/di successo, non tornare a un tono
   neutro "di sistema".
 
-## Capienza slot e prenotabilità
+## Finestre di disponibilità, durate e capienza
 
-Uno slot-istanza è la terna concreta *giorno + campo + fascia oraria*. La regola
+**Dal 12 agosto 2026 il modello è cambiato.** Prima il coach pubblicava un
+turno e quel turno *era* l'unità prenotabile: chi pubblicava 09:00-22:00 si
+ritrovava una singola lezione da tredici ore, e per avere ore separate doveva
+inserirle una per una. Ora `availability_slots` è una **finestra**: il coach
+dichiara quando è in campo, il giocatore ci ritaglia dentro una lezione di
+`LESSON_DURATIONS` (60 o 90 minuti).
+
+Gli inizi ammessi non sono una griglia fissa: `allowedStarts()` in
+`constants.ts` restituisce quelli **raggiungibili impacchettando lezioni** dal
+bordo di ogni tratto libero, e scarta quelli che lascerebbero un residuo più
+corto della lezione più breve — un buco da 30 minuti sarebbe invendibile per il
+coach. Con 60 e 90 questo dà 9:00, poi ogni mezz'ora. Dopo ogni prenotazione i
+tratti liberi si ricalcolano, quindi gli inizi "scalano" dietro alle lezioni
+già fissate.
+
+`computeLessonAvailability()` è la regola unica di prenotabilità, usata dal
+client (per disegnare gli orari) e da `createBooking()` (per validare). Due
+lezioni **identiche** — stesso inizio *e* stessa fine — sono la stessa lezione:
+è l'unico caso in cui più giocatori coesistono, e solo se è di gruppo.
+Qualunque altra sovrapposizione è un conflitto.
+
+`CalendarWindow` porta al client la finestra e le lezioni già fissate, **non**
+le combinazioni: precalcolare inizio×durata per 15 giorni sarebbero centinaia
+di righe. Il client deriva il resto con le stesse funzioni del server.
+
+### Il vincolo che gli indici unici non possono dare
+
+Con durate variabili una singola 9:00-10:30 e una 9:30-11:00 hanno **inizi
+diversi ma si accavallano**: nessun indice unico su `start_time` le intercetta.
+La garanzia vera è un vincolo di esclusione GiST, che `drizzle-kit push` non sa
+generare e vive in `scripts/db-apply-overlap-constraint.mts`
+(`npm run db:constraints`, idempotente, **da rilanciare dopo ogni
+`db:push`**). Usa `btree_gist`, tre colonne generate (`start_minutes`,
+`end_minutes`, `lesson_key`) e confligge quando gli intervalli si sovrappongono
+*e* le chiavi lezione differiscono — così il gruppo sullo stesso intervallo
+passa e tutto il resto no.
+
+L'advisory lock in `createBooking()` è passato da `paideio:slot:...|<inizio>` a
+`paideio:day:<coach>|<campo>|<data>`: la contesa non è più sul singolo inizio,
+perché due richieste con inizi diversi possono comunque accavallarsi.
+
+Test: `npm run test:capienza` (14 verifiche, incluso il rifiuto del vincolo
+GiST). Istruzioni di setup in testa allo script.
+
+### Storico: il vecchio modello a slot
+
+Uno slot-istanza era la terna concreta *giorno + campo + fascia oraria*. La regola
 che decide cosa è ancora prenotabile sta in **un solo posto**,
 `computeSlotOccupancy()` in `src/lib/constants.ts`, usata sia da
 `getCoachCalendar()` (per disegnare il calendario) sia da `createBooking()` (per

@@ -16,11 +16,16 @@ import { getCurrentUser } from "@/lib/session";
 import {
   parseJsonArray,
   toLocalDateString,
-  computeSlotOccupancy,
+  computeLessonAvailability,
   closureKey,
   isSlotClosed,
+  minutesFromTime,
+  sameInterval,
+  allowedStarts,
+  LESSON_DURATIONS,
   DEFAULT_GROUP_CAPACITY,
 } from "@/lib/constants";
+import type { BookedLesson } from "@/lib/constants";
 import { type ActionResult, ok, err } from "@/lib/action-result";
 
 const MAX_NOTES_LENGTH = 500;
@@ -53,21 +58,38 @@ export async function createBooking(input: {
     return err("Data non valida: scegli una data a partire da oggi.");
   }
 
-  // Lo slot richiesto deve corrispondere a una disponibilità reale del coach
-  // (campo, giorno della settimana e orari devono combaciare).
+  // La lezione deve avere una durata offerta e stare **dentro** una finestra
+  // pubblicata dal coach. La finestra non è più l'unità prenotabile: è il
+  // contenitore in cui il giocatore ritaglia la sua ora (o ora e mezza).
+  const candidate = {
+    start: minutesFromTime(input.startTime),
+    end: minutesFromTime(input.endTime),
+  };
+  const duration = candidate.end - candidate.start;
+  if (!(LESSON_DURATIONS as readonly number[]).includes(duration)) {
+    return err("Durata non valida: le lezioni sono da 60 o 90 minuti.");
+  }
+
   const dayOfWeek = new Date(`${input.date}T00:00:00`).getDay();
-  const slot = await db.query.availabilitySlots.findFirst({
+  const windows = await db.query.availabilitySlots.findMany({
     where: and(
       eq(availabilitySlots.coachId, input.coachId),
       eq(availabilitySlots.locationId, input.locationId),
-      eq(availabilitySlots.dayOfWeek, dayOfWeek),
-      eq(availabilitySlots.startTime, input.startTime),
-      eq(availabilitySlots.endTime, input.endTime)
+      eq(availabilitySlots.dayOfWeek, dayOfWeek)
     ),
   });
-  if (!slot) {
-    return err("Questo orario non corrisponde a nessuna disponibilità del coach.");
+  const window = windows.find(
+    (w) =>
+      minutesFromTime(w.startTime) <= candidate.start &&
+      minutesFromTime(w.endTime) >= candidate.end
+  );
+  if (!window) {
+    return err("Questo orario non rientra in nessuna disponibilità del coach.");
   }
+  const windowInterval = {
+    start: minutesFromTime(window.startTime),
+    end: minutesFromTime(window.endTime),
+  };
 
   // Tipo di allenamento e livello devono essere tra quelli offerti dal coach.
   const profile = await db.query.coachProfiles.findFirst({
@@ -108,7 +130,9 @@ export async function createBooking(input: {
       // arrivando a 5. L'advisory lock serializza tutti gli scrittori sullo
       // stesso slot per la durata della transazione; si rilascia da solo al
       // commit o al rollback.
-      const lockKey = `paideio:slot:${input.coachId}|${input.locationId}|${input.date}|${input.startTime}`;
+      // Il lock copre giorno+campo, non più il singolo inizio: con durate
+      // variabili due richieste con inizi diversi possono comunque accavallarsi.
+      const lockKey = `paideio:day:${input.coachId}|${input.locationId}|${input.date}`;
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`);
 
       // Il turno ricorrente esiste, ma il coach può aver chiuso questa data
@@ -121,29 +145,42 @@ export async function createBooking(input: {
         ),
       });
       const closedKeys = new Set(closures.map((c) => closureKey(c.date, c.locationId, c.startTime)));
-      if (isSlotClosed(closedKeys, input.date, input.locationId, input.startTime)) {
+      // La chiusura riguarda la finestra, non la lezione ritagliata dentro.
+      if (isSlotClosed(closedKeys, input.date, input.locationId, window.startTime)) {
         return "Il coach ha chiuso questa data: scegli un altro orario.";
       }
 
+      // Tutte le lezioni attive del giorno su quel campo: servono intere,
+      // perché il conflitto ora è la sovrapposizione, non l'inizio uguale.
       const active = await tx.query.bookings.findMany({
         where: and(
           eq(bookings.coachId, input.coachId),
           eq(bookings.date, input.date),
           eq(bookings.locationId, input.locationId),
-          eq(bookings.startTime, input.startTime),
           inArray(bookings.status, ["richiesta", "confermata"])
         ),
       });
+      const busy: BookedLesson[] = active.map((b) => ({
+        start: minutesFromTime(b.startTime),
+        end: minutesFromTime(b.endTime),
+        type: b.type,
+        playerId: b.playerId,
+      }));
 
-      if (active.some((b) => b.playerId === user.id)) {
+      if (busy.some((b) => sameInterval(b, candidate) && b.playerId === user.id)) {
         return "Hai già una prenotazione per questo orario.";
       }
 
-      const occupancy = computeSlotOccupancy(
-        active.map((b) => b.type),
-        groupCapacity,
-        coachTrainingTypes
-      );
+      // L'inizio deve essere fra quelli ammessi: è la stessa funzione che
+      // disegna il calendario, quindi UI e validazione non possono divergere.
+      if (!allowedStarts(windowInterval, busy, duration).includes(candidate.start)) {
+        return "Questo orario non è più disponibile: scegline un altro.";
+      }
+
+      const occupancy = computeLessonAvailability(candidate, busy, groupCapacity, coachTrainingTypes);
+      if (occupancy.blocked) {
+        return "Questo orario si sovrappone a un'altra lezione già prenotata.";
+      }
       if (!occupancy.availableTypes.includes(input.type)) {
         if (occupancy.bookedType === "singolo") {
           return "Questo orario è già occupato da una lezione singola.";

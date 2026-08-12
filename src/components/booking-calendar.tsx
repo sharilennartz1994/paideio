@@ -6,8 +6,29 @@ import { CalendarDays, Check, Clock3, MapPin, MessageSquareText } from "@/compon
 import { toast } from "sonner";
 import { createBooking } from "@/lib/actions/bookings";
 import { celebrate } from "@/lib/confetti";
-import type { CalendarSlot } from "@/lib/queries";
-import type { TrainingType } from "@/lib/constants";
+import type { CalendarWindow } from "@/lib/queries";
+import type { TrainingType, BookedLesson } from "@/lib/constants";
+import {
+  LESSON_DURATIONS,
+  allowedStarts,
+  computeLessonAvailability,
+  minutesFromTime,
+  timeFromMinutes,
+} from "@/lib/constants";
+
+/** Lezione candidata: un ritaglio concreto dentro una finestra del coach. */
+type Candidate = {
+  window: CalendarWindow;
+  start: number;
+  end: number;
+  startTime: string;
+  endTime: string;
+  seatsTaken: number;
+  capacity: number;
+  bookedType: TrainingType | null;
+  availableTypes: TrainingType[];
+  joinable: boolean;
+};
 import { Textarea } from "@/components/ui/textarea";
 import { FavoriteButton } from "@/components/favorite-button";
 import { FullScreenGameLoader, GameBadge, GameCta, GameEmptyState } from "@/components/design";
@@ -30,18 +51,16 @@ function formatDate(dateStr: string) {
   });
 }
 
-/** Etichetta che spiega perché uno slot è (o non è) prenotabile. */
-function slotStatus(slot: CalendarSlot): { label: string } {
-  if (slot.bookedType === "singolo") return { label: "Occupato · lezione singola" };
-  if (slot.bookedType === "gruppo") {
-    return slot.booked
-      ? { label: `Gruppo al completo · ${slot.seatsTaken}/${slot.capacity}` }
-      : { label: `Gruppo aperto · ${slot.seatsTaken}/${slot.capacity} posti` };
+/** Etichetta che spiega perché una lezione è (o non è) prenotabile. */
+function candidateStatus(c: Candidate): string {
+  if (c.bookedType === "gruppo") {
+    return c.joinable
+      ? `Gruppo aperto · ${c.seatsTaken}/${c.capacity} posti`
+      : `Gruppo al completo · ${c.seatsTaken}/${c.capacity}`;
   }
-  if (slot.booked) return { label: "Non disponibile" };
-  return slot.availableTypes.includes("gruppo") && !slot.availableTypes.includes("singolo")
-    ? { label: `Libero · gruppo fino a ${slot.capacity}` }
-    : { label: "Libero" };
+  return c.availableTypes.includes("gruppo") && !c.availableTypes.includes("singolo")
+    ? `Libero · gruppo fino a ${c.capacity}`
+    : "Libero";
 }
 
 function dateStamp(dateStr: string) {
@@ -51,8 +70,9 @@ function dateStamp(dateStr: string) {
 
 export function BookingCalendar({
   coachId,
-  slots,
+  windows,
   trainingTypes,
+  groupCapacity,
   levels,
   viewerRole,
   pricePerLesson,
@@ -60,8 +80,9 @@ export function BookingCalendar({
   offersLessons = true,
 }: {
   coachId: string;
-  slots: CalendarSlot[];
+  windows: CalendarWindow[];
   trainingTypes: string[];
+  groupCapacity: number;
   levels: string[];
   viewerRole: "player" | "coach" | null;
   pricePerLesson?: number | null;
@@ -70,13 +91,12 @@ export function BookingCalendar({
   /** Il coach ha dichiarato tipi di lezione e livelli. */
   offersLessons?: boolean;
 }) {
-  const availableSlots = useMemo(() => slots.filter((slot) => !slot.booked), [slots]);
-  const dates = useMemo(
-    () => Array.from(new Set(slots.map((slot) => slot.date))),
-    [slots]
+  const dates = useMemo(() => Array.from(new Set(windows.map((w) => w.date))), [windows]);
+  const [activeDate, setActiveDate] = useState(
+    dates.find((date) => windows.some((w) => w.date === date && !w.full)) ?? dates[0] ?? ""
   );
-  const [activeDate, setActiveDate] = useState(dates.find((date) => slots.some((slot) => slot.date === date && !slot.booked)) ?? dates[0] ?? "");
-  const [selected, setSelected] = useState<CalendarSlot | null>(null);
+  const [duration, setDuration] = useState<number>(LESSON_DURATIONS[0]);
+  const [selected, setSelected] = useState<Candidate | null>(null);
   const [type, setType] = useState<string>(trainingTypes[0] ?? "singolo");
   const [level, setLevel] = useState(levels[0] ?? "");
   const [notes, setNotes] = useState("");
@@ -91,7 +111,34 @@ export function BookingCalendar({
     ? dates
     : dates.slice(0, Math.max(DATE_INIZIALI, dates.indexOf(activeDate) + 1));
 
-  const daySlots = slots.filter((slot) => slot.date === activeDate);
+  // Le lezioni possibili si derivano qui con le stesse funzioni che usa
+  // `createBooking`: se divergessero, il giocatore sceglierebbe un orario che
+  // l'action poi rifiuta.
+  const dayCandidates: Candidate[] = useMemo(() => {
+    const out: Candidate[] = [];
+    for (const w of windows.filter((x) => x.date === activeDate)) {
+      const windowInterval = { start: minutesFromTime(w.startTime), end: minutesFromTime(w.endTime) };
+      for (const start of allowedStarts(windowInterval, w.busy, duration)) {
+        const end = start + duration;
+        const av = computeLessonAvailability({ start, end }, w.busy, groupCapacity, trainingTypes);
+        if (av.blocked) continue;
+        out.push({
+          window: w,
+          start,
+          end,
+          startTime: timeFromMinutes(start),
+          endTime: timeFromMinutes(end),
+          seatsTaken: av.seatsTaken,
+          capacity: av.capacity,
+          bookedType: av.bookedType,
+          availableTypes: av.availableTypes,
+          joinable: av.availableTypes.length > 0,
+        });
+      }
+    }
+    return out.sort((a, b) => a.start - b.start);
+  }, [windows, activeDate, duration, groupCapacity, trainingTypes]);
+
   const step = selected ? 2 : 1;
 
   // Su uno slot già aperto come gruppo si può solo entrare nel gruppo: i tipi
@@ -100,11 +147,9 @@ export function BookingCalendar({
     ? selected.availableTypes.filter((t) => trainingTypes.includes(t))
     : (trainingTypes.filter((t) => t === "singolo" || t === "gruppo") as TrainingType[]);
 
-  function selectSlot(slot: CalendarSlot) {
-    setSelected(slot);
-    // Se il tipo scelto prima non è più possibile su questo slot, ricade sul
-    // primo ammesso: così il riepilogo non promette mai qualcosa di rifiutabile.
-    const allowed = slot.availableTypes.filter((t) => trainingTypes.includes(t));
+  function selectCandidate(candidate: Candidate) {
+    setSelected(candidate);
+    const allowed = candidate.availableTypes.filter((t) => trainingTypes.includes(t));
     if (!allowed.includes(type as TrainingType)) setType(allowed[0] ?? "");
   }
 
@@ -113,8 +158,8 @@ export function BookingCalendar({
     startTransition(async () => {
       const result = await createBooking({
         coachId,
-        locationId: selected.locationId,
-        date: selected.date,
+        locationId: selected.window.locationId,
+        date: selected.window.date,
         startTime: selected.startTime,
         endTime: selected.endTime,
         type: type as "singolo" | "gruppo",
@@ -134,7 +179,7 @@ export function BookingCalendar({
 
   // Senza tipi di lezione e livelli ogni slot risulterebbe pieno: meglio uno
   // stato vuoto esplicito che un calendario di caselle tutte grigie.
-  if (slots.length === 0 || !offersLessons) {
+  if (windows.length === 0 || !offersLessons) {
     return (
       <GameEmptyState
         asset="pickupTube"
@@ -208,7 +253,7 @@ export function BookingCalendar({
             <div>
               <p className="text-sm font-semibold text-calce">1. Quando vuoi allenarti?</p>
               <p className="mt-1 text-sm text-nebbia">
-                {availableSlots.length} {availableSlots.length === 1 ? "orario disponibile" : "orari disponibili"} nei prossimi giorni
+                Scegli il giorno, poi la durata e l’orario
               </p>
             </div>
             {pricePerLesson != null && (
@@ -227,22 +272,16 @@ export function BookingCalendar({
           <div className="mt-6 grid grid-cols-[repeat(auto-fill,minmax(76px,1fr))] gap-2" aria-label="Giorni disponibili">
             {visibleDates.map((date) => {
               const stamp = dateStamp(date);
-              const available = slots.filter((slot) => slot.date === date && !slot.booked).length;
+              const dayFull = windows.filter((w) => w.date === date).every((w) => w.full);
               return (
                 <button
                   key={date}
                   type="button"
                   aria-pressed={activeDate === date}
-                  aria-label={`${formatDate(date)}, ${
-                    available === 1
-                      ? "1 orario disponibile"
-                      : available > 1
-                        ? `${available} orari disponibili`
-                        : "nessun orario disponibile"
-                  }`}
+                  aria-label={`${formatDate(date)}, ${dayFull ? "nessun orario disponibile" : "orari disponibili"}`}
                   onClick={() => {
                     setActiveDate(date);
-                    if (selected?.date !== date) setSelected(null);
+                    if (selected?.window.date !== date) setSelected(null);
                   }}
                   className={cn(
                     "min-h-20 border px-2 py-2 text-center transition-[background-color,color,border-color,transform] duration-150",
@@ -253,7 +292,7 @@ export function BookingCalendar({
                 >
                   <span className="block text-[10px] font-semibold">{stamp.day}</span>
                   <span className="block font-heading text-2xl leading-tight">{stamp.num}</span>
-                  <span className="block text-[10px]">{available ? `${available} slot` : "pieno"}</span>
+                  <span className="block text-[10px]">{dayFull ? "pieno" : "libero"}</span>
                 </button>
               );
             })}
@@ -275,46 +314,76 @@ export function BookingCalendar({
             <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-calce">
               <Clock3 className="size-4 text-vetro" /> {activeDate ? formatDate(activeDate) : "Scegli un giorno"}
             </p>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {daySlots.map((slot) => {
-                const isSelected =
-                  selected?.date === slot.date &&
-                  selected?.locationId === slot.locationId &&
-                  selected?.startTime === slot.startTime;
-                const status = slotStatus(slot);
-                return (
-                  <button
-                    key={`${slot.locationId}-${slot.startTime}-${slot.endTime}`}
-                    disabled={slot.booked}
-                    onClick={() => selectSlot(slot)}
-                    aria-pressed={isSelected}
-                    aria-label={`${slot.startTime}–${slot.endTime}, ${slot.locationName}, ${status.label}`}
-                    className={cn(
-                      "min-h-16 border p-3 text-left transition-[background-color,color,border-color,transform] duration-150 disabled:cursor-not-allowed disabled:opacity-40",
-                      isSelected
-                        ? "border-vetro bg-vetro/12 text-calce"
-                        : "border-nebbia/25 bg-carta-bassa text-calce hover:border-vetro"
-                    )}
-                  >
-                    <span className="flex items-center justify-between gap-3">
-                      <strong className="font-heading">{slot.startTime}–{slot.endTime}</strong>
-                      {isSelected && <Check className="size-4 text-vetro" />}
-                    </span>
-                    <span className="mt-1 flex items-center gap-1.5 text-xs text-nebbia">
-                      <MapPin className="size-3.5" /> {slot.locationName}
-                    </span>
-                    <span
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <span className="text-xs text-nebbia">Durata</span>
+              {LESSON_DURATIONS.map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  aria-pressed={duration === d}
+                  onClick={() => {
+                    setDuration(d);
+                    setSelected(null);
+                  }}
+                  className={cn(
+                    "min-h-11 border px-4 text-sm font-semibold transition-colors",
+                    duration === d
+                      ? "border-vetro bg-vetro text-carta"
+                      : "border-nebbia/25 bg-carta-bassa text-calce hover:border-vetro"
+                  )}
+                >
+                  {d === 60 ? "1 ora" : "1 ora e 30"}
+                </button>
+              ))}
+            </div>
+
+            {dayCandidates.length === 0 ? (
+              <p className="border border-nebbia/25 bg-carta-bassa p-4 text-sm text-nebbia">
+                Nessuna lezione di questa durata entra ancora in questa giornata. Prova l’altra
+                durata o un altro giorno.
+              </p>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {dayCandidates.map((c) => {
+                  const isSelected =
+                    selected?.window.locationId === c.window.locationId &&
+                    selected?.start === c.start &&
+                    selected?.end === c.end;
+                  const label = candidateStatus(c);
+                  return (
+                    <button
+                      key={`${c.window.locationId}-${c.start}-${c.end}`}
+                      disabled={!c.joinable}
+                      onClick={() => selectCandidate(c)}
+                      aria-pressed={isSelected}
+                      aria-label={`${c.startTime}–${c.endTime}, ${c.window.locationName}, ${label}`}
                       className={cn(
-                        "mt-1.5 block font-heading text-[11px] font-bold tracking-[0.04em] uppercase",
-                        slot.booked ? "text-nebbia" : "text-accent-cyan-ink"
+                        "min-h-16 border p-3 text-left transition-[background-color,color,border-color,transform] duration-150 disabled:cursor-not-allowed disabled:opacity-40",
+                        isSelected
+                          ? "border-vetro bg-vetro/12 text-calce"
+                          : "border-nebbia/25 bg-carta-bassa text-calce hover:border-vetro"
                       )}
                     >
-                      {status.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+                      <span className="flex items-center justify-between gap-3">
+                        <strong className="font-heading">{c.startTime}–{c.endTime}</strong>
+                        {isSelected && <Check className="size-4 text-vetro" />}
+                      </span>
+                      <span className="mt-1 flex items-center gap-1.5 text-xs text-nebbia">
+                        <MapPin className="size-3.5" /> {c.window.locationName}
+                      </span>
+                      <span
+                        className={cn(
+                          "mt-1.5 block font-heading text-[11px] font-bold tracking-[0.04em] uppercase",
+                          c.joinable ? "text-accent-cyan-ink" : "text-nebbia"
+                        )}
+                      >
+                        {label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
@@ -429,9 +498,9 @@ export function BookingCalendar({
 
               <div className="border-y border-nebbia/20 py-4">
                 <p className="text-xs font-semibold text-nebbia">Riepilogo</p>
-                <p className="mt-2 font-heading text-calce capitalize">{formatDate(selected.date)}</p>
+                <p className="mt-2 font-heading text-calce capitalize">{formatDate(selected.window.date)}</p>
                 <p className="mt-1 text-sm text-nebbia">
-                  {selected.startTime}–{selected.endTime} · {selected.locationName}
+                  {selected.startTime}–{selected.endTime} · {selected.window.locationName}
                 </p>
                 <p className="mt-1 text-sm capitalize text-nebbia">{type} · livello {level}</p>
               </div>

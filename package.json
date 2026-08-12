@@ -10,7 +10,8 @@
     "db:push": "dotenv -e .env.local -- drizzle-kit push",
     "db:seed": "dotenv -e .env.local -- tsx src/lib/db/seed.ts",
     "test:capienza": "tsx --tsconfig tsconfig.scripts.json scripts/e2e-capienza.mts",
-    "test:chiusure": "tsx --tsconfig tsconfig.scripts.json scripts/e2e-chiusure.mts"
+    "test:chiusure": "tsx --tsconfig tsconfig.scripts.json scripts/e2e-chiusure.mts",
+    "db:constraints": "dotenv -e .env.local -- tsx --tsconfig tsconfig.scripts.json scripts/db-apply-overlap-constraint.mts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

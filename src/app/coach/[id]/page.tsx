@@ -143,7 +143,8 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
         <div className="mx-auto max-w-6xl">
           <BookingCalendar
             coachId={id}
-            slots={calendar}
+            windows={calendar}
+            groupCapacity={detail.profile.groupCapacity}
             trainingTypes={trainingTypes}
             levels={levels}
             viewerRole={user?.role ?? null}
