@@ -608,13 +608,26 @@ Nota: `locations` ha `onDelete: "cascade"` verso `availability_slots`, quindi
 rimuovere un campo cancella anche i suoi turni - il `confirm()` in
 `location-manager.tsx` lo dice esplicitamente.
 
-### Un coach senza turni non compare in ricerca
+### Un coach non prenotabile non compare in ricerca
 
-`searchCoaches()` scarta i coach senza nessuna riga in `availability_slots`
+Due condizioni, entrambe necessarie. La seconda è quella che ha morso davvero.
+
+**1. Nessun turno pubblicato.** `searchCoaches()` scarta i coach senza righe in
+`availability_slots`
 (`loadCoachIdsWithAvailability()`, una query sola per tutta la ricerca).
 Mostrarli portava il giocatore su un calendario vuoto dopo aver premuto
 "Prenota". La soglia è **almeno un turno settimanale configurato**, non "almeno
 uno slot libero": un coach tutto esaurito resta in ricerca, come dev'essere.
+
+**2. Nessun tipo di lezione o nessun livello.** `becomeCoach()` crea un
+`coachProfiles` vuoto (`levels: "[]"`, `trainingTypes: "[]"`). Finché resta
+tale, `computeSlotOccupancy()` marca **ogni slot libero come pieno** — la riga
+è `full: offered.length === 0` — e `createBooking()` rifiuta qualunque livello.
+Il coach pubblica gli orari, li vede nel proprio calendario, e il giocatore li
+trova tutti "non disponibili": da fuori sembra un guasto del prodotto, non una
+configurazione incompleta. Il predicato condiviso è `coachOffersLessons()` in
+`constants.ts`, usato da ricerca, profilo pubblico, preferiti e area coach così
+che dicano tutti la stessa cosa.
 
 Le conseguenze, da tenere allineate se tocchi una di queste superfici:
 
@@ -625,8 +638,14 @@ Le conseguenze, da tenere allineate se tocchi una di queste superfici:
 - `getFavoriteCoaches()` **non** applica il filtro: un preferito salvato prima
   che il coach aprisse il calendario deve restare consultabile - è l'unico modo
   per ritrovarlo. La card mostra "Non ha ancora pubblicato orari".
-- `/coach-admin` avverte il coach che finché non pubblica un turno non compare
-  in ricerca. Senza quell'avviso l'unico segnale sarebbe il silenzio.
+- `/coach-admin` avverte il coach indicando **quale** delle due condizioni
+  manca, e nel caso dei tipi/livelli dice esplicitamente che i turni già
+  pubblicati risultano non disponibili. Senza quell'avviso l'unico segnale
+  sarebbe il silenzio.
+- L'alert in `coach-profile-form.tsx` diceva solo "non comparirà nei risultati
+  di ricerca", il che **era falso** prima di questa modifica (il coach
+  compariva eccome) e comunque taceva l'effetto peggiore. Ora nomina il campo
+  mancante e l'effetto sugli orari.
 - `FavoriteButton` prende `viewerRole` (non più `isPlayer`) e ha due varianti:
   `icon` (il cuoricino) e `cta` (bottone etichettato). Per i visitatori anonimi
   apre il modale Clerk `SignInButton` invece di sparire: prima il salvataggio

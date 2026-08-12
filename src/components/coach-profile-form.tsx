@@ -184,8 +184,14 @@ export function CoachProfileForm({
       {(trainingTypes.size === 0 || levels.size === 0) && (
         <Alert role="status">
           <AlertDescription>
-            Senza almeno un tipo di allenamento e un livello selezionati, il tuo profilo non
-            comparirà nei risultati di ricerca dei giocatori.
+            Ti manca {trainingTypes.size === 0 && levels.size === 0
+              ? "il tipo di lezione e il livello"
+              : trainingTypes.size === 0
+                ? "il tipo di lezione"
+                : "il livello"}
+            . Finché non lo indichi non compari nella ricerca, e anche gli orari che hai già
+            pubblicato risultano <strong>non disponibili</strong> a chi apre il tuo profilo: senza
+            queste due informazioni il sistema non sa che lezione proporre.
           </AlertDescription>
         </Alert>
       )}

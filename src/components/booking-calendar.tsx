@@ -57,6 +57,7 @@ export function BookingCalendar({
   viewerRole,
   pricePerLesson,
   initialFavorite = false,
+  offersLessons = true,
 }: {
   coachId: string;
   slots: CalendarSlot[];
@@ -66,6 +67,8 @@ export function BookingCalendar({
   pricePerLesson?: number | null;
   /** Serve solo allo stato vuoto, che propone di salvare il coach. */
   initialFavorite?: boolean;
+  /** Il coach ha dichiarato tipi di lezione e livelli. */
+  offersLessons?: boolean;
 }) {
   const availableSlots = useMemo(() => slots.filter((slot) => !slot.booked), [slots]);
   const dates = useMemo(
@@ -120,12 +123,18 @@ export function BookingCalendar({
     });
   }
 
-  if (slots.length === 0) {
+  // Senza tipi di lezione e livelli ogni slot risulterebbe pieno: meglio uno
+  // stato vuoto esplicito che un calendario di caselle tutte grigie.
+  if (slots.length === 0 || !offersLessons) {
     return (
       <GameEmptyState
         asset="pickupTube"
-        title="Nuovi orari in arrivo"
-        description="Il coach non ha ancora pubblicato disponibilità. Salvalo tra i preferiti: lo ritrovi nella tua lista e puoi tornare a controllare."
+        title={offersLessons ? "Nuovi orari in arrivo" : "Prenotazioni non ancora aperte"}
+        description={
+          offersLessons
+            ? "Il coach non ha ancora pubblicato disponibilità. Salvalo tra i preferiti: lo ritrovi nella tua lista e puoi tornare a controllare."
+            : "Il coach deve ancora indicare che tipo di lezioni tiene e per quali livelli. Salvalo tra i preferiti: lo ritrovi nella tua lista e puoi tornare a controllare."
+        }
         action={
           <FavoriteButton
             coachId={coachId}

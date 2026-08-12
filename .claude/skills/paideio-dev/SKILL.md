@@ -141,9 +141,14 @@ turni alimentano anche `/coach-admin`, `/coach/[id]` e `/cerca`; e
 `/coach-admin/orari` senza campi rende inline il form di creazione campo invece
 di rimandare a un'altra scheda. Dettagli in `AGENTS.md`.
 
-Dallo stesso giro: un coach senza turni pubblicati **non compare in
-`/cerca`** (`searchCoaches`), ma il suo profilo resta raggiungibile e lì la CTA
-diventa "Salva tra i preferiti". I preferiti (`getFavoriteCoaches`) non
+Dallo stesso giro: un coach **non prenotabile** non compare in `/cerca`
+(`searchCoaches`), ma il suo profilo resta raggiungibile e lì la CTA diventa
+"Salva tra i preferiti". Non prenotabile significa due cose: nessun turno
+pubblicato, **oppure** `levels`/`trainingTypes` vuoti. Il secondo caso è
+insidioso: `becomeCoach()` crea il profilo vuoto e
+`computeSlotOccupancy()` ha `full: offered.length === 0`, quindi ogni slot
+libero risulta pieno e il giocatore vede un calendario tutto grigio senza
+capire perché. Predicato condiviso: `coachOffersLessons()` in `constants.ts`. I preferiti (`getFavoriteCoaches`) non
 applicano quel filtro, e `FavoriteButton` prende `viewerRole` con varianti
 `icon`/`cta`, aprendo Clerk per gli anonimi invece di sparire.
 

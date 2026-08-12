@@ -11,6 +11,7 @@ import {
   toLocalDateString,
   haversineDistanceKm,
   computeSlotOccupancy,
+  coachOffersLessons,
   closureKey,
   isSlotClosed,
   DEFAULT_GROUP_CAPACITY,
@@ -49,8 +50,10 @@ export type CoachSearchResult = {
   locations: (typeof locations.$inferSelect)[];
   distanceKm: number | null;
   rating: RatingSummary;
-  /** Ha almeno un turno settimanale pubblicato, quindi è prenotabile. */
+  /** Ha almeno un turno settimanale pubblicato. */
   hasPublishedAvailability: boolean;
+  /** Ha dichiarato tipi di lezione e livelli: senza, nulla è prenotabile. */
+  offersLessons: boolean;
 };
 
 /**
@@ -93,7 +96,18 @@ async function loadCoachCard(
     distanceKm = distances.length > 0 ? Math.min(...distances) : null;
   }
 
-  return { coach, profile, locations: coachLocations, distanceKm, rating, hasPublishedAvailability };
+  return {
+    coach,
+    profile,
+    locations: coachLocations,
+    distanceKm,
+    rating,
+    hasPublishedAvailability,
+    offersLessons: coachOffersLessons(
+      parseJsonArray(profile.levels),
+      parseJsonArray(profile.trainingTypes)
+    ),
+  };
 }
 
 export type CoachSort = "rating" | "distance" | "price";
@@ -121,6 +135,10 @@ export async function searchCoaches(filters: {
 
     const card = await loadCoachCard(coach, filters.near, true);
     if (!card) continue;
+    // Stesso motivo, caso più insidioso: con i turni pubblicati ma senza tipi
+    // di lezione e livelli il calendario si popola di slot tutti non
+    // disponibili. Da fuori sembra un guasto.
+    if (!card.offersLessons) continue;
 
     if (filters.near) {
       if (card.distanceKm == null || card.distanceKm > radiusKm) continue;

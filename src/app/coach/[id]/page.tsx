@@ -7,6 +7,7 @@ import {
   getFavoriteCoachIds,
   parseJsonArray,
 } from "@/lib/queries";
+import { coachOffersLessons } from "@/lib/constants";
 import { getCurrentUser } from "@/lib/session";
 import { BookingCalendar } from "@/components/booking-calendar";
 import { BookingHashScroll } from "@/components/booking-hash-scroll";
@@ -29,12 +30,15 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
   ]);
   const trainingTypes = parseJsonArray(detail.profile.trainingTypes);
   const levels = parseJsonArray(detail.profile.levels);
-  // I turni sono settimanali, quindi un coach che ne ha pubblicato almeno uno
-  // genera sempre qualche slot nella finestra di 21 giorni: calendario vuoto
-  // equivale a "non ancora prenotabile". Questi coach non compaiono in /cerca
-  // (vedi `searchCoaches`), ma la pagina resta raggiungibile da link diretto e
-  // dai preferiti già salvati - lì la CTA diventa "Salva tra i preferiti".
-  const isBookable = calendar.length > 0;
+  // Due condizioni distinte, entrambe necessarie. I turni sono settimanali,
+  // quindi un coach che ne ha pubblicato almeno uno genera sempre slot nella
+  // finestra di 21 giorni: calendario vuoto = nessun turno. Ma anche con i
+  // turni, senza tipi di lezione e livelli ogni slot risulta pieno (vedi
+  // `coachOffersLessons`). Questi coach non compaiono in /cerca, però la pagina
+  // resta raggiungibile da link diretto e preferiti: lì la CTA diventa
+  // "Salva tra i preferiti".
+  const offersLessons = coachOffersLessons(levels, trainingTypes);
+  const isBookable = offersLessons && calendar.length > 0;
 
   return (
     <div className="pb-32">
@@ -128,7 +132,9 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
             <CalendarDays className="mt-0.5 size-5 shrink-0 text-vetro" aria-hidden />
             {isBookable
               ? "Scegli uno slot, indica il tuo livello e invia la richiesta. Il coach dovrà confermarla."
-              : "Questo coach non ha ancora pubblicato turni, quindi non compare nella ricerca. Salvalo tra i preferiti per ritrovarlo quando apre il calendario."}
+              : offersLessons
+                ? "Questo coach non ha ancora pubblicato turni, quindi non compare nella ricerca. Salvalo tra i preferiti per ritrovarlo quando apre il calendario."
+                : "Questo coach sta ancora completando il profilo e non compare nella ricerca. Salvalo tra i preferiti per ritrovarlo quando apre le prenotazioni."}
           </p>
         </div>
         <div className="mx-auto max-w-6xl">
@@ -140,6 +146,7 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
             viewerRole={user?.role ?? null}
             pricePerLesson={detail.profile.pricePerLesson}
             initialFavorite={favoriteIds.has(id)}
+            offersLessons={offersLessons}
           />
         </div>
       </section>

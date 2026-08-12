@@ -36,7 +36,7 @@ export default async function PreferitiPage() {
             }
           />
         )}
-        {favorites.map(({ coach, profile, locations, rating, hasPublishedAvailability }) => (
+        {favorites.map(({ coach, profile, locations, rating, hasPublishedAvailability, offersLessons }) => (
           <div
             key={coach.id}
             className="card-clip group flex flex-col gap-4 border-t border-secondary-fixed bg-surface-container-low p-6 transition-colors hover:bg-surface-container-high"
@@ -84,17 +84,19 @@ export default async function PreferitiPage() {
             {/* Un preferito può essere salvato prima che il coach apra il
                 calendario: in quel caso non compare in /cerca e la lista è
                 l'unico modo per ritrovarlo, quindi va detto a che punto è. */}
-            {!hasPublishedAvailability && (
+            {!(hasPublishedAvailability && offersLessons) && (
               <p className="flex items-center gap-2 border border-nebbia/30 bg-carta-bassa px-3 py-2 text-xs text-nebbia">
                 <Clock className="size-3.5 shrink-0 text-accent-ball-ink" aria-hidden />
-                Non ha ancora pubblicato orari - torna a controllare, lo trovi sempre qui.
+                {hasPublishedAvailability
+                  ? "Sta ancora completando il profilo - torna a controllare, lo trovi sempre qui."
+                  : "Non ha ancora pubblicato orari - torna a controllare, lo trovi sempre qui."}
               </p>
             )}
             <Link
               href={`/coach/${coach.id}`}
               className="group/btn flex w-fit items-center gap-2 font-heading text-label-caps font-bold text-secondary-fixed uppercase transition-colors duration-150 hover:text-calce"
             >
-              {hasPublishedAvailability ? "Vedi profilo e calendario" : "Vedi profilo"}{" "}
+              {hasPublishedAvailability && offersLessons ? "Vedi profilo e calendario" : "Vedi profilo"}{" "}
               <ArrowRight className="size-4" />
             </Link>
           </div>
