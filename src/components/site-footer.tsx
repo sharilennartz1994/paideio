@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { GameAsset } from "@/components/design";
 
 const FOOTER_LINKS = [
   { href: "/cerca", label: "Trova un coach" },
@@ -19,9 +18,24 @@ export function SiteFooter() {
   return (
     // Ultimo elemento del flusso: è il footer, non `main`, a dover liberare lo
     // spazio della bottom nav fissa (5rem + safe area) su mobile.
-    <footer className="net-texture relative w-full overflow-hidden border-t border-game-cyan/25 pt-12 pb-[calc(8rem+env(safe-area-inset-bottom))] md:pl-20 md:pb-12">
-      <GameAsset name="net" decorative sizes="360px" className="pointer-events-none absolute -right-16 bottom-0 hidden max-h-44 w-auto opacity-25 lg:block" />
-      <div className="relative flex flex-col items-center justify-between gap-8 px-4 md:flex-row md:px-16">
+    //
+    // Qui c'era un `GameAsset name="net"` in `absolute -right-16 bottom-0`
+    // sopra `lg`. Il footer è alto ~190px e le due nav sono allineate a
+    // destra: l'illustrazione (352x176) finiva esattamente dietro "Il
+    // concept", "Prossime release", "Termini di servizio" e "Privacy". Non è
+    // un problema di z-index (il testo è già sopra), ma di fondo: i link sono
+    // bianchi traslucidi (65% e 50%) e sui pixel chiari della rete scendevano
+    // a 4,12:1 e 3,14:1, sotto il minimo AA di 4,5:1.
+    // Scelta: togliere il PNG invece di spostarlo o attenuarlo. Spostarlo lo
+    // rimetterebbe dietro a un'altra colonna appena il viewport si stringe
+    // verso lg, e attenuarlo lascerebbe comunque un fondo non uniforme sotto
+    // testo traslucido. Soprattutto è ridondante: `.net-texture` è già la
+    // rete, resa in CSS a un contrasto controllato, quindi il footer non
+    // perde il riferimento visivo. Vale anche la regola del design system:
+    // un solo asset dominante per viewport, e qui non era un momento
+    // editoriale ma una decorazione sopra la navigazione.
+    <footer className="net-texture w-full border-t border-game-cyan/25 pt-12 pb-[calc(8rem+env(safe-area-inset-bottom))] md:pl-20 md:pb-12">
+      <div className="flex flex-col items-center justify-between gap-8 px-4 md:flex-row md:px-16">
         <div className="flex flex-col items-center gap-2 md:items-start">
           <div className="font-heading text-xl font-extrabold tracking-[-0.03em] text-game-white uppercase">
             Paideio
