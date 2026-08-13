@@ -5,6 +5,7 @@ import {
   getCoachCalendar,
   getCoachReviews,
   getFavoriteCoachIds,
+  countReviewableBookingsWithCoach,
   parseJsonArray,
 } from "@/lib/queries";
 import { coachOffersLessons } from "@/lib/constants";
@@ -23,10 +24,11 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
 
   const user = await getCurrentUser();
   const isPlayer = user?.role === "player";
-  const [calendar, reviews, favoriteIds] = await Promise.all([
+  const [calendar, reviews, favoriteIds, reviewableWithCoach] = await Promise.all([
     getCoachCalendar(id),
     getCoachReviews(id),
     isPlayer ? getFavoriteCoachIds(user.id) : Promise.resolve(new Set<string>()),
+    isPlayer ? countReviewableBookingsWithCoach(user.id, id) : Promise.resolve(0),
   ]);
   const trainingTypes = parseJsonArray(detail.profile.trainingTypes);
   const levels = parseJsonArray(detail.profile.levels);
@@ -186,8 +188,25 @@ export default async function CoachDetailPage({ params }: { params: Promise<{ id
                 <div className="mt-2 h-px w-24 bg-vetro" />
               </div>
             </div>
+            {/* L'invito "sii il primo a lasciarne una" era un vicolo cieco: da
+                questa pagina non si recensisce, si recensisce la propria
+                lezione svolta da `/prenotazioni`. Il richiamo compare solo a
+                chi ha davvero qualcosa da recensire con questo coach. */}
+            {reviewableWithCoach > 0 && (
+              <div className="mb-6 flex flex-wrap items-center justify-between gap-4 border-l-4 border-accent-ball-ink bg-carta-alta p-4">
+                <p className="min-w-0 text-sm text-nebbia">
+                  Hai {reviewableWithCoach === 1 ? "una lezione svolta" : `${reviewableWithCoach} lezioni svolte`} con{" "}
+                  <strong className="text-calce">{detail.coach.name}</strong> da recensire.
+                </p>
+                <GameCta href="/prenotazioni" tone="ball" arrow>
+                  Lascia una recensione
+                </GameCta>
+              </div>
+            )}
             {reviews.length === 0 && (
-              <p className="text-sm text-on-surface-variant">Nessuna recensione ancora - sii il primo a lasciarne una!</p>
+              <p className="text-sm text-on-surface-variant">
+                Nessuna recensione ancora. Le recensioni arrivano dai giocatori dopo una lezione svolta con questo coach.
+              </p>
             )}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {reviews.map(({ review, player }) => (

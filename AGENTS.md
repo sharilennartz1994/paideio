@@ -647,12 +647,55 @@ passano tutte da qui.
 - `/prenotazioni` delega la parte interattiva a
   `src/components/player-bookings-overview.tsx`. I dati restano caricati nel
   Server Component e vengono passati al client come sommario serializzabile.
-- Filtri disponibili: periodo (`prossime`, `passate`, `tutte`), stato e formato
-  (`singolo`/`gruppo`). Le lezioni passate sono ordinate dalla più recente.
+- Filtri disponibili: periodo (`prossime`, `passate`, `da-recensire`, `tutte`),
+  stato e formato (`singolo`/`gruppo`). Le lezioni passate e quelle da
+  recensire sono ordinate dalla più recente.
 - Tre viste condividono lo stesso dataset filtrato: `Lista` per gestione,
   `Calendario` mensile per orientamento temporale e `Agenda` raggruppata per
   giorno. Annullamento e recensione restano disponibili nelle viste operative;
   il calendario è deliberatamente compatto e solo informativo.
+
+## Recensire una lezione: la regola e la sua raggiungibilità
+
+La recensibilità sta in **un solo posto**, `canReviewBooking()` in
+`constants.ts`: confermata, con data di oggi o passata, non ancora recensita.
+La usano `getBookingsForPlayer()` (per mostrare il form),
+`countReviewableBookingsWithCoach()` (per il richiamo sul profilo pubblico) e
+`createReview()` (per validare, con messaggio specifico sul motivo del
+rifiuto). Il vincolo "una sola recensione per prenotazione" è l'`unique` su
+`reviews.booking_id`, non solo il controllo applicativo.
+
+**La regola era giusta, il pulsante era irraggiungibile.** Il filtro Periodo di
+`/prenotazioni` ha come default `prossime`, cioè `date >= oggi`, mentre una
+lezione è recensibile su `date <= oggi`: i due insiemi si toccano **solo nel
+giorno stesso della lezione**. Dal giorno dopo "Lascia una recensione" esisteva
+nel codice, `canReview` era `true`, e non compariva su nessuna schermata che
+qualcuno avesse motivo di aprire. Nessun indizio segnalava che ci fosse
+qualcosa da recensire, quindi il percorso era di fatto morto.
+
+Le due strade sono ora tenute insieme da `matchesBookingPeriod()`, accanto a
+`canReviewBooking()` nello stesso file, con il rapporto tra le due scritto nel
+commento. Chi cambia il default del filtro deve rileggerlo.
+
+Difese contro la ricomparsa del difetto:
+1. periodo dedicato **`da-recensire`** nel selettore, con il conteggio
+   nell'etichetta;
+2. **richiamo in cima a `/prenotazioni`** quando `pendingReviews > 0`, con la
+   CTA che imposta il filtro: due click dall'atterraggio, nessuna esplorazione
+   dei filtri richiesta;
+3. il form è reso sia nella vista `Lista` sia in `Agenda` (entrambe operative);
+4. sul profilo pubblico del coach il vecchio invito "sii il primo a lasciarne
+   una" era un vicolo cieco (da lì non si recensisce): ora compare un richiamo
+   a `/prenotazioni` **solo** a chi ha davvero una lezione svolta con quel
+   coach, e il testo dello stato vuoto spiega da dove arrivano le recensioni;
+5. `npm run test:recensioni` include la guardia di regressione: verifica che il
+   default `prossime` da solo non basti e che `da-recensire` mostri tutte e
+   sole le recensibili.
+
+Nota: `SelectValue` di Base UI mostra il **valore grezzo** se non gli si passa
+una funzione figlia. Con i valori a una parola non si notava; `da-recensire`
+sarebbe apparso col trattino, quindi il Periodo ora mappa il valore su
+`BOOKING_PERIOD_LABELS`.
 
 ## Roadmap e feedback prodotto
 
@@ -874,8 +917,9 @@ sistema. `npm run db:push`, `db:seed` e `db:constraints` puntano ancora a
   soli, vedi skill `vercel-storage`)
 - `npm run db:push` - applica lo schema Drizzle al database (stessa nota sul
   dotenv, già nello script)
-- `npm run test:capienza` / `npm run test:chiusure` - test end-to-end contro un
-  Postgres usa-e-getta (istruzioni in testa agli script in `scripts/`)
+- `npm run test:capienza` / `test:chiusure` / `test:identita` /
+  `test:recensioni` - test end-to-end contro un Postgres usa-e-getta
+  (istruzioni in testa agli script in `scripts/`)
 - `npm run test:email` - verifica il contenuto della notifica email al coach e
   il comportamento senza `RESEND_API_KEY` (nessun database, nessun invio reale)
 - `npm run build` - build di produzione
@@ -1047,7 +1091,10 @@ bloccato) per un banner "Deployment Blocked" / "Fix Git Configuration".
       `confermata` con data passata, una recensione per prenotazione. Media
       calcolata in JS su tutte le review del coach (dataset piccolo, non serve
       SQL aggregate). Il prompt "Lascia una recensione" appare in
-      `/prenotazioni` (`getBookingsForPlayer` calcola `canReview`/`isReviewed`)
+      `/prenotazioni` (`getBookingsForPlayer` calcola `canReview`/`isReviewed`).
+      Era però irraggiungibile dal giorno dopo la lezione, nascosto dal filtro
+      di default: vedi "Recensire una lezione: la regola e la sua
+      raggiungibilità". Test: `npm run test:recensioni`.
 - [x] Coach preferiti (tabella `favorites`, unique su `(playerId, coachId)`,
       `actions/favorites.ts`, `favorite-button.tsx`) - nuova pagina protetta
       `/preferiti`, aggiunta a `proxy.ts`

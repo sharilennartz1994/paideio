@@ -105,6 +105,27 @@ Test: `npm run test:capienza`, da lanciare **solo** contro un Postgres locale
 usa-e-getta (lo script rifiuta URL non locali). Istruzioni complete
 nell'intestazione di `scripts/e2e-capienza.mts`.
 
+## Recensioni: la regola e la sua raggiungibilità
+
+`canReviewBooking()` in `constants.ts` è l'unica definizione di "recensibile"
+(confermata, data di oggi o passata, non ancora recensita); la usano
+`getBookingsForPlayer()`, `countReviewableBookingsWithCoach()` e
+`createReview()`. Il "una sola per prenotazione" è l'`unique` su
+`reviews.booking_id`.
+
+La regola era corretta ma **il pulsante non era raggiungibile**: il filtro
+Periodo di `/prenotazioni` mostra per default `date >= oggi`, la recensione
+vive su `date <= oggi`, quindi dal giorno dopo la lezione "Lascia una
+recensione" non compariva su nessuna schermata. Ora esistono il periodo
+`da-recensire`, un richiamo in cima alla pagina quando ce n'è almeno una, il
+form anche nella vista Agenda e un richiamo sul profilo del coach per chi ha
+davvero una lezione svolta con lui. `matchesBookingPeriod()` sta accanto a
+`canReviewBooking()` proprio perché il rapporto tra le due va riletto prima di
+toccare il default.
+
+Test: `npm run test:recensioni` (stesso Postgres usa-e-getta di
+`test:capienza`), che include la guardia di regressione sulla raggiungibilità.
+
 ## Micro-interazioni e tono playful
 
 Toast (`sonner`) + coriandoli (`src/lib/confetti.ts`) per ogni azione di
@@ -297,7 +318,9 @@ voci cambia stato, così le sessioni future partono dal punto giusto.
       resto del sito su token nuovi ma decorazioni non ancora riportate
 - [x] Recensioni/voti coach, preferiti, traguardi giocatore, foto profilo
       coach (Vercel Blob, progetto già collegato - vedi `AGENTS.md` per i
-      dettagli e il token già configurato)
+      dettagli e il token già configurato). Le recensioni sono diventate
+      davvero raggiungibili solo dopo il fix del filtro di `/prenotazioni`:
+      vedi "Recensioni: la regola e la sua raggiungibilità"
 - [x] Hardening backend (validazione prenotazioni, transizioni di stato,
       cancellazione campo sicura, transazioni atomiche) + ricchezza frontend
       (prezzo, statistiche coach, loading/error states, dashboard coach-admin,

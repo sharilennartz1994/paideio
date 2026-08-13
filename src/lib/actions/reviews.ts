@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { bookings, reviews } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/session";
-import { toLocalDateString } from "@/lib/constants";
+import { toLocalDateString, canReviewBooking } from "@/lib/constants";
 import { type ActionResult, ok, err } from "@/lib/action-result";
 
 export async function createReview(input: {
@@ -19,13 +19,16 @@ export async function createReview(input: {
 
   const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, input.bookingId) });
   if (!booking || booking.playerId !== user.id) return err("Prenotazione non trovata.");
-  if (booking.status !== "confermata") return err("Puoi recensire solo lezioni confermate.");
-
   const today = toLocalDateString(new Date());
-  if (booking.date > today) return err("Potrai lasciare una recensione dopo la lezione.");
-
   const existing = await db.query.reviews.findFirst({ where: eq(reviews.bookingId, input.bookingId) });
-  if (existing) return err("Hai già recensito questa lezione.");
+
+  // Stesso predicato che decide se mostrare il form in `/prenotazioni`
+  // (`getBookingsForPlayer`): un solo cancello, messaggio specifico sul motivo.
+  if (!canReviewBooking(booking, today, Boolean(existing))) {
+    if (booking.status !== "confermata") return err("Puoi recensire solo lezioni confermate.");
+    if (booking.date > today) return err("Potrai lasciare una recensione dopo la lezione.");
+    return err("Hai già recensito questa lezione.");
+  }
 
   if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > 5) {
     return err("Voto non valido.");
