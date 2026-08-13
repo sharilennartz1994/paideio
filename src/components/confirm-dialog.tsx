@@ -34,11 +34,13 @@ export function ConfirmDialog({
   kicker = "Conferma",
   title,
   description,
+  body,
   reassurance,
   warning,
   confirmLabel,
   cancelLabel = "Torna indietro",
   disabled = false,
+  confirmDisabled = false,
   onConfirm,
 }: {
   /** Bottone che apre il dialog. Riceve lui il ruolo di trigger. */
@@ -46,6 +48,13 @@ export function ConfirmDialog({
   kicker?: string;
   title: string;
   description: ReactNode;
+  /**
+   * Campi che l'utente deve compilare prima di confermare (una motivazione, un
+   * orario alternativo). Vanno qui e non in `description`: quella è la
+   * `Description` di Base UI, cioè un `<p>`, e annidarci dentro form control
+   * produce markup non valido.
+   */
+  body?: ReactNode;
   /** Perché si può procedere senza timore: come si torna indietro. */
   reassurance?: ReactNode;
   /** Danno collaterale reale: cosa viene perso o annullato. */
@@ -53,6 +62,8 @@ export function ConfirmDialog({
   confirmLabel: string;
   cancelLabel?: string;
   disabled?: boolean;
+  /** Il modulo dentro `body` non è ancora completo. */
+  confirmDisabled?: boolean;
   onConfirm: () => Promise<boolean> | boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -74,6 +85,7 @@ export function ConfirmDialog({
         <p className="ui-kicker text-accent-cyan-ink">{kicker}</p>
         <AlertDialogTitle className="mt-2">{title}</AlertDialogTitle>
         <AlertDialogDescription>{description}</AlertDialogDescription>
+        {body && <div className="mt-4 grid gap-4">{body}</div>}
         {reassurance && (
           <p className="mt-4 flex items-start gap-2 border border-accent-cyan-ink/40 bg-carta-bassa p-3 text-sm leading-relaxed text-calce">
             <History className="mt-0.5 size-4 shrink-0 text-accent-cyan-ink" aria-hidden />
@@ -93,7 +105,11 @@ export function ConfirmDialog({
           {/* `variant="default"` = `bg-primary text-primary-foreground`, cioè
               `--vetro` su `--carta`: 5,45:1 di giorno e 9,82:1 di notte,
               perché i due token cambiano tema insieme. */}
-          <Button onClick={handleConfirm} disabled={working} className="font-heading font-bold uppercase">
+          <Button
+            onClick={handleConfirm}
+            disabled={working || confirmDisabled}
+            className="font-heading font-bold uppercase"
+          >
             {confirmLabel}
           </Button>
         </div>

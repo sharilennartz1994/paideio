@@ -272,6 +272,46 @@ export function computeLessonAvailability(
   };
 }
 
+/** Lunghezza massima della motivazione del coach (rifiuto o proposta). */
+export const MAX_COACH_MESSAGE_LENGTH = 500;
+/**
+ * Minimo perché "motivazione obbligatoria" voglia dire qualcosa. Un rifiuto
+ * muto è esattamente il problema che le proposte di orario risolvono.
+ */
+export const MIN_COACH_MESSAGE_LENGTH = 10;
+
+/**
+ * Inizi su cui il coach può davvero spostare **quella** lezione: quelli
+ * ammessi dentro la finestra (`allowedStarts`) su cui il tipo della lezione è
+ * ancora prenotabile (`computeLessonAvailability`).
+ *
+ * È la regola unica delle proposte, come `allowedStarts` lo è delle
+ * prenotazioni: la usano il form del coach in `/coach-admin/richieste` (per
+ * disegnare gli orari proponibili), la validazione della proposta e la
+ * rivalidazione al momento dell'accettazione. Se divergessero, il coach
+ * proporrebbe un orario che il giocatore non riuscirà mai ad accettare.
+ *
+ * `busy` non deve contenere la lezione che si sta spostando: la sua fascia
+ * attuale si libera per definizione.
+ */
+export function proposableStarts(
+  window: Interval,
+  busy: readonly BookedLesson[],
+  duration: number,
+  type: TrainingType,
+  groupCapacity: number,
+  coachTrainingTypes: readonly string[]
+): number[] {
+  return allowedStarts(window, busy, duration).filter((start) =>
+    computeLessonAvailability(
+      { start, end: start + duration },
+      busy,
+      groupCapacity,
+      coachTrainingTypes
+    ).availableTypes.includes(type)
+  );
+}
+
 export function levelBadgeClass(level: string) {
   return LEVEL_BADGE_CLASSES[level] ?? "bg-muted text-muted-foreground";
 }
@@ -284,6 +324,10 @@ export const BOOKING_STATUS_CONFIG: Record<string, { label: string; className: s
   confermata: {
     label: "Confermata",
     className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300",
+  },
+  controproposta: {
+    label: "Nuovo orario proposto",
+    className: "bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300",
   },
   rifiutata: {
     label: "Rifiutata",

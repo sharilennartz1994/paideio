@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import {
+  CalendarClock,
   CalendarDays,
   CheckCircle2,
   ChevronLeft,
@@ -36,10 +37,11 @@ import {
 } from "@/components/ui/select";
 import { CoachAvatar } from "@/components/coach-avatar";
 import { CancelBookingButton } from "@/components/cancel-booking-button";
+import { BookingProposalActions } from "@/components/booking-proposal-actions";
 import { ReviewForm } from "@/components/review-form";
 import { GameCta, GameEmptyState } from "@/components/design";
 
-type BookingStatus = "richiesta" | "confermata" | "rifiutata" | "annullata";
+type BookingStatus = "richiesta" | "confermata" | "rifiutata" | "annullata" | "controproposta";
 type BookingType = "singolo" | "gruppo";
 type ViewMode = "lista" | "calendario" | "agenda";
 
@@ -57,11 +59,18 @@ export type PlayerBookingSummary = {
   notes: string;
   canReview: boolean;
   isReviewed: boolean;
+  /** Motivazione del coach quando rifiuta o propone un altro orario. */
+  coachMessage: string;
+  /** Orario alternativo proposto dal coach, solo mentre è in trattativa. */
+  proposedDate: string | null;
+  proposedStartTime: string | null;
+  proposedEndTime: string | null;
 };
 
 const STATUS_ICON: Record<BookingStatus, typeof CheckCircle2> = {
   richiesta: Clock3,
   confermata: CheckCircle2,
+  controproposta: CalendarClock,
   rifiutata: XCircle,
   annullata: XCircle,
 };
@@ -109,6 +118,17 @@ function LessonStatus({ status }: { status: BookingStatus }) {
 
 function LessonCard({ item }: { item: PlayerBookingSummary }) {
   const active = item.status === "richiesta" || item.status === "confermata";
+  const proposal =
+    item.status === "controproposta" &&
+    item.proposedDate &&
+    item.proposedStartTime &&
+    item.proposedEndTime
+      ? {
+          date: item.proposedDate,
+          startTime: item.proposedStartTime,
+          endTime: item.proposedEndTime,
+        }
+      : null;
   return (
     <article
       className={cn(
@@ -151,6 +171,29 @@ function LessonCard({ item }: { item: PlayerBookingSummary }) {
       </div>
 
       {item.notes && <p className="mt-4 text-sm leading-relaxed text-nebbia">“{item.notes}”</p>}
+
+      {proposal ? (
+        <BookingProposalActions
+          bookingId={item.id}
+          coachName={item.coachName}
+          originalDate={item.date}
+          originalStartTime={item.startTime}
+          proposedDate={proposal.date}
+          proposedStartTime={proposal.startTime}
+          proposedEndTime={proposal.endTime}
+          coachMessage={item.coachMessage}
+        />
+      ) : (
+        item.status === "rifiutata" &&
+        item.coachMessage && (
+          <p className="mt-4 border border-accent-orange-ink/45 bg-carta-bassa p-3 text-sm leading-relaxed text-calce">
+            <span className="font-heading text-[10px] text-nebbia uppercase">
+              Perché il coach ha rifiutato
+            </span>
+            <br />“{item.coachMessage}”
+          </p>
+        )
+      )}
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -295,6 +338,23 @@ function AgendaView({ items }: { items: PlayerBookingSummary[] }) {
                   </div>
                   <LessonStatus status={item.status} />
                 </div>
+                {/* La proposta del coach viene prima: è l'unica che chiede
+                    una decisione, e va vista senza dover scorrere oltre. */}
+                {item.status === "controproposta" &&
+                  item.proposedDate &&
+                  item.proposedStartTime &&
+                  item.proposedEndTime && (
+                    <BookingProposalActions
+                      bookingId={item.id}
+                      coachName={item.coachName}
+                      originalDate={item.date}
+                      originalStartTime={item.startTime}
+                      proposedDate={item.proposedDate}
+                      proposedStartTime={item.proposedStartTime}
+                      proposedEndTime={item.proposedEndTime}
+                      coachMessage={item.coachMessage}
+                    />
+                  )}
                 {/* Anche l'agenda è una vista operativa: senza il form qui, chi
                     la tiene come vista predefinita non vedrebbe mai l'invito a
                     recensire. */}
@@ -355,11 +415,17 @@ export function PlayerBookingsOverview({ items }: { items: PlayerBookingSummary[
   const stats = {
     upcoming: items.filter((item) => item.date >= today && !["annullata", "rifiutata"].includes(item.status)).length,
     pending: items.filter((item) => item.status === "richiesta").length,
+    // Una proposta del coach aspetta una risposta *tua*: sta in un contatore
+    // suo, altrimenti si confonde con le richieste in mano al coach.
+    toDecide: items.filter((item) => item.status === "controproposta").length,
     confirmed: items.filter((item) => item.status === "confermata" && item.date >= today).length,
   };
   const statCards: Array<{ label: string; value: number; icon: typeof CalendarDays }> = [
     { label: "Prossime", value: stats.upcoming, icon: CalendarDays },
     { label: "In attesa", value: stats.pending, icon: Clock3 },
+    ...(stats.toDecide > 0
+      ? [{ label: "Da decidere", value: stats.toDecide, icon: CalendarClock }]
+      : []),
     { label: "Confermate", value: stats.confirmed, icon: CheckCircle2 },
   ];
 
@@ -380,7 +446,10 @@ export function PlayerBookingsOverview({ items }: { items: PlayerBookingSummary[
 
   return (
     <div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      {/* `auto-fit` invece di tre colonne fisse: la scheda "Da decidere"
+          compare solo quando c'è una proposta aperta, e con quattro card una
+          griglia a 3 lascerebbe l'ultima sola su una riga. */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
         {statCards.map(({ label, value, icon: Icon }) => (
           <div key={label} className="border border-nebbia/20 bg-carta-alta p-4">
             <Icon className="size-5 text-accent-cyan-ink" aria-hidden />
@@ -443,6 +512,7 @@ export function PlayerBookingsOverview({ items }: { items: PlayerBookingSummary[
                 <SelectContent align="start">
                   <SelectItem value="tutti">Tutti gli stati</SelectItem>
                   <SelectItem value="richiesta">In attesa</SelectItem>
+                  <SelectItem value="controproposta">Nuovo orario proposto</SelectItem>
                   <SelectItem value="confermata">Confermata</SelectItem>
                   <SelectItem value="rifiutata">Rifiutata</SelectItem>
                   <SelectItem value="annullata">Annullata</SelectItem>

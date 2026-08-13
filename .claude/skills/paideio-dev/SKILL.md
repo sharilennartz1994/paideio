@@ -185,6 +185,24 @@ ricorrenza. Regola condivisa in `closureKey()`/`isSlotClosed()`
 l'advisory lock. Chiudere annulla e notifica le prenotazioni attive sulla data.
 Test: `npm run test:chiusure`. Dettagli in `AGENTS.md`.
 
+## Proposte di orario
+
+Il coach non può solo accettare o rifiutare: **rifiuta con motivazione** o
+**propone un altro orario con motivazione**, e il giocatore accetta o rifiuta.
+La proposta vive sulla riga della prenotazione (`coach_message`,
+`proposed_*`) più lo stato `controproposta`, non in una tabella a parte: così
+la macchina a stati resta una sola e l'accettazione è un `UPDATE` della stessa
+riga. `controproposta` è fuori da `('richiesta','confermata')`, quindi la
+fascia originale si libera subito e quella proposta **non** viene riservata.
+`acceptBookingProposal()` rivalida tutto sotto `pg_advisory_xact_lock`
+(chiave giorno+campo, la stessa di `createBooking`) e, se l'orario è stato
+preso nel frattempo, ritorna una frase invece di un errore SQL, lasciando la
+proposta in piedi. Regola condivisa fra form del coach e server:
+`proposableStarts()` in `constants.ts`. Cuore in
+`src/lib/booking-proposals.ts` (server-only, così il test può chiamarlo),
+Server Action in `src/lib/actions/booking-proposals.ts`.
+Test: `npm run test:proposte`. Dettagli in `AGENTS.md`.
+
 ## Overflow orizzontale
 
 Un figlio di grid o flex ha `min-width: auto` e non scende sotto la larghezza

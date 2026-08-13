@@ -642,6 +642,106 @@ dall'interfaccia e non sarebbe più riapribile.
 Test: `npm run test:chiusure` (stesso Postgres usa-e-getta di
 `test:capienza`, istruzioni in testa allo script).
 
+## Proposte di orario (13 agosto 2026)
+
+Prima il coach poteva solo accettare o rifiutare, e il rifiuto era muto: il
+giocatore vedeva "Rifiutata" senza sapere perché né cosa fare. Ora il coach
+**rifiuta con motivazione** oppure **propone un altro orario con
+motivazione**, e il giocatore accetta o rifiuta la proposta. Accettando, la
+lezione si sposta e da quel momento occupa il calendario come qualunque altra
+prenotazione confermata.
+
+### La proposta sta sulla riga della prenotazione, non in una tabella
+
+`bookings` ha quattro colonne in più (`coach_message`, `proposed_date`,
+`proposed_start_time`, `proposed_end_time`) e uno stato in più,
+`controproposta`. Niente tabella `booking_proposals`, per tre motivi:
+
+1. **Una sola macchina a stati.** Con una tabella a parte ce ne sarebbero due
+   (`bookings.status` e lo stato della proposta) da tenere allineate a mano:
+   la classica coppia che diverge, con prenotazioni rifiutate e proposte
+   ancora "pendenti" sopra.
+2. **L'accettazione è comunque un UPDATE di questa riga.** Data e orario
+   della lezione vivono qui, e qui devono cambiare: una riga in più
+   aggiungerebbe una scrittura senza togliere niente.
+3. **Il vincolo di non sovrapposizione vede solo `bookings`.** Tenere
+   l'orario proposto in colonne che il vincolo non guarda è esattamente ciò
+   che serve: la proposta esiste, ma non prenota.
+
+Il prezzo accettato: **niente storico della trattativa**. Una proposta è un
+giro solo, il coach ne fa una e il giocatore risponde. Se un giorno servisse
+una vera contrattazione a più giri, quello è il momento per la tabella.
+
+### Una proposta pendente non blocca niente
+
+`controproposta` è **fuori** dall'insieme `('richiesta','confermata')`, quindi
+gli indici parziali, il vincolo GiST e tutte le query di occupazione la
+ignorano. Due conseguenze volute:
+
+- la fascia **originale si libera subito**: il coach ha appena detto che non
+  può, tenerla occupata toglierebbe disponibilità reale a tutti;
+- la fascia **proposta non viene riservata**: finché il giocatore non accetta
+  non esiste nessuna lezione da difendere, e bloccare un orario per una
+  proposta che può restare senza risposta per giorni è peggio del rischio che
+  qualcuno la prenda prima.
+
+### La corsa fra proposta e accettazione
+
+Fra il "propongo giovedì alle 11" e il click del giocatore possono passare
+giorni: nel frattempo l'orario può essere stato preso, il coach può aver
+chiuso la data o tolto il turno. `acceptBookingProposal()` **rivalida tutto
+dentro `pg_advisory_xact_lock`**, con la stessa chiave giorno+campo di
+`createBooking()` - così un'accettazione e una prenotazione nuova sullo stesso
+campo si aspettano a vicenda invece di leggere entrambe lo stesso "libero".
+Se non ci sta più, l'azione ritorna una **frase** (`"L'orario proposto non è
+più disponibile. Quell'orario è già occupato da una lezione singola."`) e la
+proposta **resta lì**: il coach può farne un'altra. Il `catch` su `23505` e
+`23P01` è solo il backstop, non la difesa principale.
+
+### La regola di cosa è proponibile è unica
+
+`proposableStarts()` in `constants.ts` = `allowedStarts()` filtrato per i tipi
+ancora disponibili su quell'intervallo (`computeLessonAvailability`). La usano
+il form del coach in `/coach-admin/richieste` (per disegnare gli orari), la
+validazione della proposta e la rivalidazione in accettazione. Vale la stessa
+regola del resto del calendario: **se le strade divergono, il coach propone un
+orario che il giocatore non riuscirà mai ad accettare.** L'orario proposto
+deve quindi stare dentro una finestra pubblicata: non esistono lezioni fuori
+dalle disponibilità dichiarate, nemmeno se le propone il coach.
+
+### Transizioni e file
+
+- coach: `richiesta → rifiutata` (con motivazione) oppure
+  `richiesta → controproposta`;
+- giocatore: `controproposta → confermata` (accetta) oppure
+  `controproposta → rifiutata` (rifiuta).
+
+Accettare porta **direttamente a `confermata`**: l'orario l'ha scelto il
+coach, chiedergli una seconda conferma sarebbe un giro a vuoto. Rifiutare la
+proposta chiude come `rifiutata` e non come `annullata`, perché la richiesta
+iniziale il coach l'aveva già scartata; `coach_message` resta sulla riga, così
+il giocatore continua a leggere il perché.
+
+- `src/lib/booking-proposals.ts` - cuore transazionale, **server-only**, non
+  Server Action (stesso schema di `queries.ts`). Sta fuori da `actions/`
+  perché `"use server"` obbliga ogni export a essere un'azione remota e
+  perché il test end-to-end deve poterlo chiamare senza sessione Clerk né
+  contesto di richiesta.
+- `src/lib/actions/booking-proposals.ts` - le Server Action: autenticano,
+  chiamano il cuore, rivalidano. File separato da `actions/bookings.ts`
+  apposta: lì c'è la prenotazione, qui la trattativa.
+- UI: `booking-request-actions.tsx` (coach, tre azioni) e
+  `booking-proposal-actions.tsx` (giocatore, dentro le card di
+  `/prenotazioni`). Entrambe passano da `ConfirmDialog`, con il campo
+  motivazione nel nuovo prop `body` - non in `description`, che è la
+  `Description` di Base UI, cioè un `<p>`.
+
+Test: `npm run test:proposte` (27 verifiche, stesso Postgres usa-e-getta di
+`test:capienza`). L'ultima è la corsa vera: due proposte sulla stessa fascia,
+due accettazioni in `Promise.all`, una sola deve passare - e la perdente deve
+fallire nella **rivalidazione**, non sull'indice unico, altrimenti vuol dire
+che il lock non ha serializzato niente.
+
 ## Notifiche prenotazioni
 
 - `notifications` conserva notifiche in-app per giocatore e coach, collegate
@@ -650,6 +750,12 @@ Test: `npm run test:chiusure` (stesso Postgres usa-e-getta di
 - `createBooking` crea atomicamente la prenotazione e due notifiche
   `booking_created`, una per ruolo. L’annullamento crea due notifiche
   `booking_cancelled` nella stessa transazione che aggiorna lo stato.
+- Stessa regola per le proposte di orario: `booking_rejected`,
+  `booking_proposed`, `booking_proposal_accepted` e
+  `booking_proposal_declined`, sempre **due righe nella stessa transazione**
+  che cambia lo stato, una per ruolo. Il messaggio al giocatore contiene la
+  motivazione del coach: è il punto di tutta la funzione. Le icone di
+  `/notifiche` stanno in `NOTIFICATION_ICON`, non più in un ternario.
 - L’annullamento dal lato giocatore passa sempre da un `AlertDialog` Base UI
   esplicito; nessuna cancellazione può partire dal primo click.
 - Le mutazioni notifiche invalidano il root layout con
@@ -717,6 +823,13 @@ passano tutte da qui.
   segnale al solo colore è debole comunque: meglio dire *cosa* succede.
 - I titoli sono in seconda persona e nominano l’oggetto - “Vuoi davvero
   chiudere questo slot?”, non “Chiudere…?”.
+- `body` è per i campi che l'utente deve compilare prima di confermare (la
+  motivazione di un rifiuto, l'orario di una proposta), con
+  `confirmDisabled` a gestire il "non ancora completo". Non metterli in
+  `description`: quella è la `Description` di Base UI, cioè un `<p>`, e
+  annidarci dentro form control produce markup non valido. Dentro il dialog
+  evita anche i `Select`: il loro popup sta a `z-50` contro il `z-[220]` del
+  dialog, quindi finisce dietro. Chip e bottoni, come nel form delle proposte.
 - Il `trigger` è un `Button` reale, quindi **non** va `nativeButton={false}`
   (vedi “Note Base UI”).
 
@@ -1002,8 +1115,8 @@ sistema. `npm run db:push`, `db:seed` e `db:constraints` puntano ancora a
 - `npm run db:push` - applica lo schema Drizzle al database (stessa nota sul
   dotenv, già nello script)
 - `npm run test:capienza` / `test:chiusure` / `test:identita` /
-  `test:recensioni` - test end-to-end contro un Postgres usa-e-getta
-  (istruzioni in testa agli script in `scripts/`)
+  `test:recensioni` / `test:proposte` - test end-to-end contro un Postgres
+  usa-e-getta (istruzioni in testa agli script in `scripts/`)
 - `npm run test:email` - verifica il contenuto della notifica email al coach e
   il comportamento senza `RESEND_API_KEY` (nessun database, nessun invio reale)
 - `npm run build` - build di produzione
@@ -1158,6 +1271,10 @@ bloccato) per un banner "Deployment Blocked" / "Fix Git Configuration".
 - [ ] Email al giocatore quando il coach conferma o rifiuta (il trasporto c'è
       già, manca il template: non fatto in questo giro per non toccare il
       flusso di conferma/rifiuto)
+- [x] Rifiuto motivato e proposta di un altro orario - vedi la sezione
+      "Proposte di orario". Stato `controproposta` e colonne sulla riga della
+      prenotazione, rivalidazione sotto advisory lock in accettazione. Test:
+      `npm run test:proposte`.
 - [ ] Policy di cancellazione: oggi un giocatore può annullare una
       prenotazione `confermata` in qualsiasi momento, senza finestra minima
       né conseguenze per il coach che ha bloccato lo slot.
