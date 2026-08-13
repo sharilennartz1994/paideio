@@ -412,6 +412,25 @@ export async function getCoachClosedDays(coachId: string, daysAhead = 28): Promi
     .sort();
 }
 
+/**
+ * Capienza e tipi di lezione del coach, i due valori che servono ovunque si
+ * calcoli la prenotabilità di una fascia (calendario, proposte di orario).
+ * Un profilo mancante non è un errore: il coach può non averlo ancora
+ * compilato, e in quel caso non offre nulla.
+ */
+export async function getCoachProfileBasics(
+  coachId: string
+): Promise<{ groupCapacity: number; trainingTypes: string[]; levels: string[] }> {
+  const profile = await db.query.coachProfiles.findFirst({
+    where: eq(coachProfiles.userId, coachId),
+  });
+  return {
+    groupCapacity: profile?.groupCapacity ?? DEFAULT_GROUP_CAPACITY,
+    trainingTypes: parseJsonArray(profile?.trainingTypes ?? "[]"),
+    levels: parseJsonArray(profile?.levels ?? "[]"),
+  };
+}
+
 export async function getBookingsForPlayer(playerId: string) {
   const rows = await db.query.bookings.findMany({ where: eq(bookings.playerId, playerId) });
   const reviewedBookingIds = new Set(

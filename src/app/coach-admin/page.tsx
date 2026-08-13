@@ -2,11 +2,17 @@ import Link from "next/link";
 import { eq } from "drizzle-orm";
 import { Inbox, CalendarCheck, Star, ArrowRight, User, Clock, Check, Circle, Eye, Sparkles } from "@/components/icons/paideio-icons";
 import { getCurrentCoach } from "@/lib/session";
-import { getCoachAdminStats, getBookingsForCoach, parseJsonArray } from "@/lib/queries";
+import {
+  getCoachAdminStats,
+  getBookingsForCoach,
+  getCoachSchedule,
+  parseJsonArray,
+} from "@/lib/queries";
 import { coachOffersLessons } from "@/lib/constants";
 import { db } from "@/lib/db";
 import { availabilitySlots, locations } from "@/lib/db/schema";
 import { BookingRequestActions } from "@/components/booking-request-actions";
+import type { ProposalWindow } from "@/components/booking-request-actions";
 import { CoachAvatar } from "@/components/coach-avatar";
 import { GameAsset, GameEmptyState } from "@/components/design/field-assets";
 
@@ -15,13 +21,24 @@ export default async function CoachAdminDashboard() {
   if (!current?.profile) return null;
   const { user, profile } = current;
 
-  const [stats, bookings, coachLocations, slots] = await Promise.all([
+  const [stats, bookings, coachLocations, slots, schedule] = await Promise.all([
     getCoachAdminStats(user.id),
     getBookingsForCoach(user.id),
     db.query.locations.findMany({ where: eq(locations.coachId, user.id) }),
     db.query.availabilitySlots.findMany({ where: eq(availabilitySlots.coachId, user.id) }),
+    // Serve al form "proponi un altro orario" delle richieste in evidenza.
+    getCoachSchedule(user.id, 28),
   ]);
   const pending = bookings.filter(({ booking }) => booking.status === "richiesta").slice(0, 3);
+  const proposalWindows: ProposalWindow[] = schedule.map((slot) => ({
+    date: slot.date,
+    startTime: slot.startTime,
+    endTime: slot.endTime,
+    locationId: slot.locationId,
+    locationName: slot.locationName,
+    busy: slot.busy,
+    closed: slot.closed,
+  }));
   const setup = [
     {
       label: "Profilo pubblico",
@@ -239,7 +256,19 @@ export default async function CoachAdminDashboard() {
                   </div>
                 )}
                 <div className="pt-2">
-                  <BookingRequestActions bookingId={booking.id} />
+                  <BookingRequestActions
+                    bookingId={booking.id}
+                    playerId={booking.playerId}
+                    playerName={player?.name ?? "Il giocatore"}
+                    date={booking.date}
+                    startTime={booking.startTime}
+                    endTime={booking.endTime}
+                    type={booking.type}
+                    locationId={booking.locationId}
+                    windows={proposalWindows}
+                    groupCapacity={profile.groupCapacity}
+                    trainingTypes={parseJsonArray(profile.trainingTypes)}
+                  />
                 </div>
               </div>
             </div>

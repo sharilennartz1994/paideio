@@ -87,7 +87,10 @@ export async function removeLocation(locationId: string): Promise<ActionResult> 
       .where(
         and(
           eq(bookings.locationId, locationId),
-          inArray(bookings.status, ["richiesta", "confermata"]),
+          // Anche le trattative aperte: senza il campo la lezione non può
+          // avvenire da nessuna parte, e una `controproposta` orfana
+          // resterebbe accettabile solo per farsi dire di no.
+          inArray(bookings.status, ["richiesta", "confermata", "controproposta"]),
           gte(bookings.date, today)
         )
       );

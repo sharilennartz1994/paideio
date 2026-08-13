@@ -1,10 +1,21 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Bell, CalendarCheck2, CalendarX2 } from "@/components/icons/paideio-icons";
+import { Bell, CalendarCheck2, CalendarClock, CalendarX2 } from "@/components/icons/paideio-icons";
 import { getCurrentUser } from "@/lib/session";
 import { getNotificationsForUser } from "@/lib/queries";
 import { MarkNotificationsReadButton } from "@/components/mark-notifications-read-button";
 import { GameEmptyState } from "@/components/design";
+
+const NOTIFICATION_ICON: Record<string, typeof CalendarCheck2> = {
+  booking_created: CalendarCheck2,
+  booking_cancelled: CalendarX2,
+  booking_rejected: CalendarX2,
+  // Una proposta e il suo rifiuto restano "orario da decidere": l'icona dice
+  // che c'è una trattativa aperta, non che la lezione è saltata.
+  booking_proposed: CalendarClock,
+  booking_proposal_declined: CalendarClock,
+  booking_proposal_accepted: CalendarCheck2,
+};
 
 function formatNotificationDate(value: string) {
   return new Intl.DateTimeFormat("it-IT", {
@@ -42,7 +53,7 @@ export default async function NotifichePage() {
           />
         )}
         {items.map((item) => {
-          const Icon = item.type === "booking_cancelled" ? CalendarX2 : CalendarCheck2;
+          const Icon = NOTIFICATION_ICON[item.type] ?? CalendarCheck2;
           return (
             <Link
               key={item.id}
