@@ -1154,9 +1154,22 @@ Dal 12 agosto 2026 c'è un Postgres locale in `docker-compose.yml`:
 
 ```bash
 npm run db:local:up      # container su localhost:55433
-npm run db:local:reset   # schema + vincoli GiST + dati demo
+npm run db:local:reset   # azzera schema, ripubblica, vincoli GiST, dati demo
 npm run dev
 ```
+
+`db:local:reset` **azzera lo schema** prima di ripubblicarlo, e non è un
+eccesso di zelo: `drizzle-kit push` su un database che ha già le tabelle apre un
+prompt interattivo per capire se una colonna nuova sia la rinomina di una
+esistente. Senza TTY fallisce, e dentro la catena `&&` il fallimento passava
+inosservato: il seed partiva lo stesso e si schiantava su una colonna mancante.
+Su schema vuoto non c'è niente da disambiguare. Lo script rifiuta qualunque
+`DATABASE_URL` non locale.
+
+**Corollario per la produzione**: aggiornare lo schema di Neon con
+`npm run db:push` va fatto **da un terminale vero**, perché quel prompt lì
+comparirà e va risposto a mano. Subito dopo serve `npm run db:constraints`, che
+`drizzle-kit` non sa generare.
 
 Il ponte è **`.env.development.local`** (non versionato, `.gitignore` ha
 `.env*`), che contiene solo `DATABASE_URL`. Next lo carica con priorità più

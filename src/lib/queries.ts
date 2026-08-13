@@ -296,7 +296,8 @@ async function buildCoachSchedule(coachId: string, daysAhead: number): Promise<S
   const profile = await db.query.coachProfiles.findFirst({
     where: eq(coachProfiles.userId, coachId),
   });
-  const groupCapacity = profile?.groupCapacity ?? DEFAULT_GROUP_CAPACITY;
+  // La capienza non serve più qui: con il modello a finestre i posti si
+  // calcolano sul singolo ritaglio, lato client o in `createBooking`.
   const coachTrainingTypes = parseJsonArray(profile?.trainingTypes ?? "[]");
 
   const closures = await db.query.availabilityClosures.findMany({
