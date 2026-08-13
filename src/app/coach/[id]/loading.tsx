@@ -1,5 +1,5 @@
-import { FullScreenGameLoader } from "@/components/design";
+import { RouteSkeleton } from "@/components/design";
 
 export default function CoachDetailLoading() {
-  return <FullScreenGameLoader label="Prepariamo il profilo del coach" />;
+  return <RouteSkeleton variant="profile" label="Prepariamo il profilo del coach" />;
 }

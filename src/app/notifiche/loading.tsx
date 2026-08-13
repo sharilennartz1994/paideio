@@ -1,5 +1,5 @@
-import { FullScreenGameLoader } from "@/components/design";
+import { RouteSkeleton } from "@/components/design";
 
-export default function Loading() {
-  return <FullScreenGameLoader label="Carichiamo le notifiche" />;
+export default function NotificheLoading() {
+  return <RouteSkeleton variant="list" rows={5} label="Carichiamo le notifiche" />;
 }

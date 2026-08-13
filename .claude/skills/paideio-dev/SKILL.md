@@ -267,9 +267,15 @@ sono archiviate fuori da `public/` in
 campo modulare ripetuta (non un PNG overgrip); il grip è impiegato nella
 lezione Academy sull’attrezzatura.
 
-Ogni attesa di navigazione o di una mutazione utente usa
-`FullScreenGameLoader`. I reveal di `ArenaMotionDirector` devono restare
-route-safe: mai nascondere completamente contenuti in attesa
+Le attese di una **mutazione utente** usano `FullScreenGameLoader`. Le attese di
+**navigazione** no: i `loading.tsx` usano `RouteSkeleton`
+(`components/design/route-skeletons.tsx`, sei varianti per forma di pagina) e
+la finestra fra click e primo byte è coperta da `RouteProgressBar`, montata in
+`layout.tsx`. Il velo a tutto schermo copriva topbar, rail e bottom nav, cioè
+la shell che l'App Router tiene viva durante la navigazione: non va
+reintrodotto in un `loading.tsx`. Dettagli e tabella di copertura in AGENTS.md,
+sezione "Loader di navigazione". I reveal di `ArenaMotionDirector` devono
+restare route-safe: mai nascondere completamente contenuti in attesa
 dell’`IntersectionObserver`.
 
 Accessibilità: mantenere WCAG 2.2 AA in entrambe le modalità, focus visibile,

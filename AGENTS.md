@@ -120,9 +120,10 @@ normativa attuale è `design/SYSTEM.md`, con istruzioni d'implementazione in
 - Motion rapida e causale: press, hover, ingresso route e loader-pallina;
   niente attese teatrali o loop ornamentali. Tutto si disattiva con
   `prefers-reduced-motion`. I reveal non possono mai portare il contenuto a
-  `opacity: 0`: `ArenaMotionDirector` si riallinea a ogni pathname. Le route
-  `loading.tsx` e le attese delle azioni interattive usano
-  `FullScreenGameLoader`. La ricerca mobile usa uno Sheet Base UI accessibile.
+  `opacity: 0`: `ArenaMotionDirector` si riallinea a ogni pathname. Le attese
+  delle **azioni interattive** usano `FullScreenGameLoader`; le route
+  `loading.tsx` **no**, usano `RouteSkeleton` (vedi "Loader di navigazione").
+  La ricerca mobile usa uno Sheet Base UI accessibile.
 - Accessibilità WCAG 2.2 AA anche in modalità giorno: testo normale ≥4.5:1,
   testo grande e contorni UI ≥3:1, focus sempre visibile e target interattivi
   minimi 44px. `GameRouteStage` riporta le navigazioni normali al top ma
@@ -319,6 +320,75 @@ breadcrumb link 10,45:1, breadcrumb corrente 11,41:1, sezione inattiva 9,67:1,
 sezione attiva 16,84:1. Target: voci della rail 67×53, breadcrumb e nav di
 sezione `min-h-11`. A 375px nessuna delle pagine controllate ha scroll
 orizzontale di documento e non resta nessun `overflow-x-auto` senza affordance.
+### Loader di navigazione
+
+Prima di questo giro l'utente diceva "non vedo nessun loader", e il motivo non
+era che mancassero i file: `src/app/loading.tsx` esiste da sempre e il suo
+boundary copre **tutte** le rotte discendenti. Le cause erano altre due.
+
+1. **Il prefetch salta il fallback.** `<Link>` prefetcha ogni rotta che entra
+   nel viewport, e la sidebar/il footer li tengono tutti in viewport. Quando
+   clicchi, il payload RSC è già in cache: la rotta si impegna in pochi
+   millisecondi e il `loading.tsx` non viene mai renderizzato. Misurato in
+   locale: navigare `/` → `/academy` produceva **zero** frame con fallback.
+   Non è un difetto da correggere, è il comportamento voluto; il buco è
+   altrove.
+2. **Il buco vero è fra il click e il primo byte.** Se il prefetch non è
+   ancora arrivato (rete lenta, link appena comparso), lì non succede niente
+   sullo schermo e `loading.tsx` non aiuta, perché entra in scena solo *dopo*
+   che la rotta è stata impegnata.
+
+Quindi le difese sono due, e coprono due momenti diversi:
+
+- **`RouteProgressBar`** (`components/design/route-progress-bar.tsx`, montato in
+  `layout.tsx`): barra da 3px in cima, copre click → primo byte. La via
+  idiomatica sarebbe `useLinkStatus` di `next/link`, ma va montato *dentro*
+  ogni `<Link>` e i link vivono in `sidebar-nav.tsx`/`mobile-nav.tsx`/
+  `site-footer.tsx`; questa è la versione globale, un listener delegato sui
+  click di ancora. Lo stato pendente è **la chiave della pagina che stiamo
+  lasciando**, non un booleano, e viene azzerato *in fase di render* quando la
+  rotta cambia: con un booleano azzerato in `useEffect` il linter segnala il
+  setState sincrono in effetto, e in più il tasto Indietro riaccendeva la
+  barra. La comparsa è ritardata di 140ms **in CSS**, così le navigazioni già
+  prefetchate non la fanno mai lampeggiare.
+- **`RouteSkeleton`** (`components/design/route-skeletons.tsx`): il fallback dei
+  `loading.tsx`. Sei varianti (`editorial`, `list`, `profile`, `dashboard`,
+  `document`, `block`), una per forma di pagina, così il passaggio scheletro →
+  contenuto non sposta la griglia.
+
+**I `loading.tsx` non usano più `FullScreenGameLoader`.** Quel componente è un
+velo `fixed inset-0 bg-game-ink` e copriva topbar, rail e bottom nav, cioè
+proprio la shell che l'App Router tiene viva e interattiva durante una
+navigazione; in modalità giorno era anche un lampo nero a tutto schermo ad ogni
+click. Resta la scelta giusta per le **attese delle azioni interattive**, dove
+bloccare l'interfaccia è il punto. Non reintrodurlo in un `loading.tsx`.
+
+Copertura attuale (un `loading.tsx` copre anche i segmenti figli):
+
+| file | variante | rotte coperte |
+| --- | --- | --- |
+| `app/loading.tsx` | `editorial` | `/`, `/sign-in`, `/sign-up`, e tutto il resto senza fallback più vicino |
+| `app/academy/loading.tsx` | `editorial` + nav | `/academy` e le 6 sottosezioni |
+| `app/circuito/loading.tsx` | `editorial` + nav | `/circuito` e le 3 sottosezioni |
+| `app/chi-siamo`, `diventa-coach`, `prossime-release` | `editorial` | le rispettive |
+| `app/termini`, `app/privacy` | `document` | testo lungo con indice laterale |
+| `app/cerca`, `preferiti`, `prenotazioni`, `notifiche` | `list` | filtri + righe |
+| `app/coach/[id]/loading.tsx` | `profile` | hero scuro + pannello prenotazione |
+| `app/coach-admin/loading.tsx` | `dashboard` | `/coach-admin` e le 4 schede |
+| `app/design-system/loading.tsx` | `block` | pallina centrata |
+
+`coach-admin/loading.tsx` merita una nota: un `loading.tsx` **non** avvolge il
+layout del proprio segmento, quindi sta *dentro* `coach-admin/layout.tsx`.
+Cambiando scheda, l'intestazione "Area coach" e la barra dei tab restano
+visibili e solo il pannello si ricarica: era impossibile ottenerlo con il velo
+a tutto schermo.
+
+I blocchi scheletro sopra una superficie arena fissa (`bg-game-ink`) devono
+usare `.game-skeleton-arena` insieme a `.game-skeleton-shape`: `--nebbia` è
+theme-aware e in modalità giorno sull'inchiostro sparisce (vedi "Regola
+token"). Sotto `prefers-reduced-motion` lo sweep degli scheletri era già
+disattivato; la barra resta visibile ma diventa un blocco fermo a piena
+larghezza, senza segmento che scorre in loop.
 
 ### Navigazione mobile
 

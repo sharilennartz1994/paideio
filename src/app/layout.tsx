@@ -9,7 +9,7 @@ import { AppBottomNav } from "@/components/app-bottom-nav";
 import { RouteBreadcrumb } from "@/components/route-breadcrumb";
 import { SiteFooter } from "@/components/site-footer";
 import { Toaster } from "@/components/ui/sonner";
-import { ArenaMotionDirector, GameRouteStage } from "@/components/design";
+import { ArenaMotionDirector, GameRouteStage, RouteProgressBar } from "@/components/design";
 import "./globals.css";
 
 const hankenGrotesk = Hanken_Grotesk({
@@ -57,6 +57,7 @@ export default function RootLayout({
           <AppTopbar />
           <AppSidebar />
           <ArenaMotionDirector />
+          <RouteProgressBar />
           <main
             id="contenuto-principale"
             tabIndex={-1}

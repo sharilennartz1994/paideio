@@ -1,5 +1,5 @@
-import { FullScreenGameLoader } from "@/components/design";
+import { RouteSkeleton } from "@/components/design";
 
 export default function PreferitiLoading() {
-  return <FullScreenGameLoader label="Raduniamo i tuoi coach" />;
+  return <RouteSkeleton variant="list" rows={3} label="Raduniamo i tuoi coach" />;
 }
