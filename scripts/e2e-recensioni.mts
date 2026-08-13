@@ -50,6 +50,12 @@ function shiftDays(days: number) {
   return toLocalDateString(d);
 }
 
+function addMinutes(time: string, minutes: number): string {
+  const [h, m] = time.split(":").map(Number);
+  const total = h * 60 + m + minutes;
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
 async function makePlayer(label: string) {
   const id = randomUUID();
   await db.insert(users).values({
@@ -78,7 +84,10 @@ async function addBooking(opts: {
     locationId: opts.locationId,
     date: opts.date,
     startTime: opts.startTime,
-    endTime: "23:00",
+    // Una lezione dura 60 o 90 minuti, non fino a fine giornata: con la fine
+    // fissa a "23:00" ogni prenotazione si accavallava alle altre e il vincolo
+    // `bookings_no_overlap` respingeva la seconda dello stesso giorno.
+    endTime: addMinutes(opts.startTime, 60),
     type: "singolo",
     level: "intermedio",
     status: opts.status,
