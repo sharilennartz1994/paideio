@@ -6,6 +6,7 @@ import { Hanken_Grotesk, Oxanium } from "next/font/google";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
 import { AppBottomNav } from "@/components/app-bottom-nav";
+import { RouteBreadcrumb } from "@/components/route-breadcrumb";
 import { SiteFooter } from "@/components/site-footer";
 import { Toaster } from "@/components/ui/sonner";
 import { ArenaMotionDirector, GameRouteStage } from "@/components/design";
@@ -61,6 +62,7 @@ export default function RootLayout({
             tabIndex={-1}
             className="min-h-screen pt-16 md:pl-20"
           >
+            <RouteBreadcrumb />
             <GameRouteStage>{children}</GameRouteStage>
           </main>
           <SiteFooter />

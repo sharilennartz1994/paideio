@@ -244,15 +244,93 @@ elementi con `scrollWidth - clientWidth > 2` che non siano `overflow-x:auto`.
 Attenzione ai falsi positivi legittimi: `.truncate` sfora per definizione, e le
 icone decorative posizionate `-right-4` sono ritagliate apposta.
 
+### Orientamento: la navigazione si legge senza interagire
+
+Diagnosi del 13 agosto 2026, partita da "dal menù a sinistra non è chiaro quale
+sia la navigazione per un utente che non conosce Paideio". Non era un problema
+di stile: era che **la struttura del sito non era leggibile senza compiere
+un'azione**. Le quattro prove misurate:
+
+1. **La rail desktop mostrava zero testo.** I sei link avevano l'etichetta in
+   uno `<span aria-hidden>` con `hidden group-hover:block`: misurando le voci,
+   `visibleSpans` era `["", "", "", "", "", ""]`. Chi arrivava vedeva sei glifi
+   muti. Su un tablet da 768px in su la rail compare ma l'hover no, quindi
+   Academy e Circuito erano di fatto **inconoscibili**.
+2. **Nessuna indicazione di posizione fuori dalla rail.** Aperta
+   `/academy/regole` da un link esterno o da una ricerca, l'unico indizio era il
+   kicker dell'hero, che è copy editoriale e non un percorso risalibile.
+3. **La nav di sezione di Academy/Circuito non aveva stato attivo.** Su
+   `/academy/tecnica` nessuno dei sette link aveva `aria-current` né stile
+   diverso: la nav diceva cosa esiste, non dove sei. In più era
+   `overflow-x-auto` con `min-w-max`, **553px dentro 375px**: Training,
+   Attrezzatura e Storia restavano fuori schermo senza affordance, lo stesso
+   difetto già corretto in `coach-admin-nav.tsx`.
+4. **Il desktop era un sottoinsieme del mobile.** Lo sheet "Altro" elencava
+   Notifiche, Il concept e Prossime release; la rail no. E `/prenotazioni`
+   compariva nello sheet anche per i coach, dove `prenotazioni/page.tsx` fa
+   `redirect("/")`: era un link morto.
+
+Le scelte, in ordine di importanza:
+
+- **`src/lib/navigation.ts` è la tassonomia unica.** Prima ogni superficie
+  aveva la propria lista e le liste divergevano (da cui il punto 4, e "Gear"
+  nella nav di sezione contro "Attrezzatura" nelle card dell'hub: due nomi per
+  la stessa pagina rendono impossibile capire dove si è). Le voci si aggiungono
+  lì, poi rail, sheet, breadcrumb e nav di sezione le leggono. La regola
+  storica "nessuna rotta raggiungibile da una sola superficie" adesso si
+  verifica leggendo **un solo file**: `primaryNavGroups()` (rail) e
+  `moreSheetGroups()` (sheet) sono lì una accanto all'altra.
+- **La rail resta 80px, le etichette diventano visibili** (icona sopra
+  etichetta, `text-[10px]`, la stessa soluzione di `coach-admin-nav.tsx` e
+  della bottom nav). **Non allargarla**: `layout.tsx` (`md:pl-20`) e
+  `site-footer.tsx` (`md:pl-20`) sono entrambi allineati a quella misura, e il
+  footer è vincolato a restare così, quindi una rail più larga scollerebbe il
+  footer dal contenuto di 160px. Le etichette più lunghe misurano 53px
+  ("Preferiti") in 67px di box: stanno su una riga sola.
+- **La rail è raggruppata**: "Gioca" (Home, Cerca, e per i player Lezioni e
+  Preferiti) e "Impara" (Academy, Circuito). I due titoli a 9px sono ciò che
+  spiega la struttura del prodotto a chi arriva la prima volta, e lo sheet
+  mobile usa gli stessi due nomi più "Paideio", così il modello mentale è lo
+  stesso sulle due superfici.
+- **`route-breadcrumb.tsx` in `layout.tsx`, dentro `<main>` e fuori da
+  `GameRouteStage`** (le animazioni di route non devono toccarlo). Si disegna
+  su ogni pagina che non sia la home o le rotte Clerk. L'ultima briciola è
+  anche il titolo della pagina, quindi risponde insieme a "dove sono" e "come
+  torno indietro". Superficie fissa `--game-ink` come la topbar, quindi testo
+  fisso: si incolla alla topbar e forma un unico blocco di chrome in entrambi i
+  temi. I segmenti tecnici si saltano (`/coach` non è un indice: il percorso è
+  "Home / Profilo coach", non "Home / Coach / Profilo coach") e le rotte non
+  registrate ricadono su uno slug reso leggibile, così una pagina nuova non
+  rompe il breadcrumb.
+- **`editorial-section-nav.tsx`** sostituisce la nav inline di
+  `EditorialHero`: stato attivo con `aria-current`, etichette italiane dalla
+  tassonomia, e `flex-wrap` al posto di `overflow-x-auto` (a 375px va su tre
+  righe, tutte e sette le voci visibili). La sezione si deduce da
+  `usePathname`, non più da `kicker.startsWith("Academy")`: quella inferenza
+  mostrava la nav del Circuito su qualunque pagina con un kicker diverso.
+- **`/prenotazioni` è solo per i player** nella tassonomia, perché la pagina
+  fa `redirect("/")` per gli altri ruoli. Un link di navigazione che riporta in
+  home senza spiegare perché è peggio dell'assenza del link.
+
+Contrasti misurati (canvas 1×1, entrambi i temi, valori **identici** perché
+sono tutte superfici fisse con testo fisso): titolo di gruppo della rail
+11,41:1, voce inattiva 11,9:1, voce attiva 14,47:1, CTA coach 15,01:1,
+breadcrumb link 10,45:1, breadcrumb corrente 11,41:1, sezione inattiva 9,67:1,
+sezione attiva 16,84:1. Target: voci della rail 67×53, breadcrumb e nav di
+sezione `min-h-11`. A 375px nessuna delle pagine controllate ha scroll
+orizzontale di documento e non resta nessun `overflow-x-auto` senza affordance.
+
 ### Navigazione mobile
 
 `app-bottom-nav.tsx` è solo il guscio server (ruolo + contatore notifiche);
 l’interfaccia sta in `mobile-nav.tsx` (client). Quattro schede - Home, Cerca,
 una terza che cambia con il ruolo (Lezioni / Coach / Academy per gli anonimi) e
-**Altro**, che apre uno Sheet Base UI con il resto della navigazione (Academy,
-Circuito, Preferiti, Notifiche, Diventa coach, Il concept, Prossime release).
-La regola è che **nessuna rotta sia raggiungibile solo dalla sidebar desktop**:
-quando aggiungi una voce alla sidebar, aggiungila anche allo sheet. Lo stato
+**Altro**, che apre uno Sheet Base UI con il resto della navigazione, raggruppato
+in "Gioca", "Impara" e "Paideio". Il contenuto dello sheet arriva da
+`moreSheetGroups()` in `src/lib/navigation.ts`, la stessa sorgente della rail
+desktop, e la voce corrispondente alla terza scheda viene filtrata via per non
+duplicarla. La regola è che **nessuna rotta sia raggiungibile da una sola
+superficie**: si tiene aggiornando la tassonomia, non le due liste. Lo stato
 attivo è calcolato con `usePathname` e comprende le sottorotte; la scheda
 "Altro" si accende quando la pagina corrente vive dentro lo sheet. Le voci dello
 sheet sono `SheetClose` con `render={<Link/>}` e `nativeButton={false}`, così la
@@ -728,8 +806,10 @@ sarebbe apparso col trattino, quindi il Periodo ora mappa il valore su
   spiegano l’effetto delle modifiche, raggruppano gli orari per giorno e
   chiedono conferma prima di rimuovere campi o turni.
 - La sidebar desktop resta una rail compatta da 80px e non si espande sopra i
-  contenuti; le etichette appaiono come tooltip. I `devIndicators` Next sono
-  disabilitati per non sovrapporre il pulsante dev alla rail durante i test.
+  contenuti, ma **le etichette sono visibili**, non più tooltip in hover: vedi
+  "Orientamento: la navigazione si legge senza interagire". I `devIndicators`
+  Next sono disabilitati per non sovrapporre il pulsante dev alla rail durante
+  i test.
 
 ### Le cinque schede coach devono stare tutte nello schermo
 
@@ -837,9 +917,13 @@ Le conseguenze, da tenere allineate se tocchi una di queste superfici:
 - Dati dinamici e normativa mostrano sempre fonte e data di verifica. Le
   regole base usano FIP 2026; i regolamenti FITP delle manifestazioni sono
   distinti. Le classifiche correnti sono snapshot editoriali, non feed live.
-- Componenti condivisi in `src/components/editorial-layout.tsx`; tassonomia
-  in `src/lib/editorial-content.ts`. Academy e Circuito sono presenti nella
-  sidebar e lo stato attivo comprende le sottorotte.
+- Componenti condivisi in `src/components/editorial-layout.tsx`; i contenuti
+  delle card in `src/lib/editorial-content.ts`, l'elenco delle sottosezioni e
+  le loro etichette canoniche in `src/lib/navigation.ts` (`EDITORIAL_SECTIONS`).
+  Academy e Circuito sono presenti nella sidebar e lo stato attivo comprende le
+  sottorotte. La nav delle sottosezioni è `editorial-section-nav.tsx`: ha stato
+  attivo, va a capo invece di scorrere e usa le stesse etichette delle card
+  dell'hub - vedi "Orientamento: la navigazione si legge senza interagire".
 
 ## Convenzioni
 

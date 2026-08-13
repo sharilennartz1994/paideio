@@ -2,52 +2,83 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, CalendarDays, Heart, LayoutDashboard, GraduationCap, Trophy } from "@/components/icons/paideio-icons";
+import { PadelBallMark } from "@/components/padel-ball-mark";
+import { coachCallToAction, isActivePath, primaryNavGroups, type Role } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
-type NavItem = { href: string; label: string; icon: typeof Home };
-
-export function SidebarNav({ role }: { role: "player" | "coach" | null }) {
+/**
+ * Rail desktop. Le etichette sono **sempre visibili**, non più tooltip in
+ * hover: prima la rail mostrava sei glifi muti e chi arrivava per la prima
+ * volta non poteva sapere che esistessero Academy o Circuito senza passarci
+ * sopra il mouse (e su un tablet da 768px in su, dove la rail compare ma
+ * l'hover no, non poteva scoprirlo affatto).
+ *
+ * La rail resta larga 80px: `layout.tsx` (`md:pl-20`) e `site-footer.tsx`
+ * (`md:pl-20`) sono allineati a quella misura, quindi allargarla scollerebbe il
+ * footer dal contenuto. Icona sopra etichetta a 10px è la stessa soluzione già
+ * adottata da `coach-admin-nav.tsx` e dalla bottom nav per lo stesso problema.
+ *
+ * I titoli di gruppo ("Gioca", "Impara") sono la parte che spiega la struttura
+ * del prodotto: senza, sei voci in colonna restano un elenco piatto.
+ */
+export function SidebarNav({ role }: { role: Role }) {
   const pathname = usePathname();
-
-  const items: NavItem[] = [
-    { href: "/", label: "Home", icon: Home },
-    { href: "/cerca", label: "Cerca", icon: Search },
-    { href: "/academy", label: "Academy", icon: GraduationCap },
-    { href: "/circuito", label: "Circuito", icon: Trophy },
-  ];
-  if (role === "player") {
-    items.push({ href: "/prenotazioni", label: "Prenotazioni", icon: CalendarDays });
-    items.push({ href: "/preferiti", label: "Preferiti", icon: Heart });
-  }
-  if (role === "coach") {
-    items.push({ href: "/coach-admin", label: "Area coach", icon: LayoutDashboard });
-  }
+  const groups = primaryNavGroups(role);
+  const coach = coachCallToAction(role);
+  const CoachIcon = coach.icon;
+  const coachActive = isActivePath(pathname, coach.href);
 
   return (
-    <nav className="flex flex-1 flex-col gap-1 px-2" aria-label="Navigazione principale">
-      {items.map((item) => {
-        const active = pathname === item.href || (item.href !== "/" && pathname.startsWith(`${item.href}/`));
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            aria-current={active ? "page" : undefined}
-            aria-label={item.label}
-            className={cn(
-              "group/nav relative flex min-h-12 items-center justify-center border-r-2 px-3 py-3 font-heading text-xs font-bold tracking-[0.06em] whitespace-nowrap uppercase transition-[background-color,color,border-color] duration-150",
-              active
-                ? "border-game-ball bg-game-blue/22 text-game-ball"
-                : "border-transparent text-game-white/65 hover:bg-game-blue/16 hover:text-game-cyan"
-            )}
-          >
-            <item.icon className="size-5 shrink-0" aria-hidden />
-            <span aria-hidden className="pointer-events-none absolute left-[calc(100%+12px)] z-10 hidden border border-game-cyan/30 bg-game-ink px-3 py-2 text-xs text-game-white group-hover/nav:block group-focus-visible/nav:block">
-              {item.label}
-            </span>
-          </Link>
-        );
-      })}
-    </nav>
+    <>
+      <nav
+        className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-1.5 pb-2"
+        aria-label="Navigazione principale"
+      >
+        {groups.map((group) => (
+          <div key={group.title}>
+            <h2 className="px-1 pb-1.5 text-center font-heading text-[9px] font-bold tracking-[0.14em] text-game-cyan uppercase">
+              {group.title}
+            </h2>
+            <ul className="flex flex-col gap-0.5">
+              {group.entries.map((item) => {
+                const active = isActivePath(pathname, item.href);
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "flex min-h-[3.25rem] flex-col items-center justify-center gap-1 border-r-2 px-0.5 py-2 text-center font-heading text-[10px] leading-tight font-bold tracking-[0.04em] uppercase transition-[background-color,color,border-color] duration-150",
+                        "focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-game-cyan",
+                        active
+                          ? "border-game-ball bg-game-blue/22 text-game-ball"
+                          : "border-transparent text-game-white/80 hover:bg-game-blue/16 hover:text-game-cyan"
+                      )}
+                    >
+                      <item.icon className="size-5 shrink-0" aria-hidden />
+                      <span>{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </nav>
+
+      {/* CTA in fondo: unica porta desktop verso l'area coach. Anche qui
+          l'etichetta è visibile, non un tooltip: era un quadrato giallo muto. */}
+      <div className="mt-auto border-t border-game-cyan/20 px-1.5 pt-3">
+        <Link
+          href={coach.href}
+          aria-current={coachActive ? "page" : undefined}
+          className="relative flex min-h-[3.5rem] flex-col items-center justify-center gap-1 border border-game-ball bg-game-ball px-0.5 py-2 text-center font-heading text-[10px] leading-tight font-bold tracking-[0.04em] text-game-ink uppercase transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-game-cyan"
+        >
+          <CoachIcon className="size-4 shrink-0" aria-hidden />
+          <span>{coach.label}</span>
+          <PadelBallMark className="absolute -right-1 -bottom-1 size-4" />
+        </Link>
+      </div>
+    </>
   );
 }

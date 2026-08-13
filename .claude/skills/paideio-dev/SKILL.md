@@ -79,8 +79,10 @@ PNG proprietarie in `public/design/icons` e le primitive in
 `src/app/icon.png`/`apple-icon.png`; non convertirli in SVG. La shell usa
 sidebar desktop, topbar e bottom navigation mobile. La bottom nav
 (`mobile-nav.tsx`, guscio server in `app-bottom-nav.tsx`) ha quattro schede più
-uno sheet "Altro": nessuna rotta deve essere raggiungibile solo dalla sidebar
-desktop, quindi ogni voce nuova va aggiunta in entrambi i posti.
+uno sheet "Altro": nessuna rotta deve essere raggiungibile da una sola
+superficie. Le voci di navigazione si dichiarano in **`src/lib/navigation.ts`**
+(rail, sheet, breadcrumb ed elenco delle sottosezioni editoriali leggono da
+lì), non nei singoli componenti.
 
 La metafora del gioco non deve oscurare il servizio: l’hero esplicita sempre
 ricerca del coach e prenotazione. Contrasto WCAG AA in entrambi i temi,
@@ -226,8 +228,12 @@ script di audit in `AGENTS.md`.
 Da `/cerca` ogni risultato offre una CTA `Prenota` verso
 `/coach/[id]#prenota`; il configuratore sul profilo è full-width e centrale,
 mai in una sidebar. Gli anonimi vedono “Accedi e prenota”, i player “Invia
-richiesta”. La sidebar desktop è una rail fissa da 80px con tooltip, senza
-espansione hover.
+richiesta”. La sidebar desktop è una rail fissa da 80px senza espansione hover,
+ma con **etichette sempre visibili** sotto le icone e raggruppate in "Gioca" e
+"Impara": le etichette in tooltip rendevano la struttura del sito
+inconoscibile a chi arrivava la prima volta. Non allargare la rail: `layout.tsx`
+e `site-footer.tsx` sono entrambi allineati a `md:pl-20`. Ogni pagina che non
+sia la home mostra il percorso di navigazione (`route-breadcrumb.tsx`).
 
 Le pagine Academy sono moduli didattici, non raccolte di liste: usare
 `src/components/academy/academy-ui.tsx` per obiettivo, principio, esercizio,
