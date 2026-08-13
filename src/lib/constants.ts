@@ -141,6 +141,59 @@ export const BOOKING_STATUS_CONFIG: Record<string, { label: string; className: s
   },
 };
 
+/**
+ * Recensibilità di una prenotazione. Come per `computeSlotOccupancy()`, la
+ * regola sta in **un solo posto**: la usano `getBookingsForPlayer()` (per
+ * decidere se mostrare il form), `createReview()` (per validare) e il filtro
+ * "Da recensire" di `/prenotazioni`. Se divergono, la pagina offre una
+ * recensione che l'action poi rifiuta, o - come è successo - la calcola e non
+ * la mostra a nessuno.
+ */
+export function canReviewBooking(
+  booking: { status: string; date: string },
+  today: string,
+  alreadyReviewed: boolean
+): boolean {
+  return booking.status === "confermata" && booking.date <= today && !alreadyReviewed;
+}
+
+export const BOOKING_PERIODS = ["prossime", "passate", "da-recensire", "tutte"] as const;
+export type BookingPeriod = (typeof BOOKING_PERIODS)[number];
+
+export const BOOKING_PERIOD_LABELS: Record<BookingPeriod, string> = {
+  prossime: "Prossime lezioni",
+  passate: "Lezioni passate",
+  "da-recensire": "Da recensire",
+  tutte: "Tutte le date",
+};
+
+/**
+ * Filtro "Periodo" di `/prenotazioni`.
+ *
+ * **Attenzione al rapporto con `canReviewBooking()`**: il default `prossime` è
+ * `date >= today`, la recensibilità è `date <= today`. I due insiemi si
+ * toccano solo nel giorno stesso della lezione, quindi dal giorno dopo il
+ * pulsante "Lascia una recensione" esisteva ma non era su nessuna schermata
+ * raggiungibile senza cambiare il filtro a mano. Da qui il periodo dedicato
+ * `da-recensire` e il richiamo in cima alla pagina.
+ */
+export function matchesBookingPeriod(
+  item: { date: string; canReview: boolean },
+  period: BookingPeriod,
+  today: string
+): boolean {
+  switch (period) {
+    case "prossime":
+      return item.date >= today;
+    case "passate":
+      return item.date < today;
+    case "da-recensire":
+      return item.canReview;
+    case "tutte":
+      return true;
+  }
+}
+
 const DAY_NAMES = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
 
 export function dayName(dayOfWeek: number) {

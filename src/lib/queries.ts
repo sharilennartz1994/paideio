@@ -14,6 +14,7 @@ import {
   coachOffersLessons,
   closureKey,
   isSlotClosed,
+  canReviewBooking,
   DEFAULT_GROUP_CAPACITY,
 } from "./constants";
 
@@ -397,7 +398,7 @@ export async function getBookingsForPlayer(playerId: string) {
       const location = b.locationId
         ? await db.query.locations.findFirst({ where: eq(locations.id, b.locationId) })
         : undefined;
-      const canReview = b.status === "confermata" && b.date <= today && !reviewedBookingIds.has(b.id);
+      const canReview = canReviewBooking(b, today, reviewedBookingIds.has(b.id));
       return {
         booking: b,
         coach,
@@ -409,6 +410,23 @@ export async function getBookingsForPlayer(playerId: string) {
     })
   );
   return withDetails.sort((a, b) => (a.booking.date + a.booking.startTime).localeCompare(b.booking.date + b.booking.startTime));
+}
+
+/**
+ * Quante lezioni svolte con questo coach il giocatore può ancora recensire.
+ * Serve al profilo pubblico: la sezione "Recensioni" invitava a lasciarne una
+ * senza offrire alcun modo di farlo.
+ */
+export async function countReviewableBookingsWithCoach(playerId: string, coachId: string): Promise<number> {
+  const rows = await db.query.bookings.findMany({
+    where: and(eq(bookings.playerId, playerId), eq(bookings.coachId, coachId)),
+  });
+  if (rows.length === 0) return 0;
+  const reviewedBookingIds = new Set(
+    (await db.query.reviews.findMany({ where: eq(reviews.playerId, playerId) })).map((r) => r.bookingId)
+  );
+  const today = toLocalDateString(new Date());
+  return rows.filter((b) => canReviewBooking(b, today, reviewedBookingIds.has(b.id))).length;
 }
 
 export async function getBookingsForCoach(coachId: string) {
