@@ -1,5 +1,5 @@
-import { FullScreenGameLoader } from "@/components/design";
+import { RouteSkeleton } from "@/components/design";
 
 export default function PrenotazioniLoading() {
-  return <FullScreenGameLoader label="Carichiamo le tue lezioni" />;
+  return <RouteSkeleton variant="list" rows={3} label="Carichiamo le tue lezioni" />;
 }

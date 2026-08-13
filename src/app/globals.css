@@ -369,6 +369,46 @@
     transform: translateX(-100%);
     animation: game-skeleton-sweep 1.35s cubic-bezier(.23,1,.32,1) infinite;
   }
+  /* Gemello di `.game-skeleton-shape` per le superfici arena FISSE (hero
+     `bg-game-ink`, header profilo coach): `--nebbia` è theme-aware e in
+     modalità giorno è un grigio scuro, quindi sull'inchiostro il blocco
+     sparisce. Vedi "Regola token" in AGENTS.md. */
+  .game-skeleton-arena {
+    background: color-mix(in srgb, var(--game-white) 15%, transparent);
+  }
+  .game-skeleton-arena::after {
+    background: linear-gradient(
+      100deg,
+      transparent 15%,
+      color-mix(in srgb, var(--game-cyan) 26%, transparent) 50%,
+      transparent 85%
+    );
+  }
+
+  /* Feedback fra il click e il primo byte: la barra vive sopra la topbar, che
+     è una superficie fissa, quindi usa `--game-cyan` e non `--vetro`. */
+  .route-progress {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 70;
+    height: 3px;
+    overflow: hidden;
+    pointer-events: none;
+    background: color-mix(in srgb, var(--game-cyan) 16%, transparent);
+    opacity: 0;
+    /* Solo dopo 140ms: le navigazioni già prefetchate non devono lampeggiare. */
+    animation: route-progress-in 120ms ease 140ms both;
+  }
+  .route-progress > span {
+    display: block;
+    width: 40%;
+    height: 100%;
+    background: var(--game-cyan);
+    animation: route-progress-slide 1.1s cubic-bezier(.65,0,.35,1) 140ms infinite;
+  }
+
   .card-clip {
     clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
   }
@@ -531,6 +571,15 @@
 
 @keyframes game-skeleton-sweep {
   100% { transform: translateX(100%); }
+}
+
+@keyframes route-progress-in {
+  to { opacity: 1; }
+}
+
+@keyframes route-progress-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
 }
 
 @keyframes game-route-enter {
@@ -712,6 +761,14 @@ html[data-motion-ready="true"] .paideio-principles:has([data-game-visible="true"
   }
   .game-route-stage {
     animation: none !important;
+  }
+  /* La barra resta (dice "sto caricando"), ma diventa un blocco fermo: niente
+     segmento che scorre in loop. Il ritardo di 140ms sull'opacità sopravvive,
+     quindi le navigazioni istantanee continuano a non lampeggiare. */
+  .route-progress > span {
+    width: 100%;
+    animation: none !important;
+    transform: none;
   }
   html[data-motion-ready="true"] [data-game-reveal],
   html[data-motion-ready="true"] [data-game-reveal][data-game-visible="true"] {
