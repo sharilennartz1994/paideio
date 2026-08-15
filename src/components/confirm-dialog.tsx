@@ -11,6 +11,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 /**
  * Conferma in stile Paideio, al posto di `window.confirm()`.
@@ -41,6 +49,7 @@ export function ConfirmDialog({
   cancelLabel = "Torna indietro",
   disabled = false,
   confirmDisabled = false,
+  mustDecide = false,
   onConfirm,
 }: {
   /** Bottone che apre il dialog. Riceve lui il ruolo di trigger. */
@@ -64,6 +73,11 @@ export function ConfirmDialog({
   disabled?: boolean;
   /** Il modulo dentro `body` non è ancora completo. */
   confirmDisabled?: boolean;
+  /**
+   * Forza la modale non chiudibile anche quando la regola automatica la
+   * renderebbe chiudibile. Da usare solo con una ragione scritta.
+   */
+  mustDecide?: boolean;
   onConfirm: () => Promise<boolean> | boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -78,13 +92,27 @@ export function ConfirmDialog({
     }
   }
 
+  // Chiudibile per default: annullare una conferma cliccando fuori equivale a
+  // premere "Torna indietro", non si perde niente. Resta non chiudibile in due
+  // casi in cui invece qualcosa si perde: c'è un modulo compilato a metà
+  // (`body`), oppure c'è una conseguenza irreversibile da leggere (`warning`).
+  const mustStay = mustDecide || body != null || warning != null;
+
+  const Root = mustStay ? AlertDialog : Dialog;
+  const Trigger = mustStay ? AlertDialogTrigger : DialogTrigger;
+  const Content = mustStay ? AlertDialogContent : DialogContent;
+  const Title = mustStay ? AlertDialogTitle : DialogTitle;
+  const Description = mustStay ? AlertDialogDescription : DialogDescription;
+  const Close = mustStay ? AlertDialogClose : DialogClose;
+
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger disabled={disabled} render={trigger} />
-      <AlertDialogContent>
+    <Root open={open} onOpenChange={setOpen}>
+      <Trigger disabled={disabled} render={trigger} />
+      <Content>
         <p className="ui-kicker text-accent-cyan-ink">{kicker}</p>
-        <AlertDialogTitle className="mt-2">{title}</AlertDialogTitle>
-        <AlertDialogDescription>{description}</AlertDialogDescription>
+        {/* `pr-14` solo quando c'è la X in alto a destra. */}
+        <Title className={mustStay ? "mt-2" : "mt-2 pr-14"}>{title}</Title>
+        <Description>{description}</Description>
         {body && <div className="mt-4 grid gap-4">{body}</div>}
         {reassurance && (
           <p className="mt-4 flex items-start gap-2 border border-accent-cyan-ink/40 bg-carta-bassa p-3 text-sm leading-relaxed text-calce">
@@ -99,9 +127,9 @@ export function ConfirmDialog({
           </p>
         )}
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <AlertDialogClose render={<Button variant="outline" />} disabled={working}>
+          <Close render={<Button variant="outline" />} disabled={working}>
             {cancelLabel}
-          </AlertDialogClose>
+          </Close>
           {/* `variant="default"` = `bg-primary text-primary-foreground`, cioè
               `--vetro` su `--carta`: 5,45:1 di giorno e 9,82:1 di notte,
               perché i due token cambiano tema insieme. */}
@@ -113,7 +141,7 @@ export function ConfirmDialog({
             {confirmLabel}
           </Button>
         </div>
-      </AlertDialogContent>
-    </AlertDialog>
+      </Content>
+    </Root>
   );
 }

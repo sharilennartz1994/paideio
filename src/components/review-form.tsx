@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useOutcome } from "@/components/outcome-dialog";
 import { createReview } from "@/lib/actions/reviews";
 import { celebrate } from "@/lib/confetti";
 import { StarRatingInput } from "@/components/star-rating";
@@ -14,6 +15,7 @@ export function ReviewForm({ bookingId, coachName }: { bookingId: string; coachN
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [isPending, startTransition] = useTransition();
+  const showOutcome = useOutcome();
   const [done, setDone] = useState(false);
 
   if (done) {
@@ -37,7 +39,12 @@ export function ReviewForm({ bookingId, coachName }: { bookingId: string; coachN
       const result = await createReview({ bookingId, rating, comment });
       if (result.ok) {
         celebrate();
-        toast.success(`Recensione inviata${coachName ? ` a ${coachName}` : ""}!`);
+        showOutcome({
+          kicker: "Grazie",
+          title: "Recensione inviata",
+          description: `La tua valutazione${coachName ? ` per ${coachName}` : ""} è pubblicata sul profilo del coach.`,
+          next: "Aiuta i prossimi giocatori a scegliere. Non è modificabile: una recensione per lezione.",
+        });
         setDone(true);
       } else {
         toast.error(result.error);

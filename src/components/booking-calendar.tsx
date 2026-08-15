@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { SignInButton } from "@clerk/nextjs";
 import { CalendarDays, Check, Clock3, MapPin, MessageSquareText } from "@/components/icons/paideio-icons";
 import { toast } from "sonner";
+import { useOutcome } from "@/components/outcome-dialog";
 import { createBooking } from "@/lib/actions/bookings";
 import { celebrate } from "@/lib/confetti";
 import type { CalendarWindow } from "@/lib/queries";
@@ -102,6 +103,7 @@ export function BookingCalendar({
   const [notes, setNotes] = useState("");
   const [tutteLeDate, setTutteLeDate] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const showOutcome = useOutcome();
 
   // Le date vanno a capo invece di scorrere, quindi mostrarle tutte subito
   // allungava il passo 1 a 5 righe su mobile. Si parte dalla prima settimana,
@@ -168,10 +170,21 @@ export function BookingCalendar({
       });
       if (result.ok) {
         celebrate();
-        toast.success(SUCCESS_MESSAGES[Math.floor(Math.random() * SUCCESS_MESSAGES.length)]);
+        // Modale e non toast: la richiesta non è confermata, e il giocatore
+        // deve capire che ora aspetta il coach. Un avviso di tre secondi in
+        // cima allo schermo non basta a dirlo.
+        showOutcome({
+          kicker: SUCCESS_MESSAGES[Math.floor(Math.random() * SUCCESS_MESSAGES.length)],
+          title: "Richiesta inviata al coach",
+          description: `Hai chiesto ${formatDate(selected.window.date)} dalle ${selected.startTime} alle ${selected.endTime}, ${selected.window.locationName}.`,
+          next: "La lezione non è ancora confermata: il coach deve accettarla. Ti arriva una notifica appena risponde, e la trovi in ogni momento nelle tue lezioni.",
+          closeLabel: "Ho capito",
+        });
         setSelected(null);
         setNotes("");
       } else {
+        // Gli errori restano toast: sono transitori e si risolvono qui, senza
+        // dover chiudere una modale per riprovare.
         toast.error(result.error);
       }
     });

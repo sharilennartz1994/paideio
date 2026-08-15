@@ -862,6 +862,44 @@ non perdere:
    dentro un'action. Test: `npm run test:email` (nessun database, nessuna posta
    vera).
 
+### Esiti in modale, e quando invece basta un toast
+
+Un toast dura tre secondi e se ne va: va bene per dire "campo salvato", non per
+dire a un giocatore che la richiesta e' partita ma la lezione **non e' ancora
+confermata**. Le azioni che cambiano lo stato di una lezione mostrano l'esito
+in una modale (`OutcomeProvider` + `useOutcome()` in
+`components/outcome-dialog.tsx`), che ferma l'attenzione e ha spazio per il
+campo `next`: cosa succede adesso, chi deve fare cosa.
+
+**La linea.** Modale per: richiesta inviata, lezione confermata, richiesta
+rifiutata, proposta di orario inviata, proposta accettata o rifiutata,
+annullamento, recensione inviata. Toast per tutto il resto: preferito, campo
+aggiunto o rimosso, fascia pubblicata, chiusura di una data, profilo salvato,
+avatar caricato, notifiche segnate come lette. Una modale a ogni click sarebbe
+piu' fastidiosa del problema che risolve: se non c'e' niente da spiegare oltre
+"fatto", resta il toast.
+
+**Gli errori restano toast anche sulle azioni importanti.** Sono transitori e
+si risolvono sul posto; per giunta molti nascono dentro un `ConfirmDialog` che
+resta aperto, e impilare una modale sopra un'altra e' peggio del problema.
+
+### Chiudibile o no: `Dialog` contro `AlertDialog`
+
+Base UI distingue le due primitive per semantica, non per stile: `AlertDialog`
+pretende una risposta e ignora click fuori ed Esc, `Dialog` si chiude in tutti
+i modi che una persona si aspetta. Il progetto usava `AlertDialog` ovunque,
+anche dove non c'era niente da decidere.
+
+Regola: **se chiudendo non si perde nulla, si deve poter chiudere.** Gli esiti
+informativi sono sempre `Dialog`, con X da 44px, Esc e click fuori.
+
+`ConfirmDialog` sceglie da solo, senza che i punti di chiamata debbano pensarci:
+resta `AlertDialog` se c'e' un `body` (un modulo compilato a meta' andrebbe
+perso) o un `warning` (c'e' una conseguenza irreversibile da leggere),
+altrimenti diventa `Dialog`. La prop `mustDecide` forza il primo caso, ma va
+usata solo con una ragione scritta. In pratica: rimuovere un campo e annullare
+una lezione trattengono, chiudere una data o rimuovere una fascia no.
+
 ### Conferme: `ConfirmDialog`, mai `window.confirm()`
 
 `src/components/confirm-dialog.tsx` è la conferma canonica del prodotto,

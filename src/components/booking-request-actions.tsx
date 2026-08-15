@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useOutcome } from "@/components/outcome-dialog";
 import { updateBookingStatus } from "@/lib/actions/bookings";
 import {
   proposeBookingTime,
@@ -73,6 +74,7 @@ export function BookingRequestActions({
   trainingTypes: string[];
 }) {
   const [isPending, startTransition] = useTransition();
+  const showOutcome = useOutcome();
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState("");
   const [duration, setDuration] = useState<number>(
@@ -151,7 +153,11 @@ export function BookingRequestActions({
       const result = await updateBookingStatus(bookingId, "confermata");
       if (result.ok) {
         celebrate();
-        toast.success("Lezione confermata! Il giocatore riceverà l'ok.");
+        showOutcome({
+          title: "Lezione confermata",
+          description: `${playerName} riceve subito la notifica: l'appuntamento è preso.`,
+          next: "La trovi fra le lezioni confermate. Se poi non puoi esserci, chiudi la data dalla scheda Orari: il giocatore viene avvisato.",
+        });
       } else {
         toast.error(result.error);
       }
@@ -161,7 +167,13 @@ export function BookingRequestActions({
   async function handleReject(): Promise<boolean> {
     const result = await rejectBookingRequest({ bookingId, reason });
     if (result.ok) {
-      toast("Richiesta rifiutata: il giocatore legge la tua motivazione.");
+      showOutcome({
+        tone: "info",
+        kicker: "Richiesta rifiutata",
+        title: "Il giocatore è stato avvisato",
+        description: `${playerName} riceve la notifica con la tua motivazione.`,
+        next: "Se cambia qualcosa può inviarti una nuova richiesta su un altro orario.",
+      });
       setReason("");
       return true;
     }
@@ -179,7 +191,11 @@ export function BookingRequestActions({
       message,
     });
     if (result.ok) {
-      toast.success(`Proposta inviata a ${playerName}. Ora tocca a lui.`);
+      showOutcome({
+        title: "Proposta inviata",
+        description: `${playerName} deve accettare il nuovo orario perché la lezione sia fissata.`,
+        next: "Finché non risponde quell'orario resta libero per gli altri: se qualcuno lo prende prima, la proposta decade e te lo diciamo.",
+      });
       setMessage("");
       setProposedStart(null);
       return true;

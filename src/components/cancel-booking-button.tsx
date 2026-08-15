@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useOutcome } from "@/components/outcome-dialog";
 import { updateBookingStatus } from "@/lib/actions/bookings";
 import { AlertTriangle } from "@/components/icons/paideio-icons";
 import { FullScreenGameLoader } from "@/components/design";
@@ -28,13 +29,20 @@ export function CancelBookingButton({
 }) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const showOutcome = useOutcome();
 
   function handleCancel() {
     startTransition(async () => {
       const result = await updateBookingStatus(bookingId, "annullata");
       if (result.ok) {
         setOpen(false);
-        toast("Prenotazione annullata.");
+        showOutcome({
+          tone: "info",
+          kicker: "Lezione annullata",
+          title: "Fatto, il coach è stato avvisato",
+          description: `La lezione del ${date} alle ${startTime}${coachName ? ` con ${coachName}` : ""} è annullata.`,
+          next: "L'orario torna disponibile per gli altri giocatori. Se cambi idea dovrai inviare una nuova richiesta.",
+        });
       } else {
         toast.error(result.error);
       }

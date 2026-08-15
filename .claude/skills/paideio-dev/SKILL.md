@@ -222,6 +222,15 @@ adottata **solo con email verificata da Clerk**, conservando ruolo e id: prima
 il conflitto veniva ingoiato e l'utente risultava autenticato ma inesistente
 per l'app. Test: `npm run test:identita`.
 
+## Esiti e modali
+
+Le azioni che cambiano lo stato di una lezione mostrano l'esito in una modale
+(`useOutcome()`), non in un toast: il toast sparisce e non ha spazio per dire
+cosa succede dopo. Tutto il resto resta toast. Gli errori restano sempre toast.
+Chiudibilita': `Dialog` se chiudendo non si perde nulla, `AlertDialog` solo con
+un modulo a meta' o una conseguenza irreversibile da leggere. `ConfirmDialog`
+sceglie da solo in base a `body`/`warning`. Dettagli in `AGENTS.md`.
+
 ## Conferme
 
 Usare `ConfirmDialog` (`components/confirm-dialog.tsx`), mai `window.confirm()`

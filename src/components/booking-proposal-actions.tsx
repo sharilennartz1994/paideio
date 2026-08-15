@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { useOutcome } from "@/components/outcome-dialog";
 import {
   acceptBookingProposal,
   declineBookingProposal,
@@ -45,6 +46,7 @@ export function BookingProposalActions({
   coachMessage: string;
 }) {
   const [isPending, setIsPending] = useState(false);
+  const showOutcome = useOutcome();
 
   async function handleAccept(): Promise<boolean> {
     setIsPending(true);
@@ -55,9 +57,11 @@ export function BookingProposalActions({
         return false;
       }
       celebrate();
-      toast.success(
-        `Lezione confermata: ${formatDate(result.data.date)} alle ${result.data.startTime}.`
-      );
+      showOutcome({
+        title: "Lezione confermata",
+        description: `Nuovo appuntamento: ${formatDate(result.data.date)} alle ${result.data.startTime}, con ${coachName}.`,
+        next: "Da adesso quell'orario è occupato nel calendario del coach. Lo trovi fra le tue lezioni confermate.",
+      });
       return true;
     } finally {
       setIsPending(false);
@@ -72,7 +76,13 @@ export function BookingProposalActions({
         toast.error(result.error);
         return false;
       }
-      toast("Proposta rifiutata. Puoi cercare un altro orario quando vuoi.");
+      showOutcome({
+        tone: "info",
+        kicker: "Proposta rifiutata",
+        title: "Nessun problema",
+        description: `${coachName} riceve la notifica. La richiesta si chiude qui.`,
+        next: "Quando vuoi puoi inviarne una nuova su un altro orario, dal profilo del coach.",
+      });
       return true;
     } finally {
       setIsPending(false);
