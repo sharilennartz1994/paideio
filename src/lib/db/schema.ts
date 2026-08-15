@@ -136,6 +136,25 @@ export const bookings = pgTable(
     proposedStartTime: text("proposed_start_time"),
     proposedEndTime: text("proposed_end_time"),
     createdAt: text("created_at").notNull(),
+    // Colonne **generate**, derivate da `start_time`/`end_time`: esistono solo
+    // per il vincolo di esclusione GiST `bookings_no_overlap`, che ha bisogno
+    // di un `int4range` e di una chiave lezione confrontabili.
+    //
+    // Sono dichiarate qui, e non solo nello script SQL che crea il vincolo,
+    // perché altrimenti `drizzle-kit push` le vede come colonne estranee e a
+    // ogni push propone di cancellarle: il vincolo dipende da tutte e tre,
+    // quindi la cancellazione o fallisce a metà o lascia la produzione senza
+    // protezione contro le sovrapposizioni. Dichiararle rende il push muto.
+    //
+    // Il vincolo vero resta in `scripts/db-apply-overlap-constraint.mts`:
+    // `drizzle-kit` non sa generare gli EXCLUDE.
+    startMinutes: integer("start_minutes").generatedAlwaysAs(
+      sql`substring(start_time from 1 for 2)::int * 60 + substring(start_time from 4 for 2)::int`
+    ),
+    endMinutes: integer("end_minutes").generatedAlwaysAs(
+      sql`substring(end_time from 1 for 2)::int * 60 + substring(end_time from 4 for 2)::int`
+    ),
+    lessonKey: text("lesson_key").generatedAlwaysAs(sql`start_time || '-' || end_time`),
   },
   (table) => [
     // Una lezione singola occupa il campo in esclusiva: al massimo una attiva

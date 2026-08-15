@@ -1209,6 +1209,24 @@ Su schema vuoto non c'è niente da disambiguare. Lo script rifiuta qualunque
 comparirà e va risposto a mano. Subito dopo serve `npm run db:constraints`, che
 `drizzle-kit` non sa generare.
 
+### Le colonne generate vanno dichiarate nello schema, non solo create in SQL
+
+`start_minutes`, `end_minutes` e `lesson_key` esistono solo per il vincolo GiST
+e le crea `db-apply-overlap-constraint.mts`. Finché stavano **soltanto** lì,
+`drizzle-kit` le vedeva come colonne estranee e a ogni `db:push` proponeva di
+cancellarle sotto l'etichetta "data loss". Il vincolo dipende da tutte e tre:
+rispondere di sì o fa fallire il push a metà (Postgres rifiuta il `DROP` senza
+`CASCADE`) o lascia la produzione senza protezione contro le sovrapposizioni.
+
+Ora sono dichiarate in `schema.ts` con `generatedAlwaysAs`, quindi il push le
+riconosce e tace. **Se in futuro aggiungi una colonna generata via SQL,
+dichiarala anche qui**, altrimenti riapri lo stesso trabocchetto: un prompt
+distruttivo che prima o poi qualcuno accetta di fretta.
+
+Verificato ricostruendo su un Postgres usa-e-getta lo stato esatto di Neon
+(schema pre-proposte + vincolo) e rilanciando il push: nessun prompt, nessun
+avviso, le tre colonne generate intatte e il vincolo ancora attivo.
+
 Il ponte è **`.env.development.local`** (non versionato, `.gitignore` ha
 `.env*`), che contiene solo `DATABASE_URL`. Next lo carica con priorità più
 alta di `.env.local` ma continua a leggere anche quello, quindi **le chiavi
