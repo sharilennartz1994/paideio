@@ -9,6 +9,7 @@ import { AppBottomNav } from "@/components/app-bottom-nav";
 import { RouteBreadcrumb } from "@/components/route-breadcrumb";
 import { SiteFooter } from "@/components/site-footer";
 import { Toaster } from "@/components/ui/sonner";
+import { OutcomeProvider } from "@/components/outcome-dialog";
 import { ArenaMotionDirector, GameRouteStage, RouteProgressBar } from "@/components/design";
 import "./globals.css";
 
@@ -54,6 +55,7 @@ export default function RootLayout({
           >
             Vai al contenuto principale
           </a>
+          <OutcomeProvider>
           <AppTopbar />
           <AppSidebar />
           <ArenaMotionDirector />
@@ -69,6 +71,7 @@ export default function RootLayout({
           <SiteFooter />
           <AppBottomNav />
           <Toaster position="top-center" />
+          </OutcomeProvider>
         </ClerkProvider>
       </body>
     </html>
