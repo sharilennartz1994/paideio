@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import {
+  CalendarClock,
   CalendarDays,
   CheckCircle2,
   ChevronLeft,
@@ -11,11 +12,19 @@ import {
   MapPin,
   Rows3,
   Search,
+  Star,
   Users,
   UserRound,
   XCircle,
 } from "@/components/icons/paideio-icons";
-import { BOOKING_STATUS_CONFIG, toLocalDateString } from "@/lib/constants";
+import {
+  BOOKING_PERIODS,
+  BOOKING_PERIOD_LABELS,
+  BOOKING_STATUS_CONFIG,
+  matchesBookingPeriod,
+  toLocalDateString,
+  type BookingPeriod,
+} from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,13 +37,13 @@ import {
 } from "@/components/ui/select";
 import { CoachAvatar } from "@/components/coach-avatar";
 import { CancelBookingButton } from "@/components/cancel-booking-button";
+import { BookingProposalActions } from "@/components/booking-proposal-actions";
 import { ReviewForm } from "@/components/review-form";
 import { GameCta, GameEmptyState } from "@/components/design";
 
-type BookingStatus = "richiesta" | "confermata" | "rifiutata" | "annullata";
+type BookingStatus = "richiesta" | "confermata" | "rifiutata" | "annullata" | "controproposta";
 type BookingType = "singolo" | "gruppo";
 type ViewMode = "lista" | "calendario" | "agenda";
-type PeriodFilter = "prossime" | "passate" | "tutte";
 
 export type PlayerBookingSummary = {
   id: string;
@@ -50,11 +59,18 @@ export type PlayerBookingSummary = {
   notes: string;
   canReview: boolean;
   isReviewed: boolean;
+  /** Motivazione del coach quando rifiuta o propone un altro orario. */
+  coachMessage: string;
+  /** Orario alternativo proposto dal coach, solo mentre è in trattativa. */
+  proposedDate: string | null;
+  proposedStartTime: string | null;
+  proposedEndTime: string | null;
 };
 
 const STATUS_ICON: Record<BookingStatus, typeof CheckCircle2> = {
   richiesta: Clock3,
   confermata: CheckCircle2,
+  controproposta: CalendarClock,
   rifiutata: XCircle,
   annullata: XCircle,
 };
@@ -102,6 +118,17 @@ function LessonStatus({ status }: { status: BookingStatus }) {
 
 function LessonCard({ item }: { item: PlayerBookingSummary }) {
   const active = item.status === "richiesta" || item.status === "confermata";
+  const proposal =
+    item.status === "controproposta" &&
+    item.proposedDate &&
+    item.proposedStartTime &&
+    item.proposedEndTime
+      ? {
+          date: item.proposedDate,
+          startTime: item.proposedStartTime,
+          endTime: item.proposedEndTime,
+        }
+      : null;
   return (
     <article
       className={cn(
@@ -144,6 +171,29 @@ function LessonCard({ item }: { item: PlayerBookingSummary }) {
       </div>
 
       {item.notes && <p className="mt-4 text-sm leading-relaxed text-nebbia">“{item.notes}”</p>}
+
+      {proposal ? (
+        <BookingProposalActions
+          bookingId={item.id}
+          coachName={item.coachName}
+          originalDate={item.date}
+          originalStartTime={item.startTime}
+          proposedDate={proposal.date}
+          proposedStartTime={proposal.startTime}
+          proposedEndTime={proposal.endTime}
+          coachMessage={item.coachMessage}
+        />
+      ) : (
+        item.status === "rifiutata" &&
+        item.coachMessage && (
+          <p className="mt-4 border border-accent-orange-ink/45 bg-carta-bassa p-3 text-sm leading-relaxed text-calce">
+            <span className="font-heading text-[10px] text-nebbia uppercase">
+              Perché il coach ha rifiutato
+            </span>
+            <br />“{item.coachMessage}”
+          </p>
+        )
+      )}
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -288,14 +338,42 @@ function AgendaView({ items }: { items: PlayerBookingSummary[] }) {
                   </div>
                   <LessonStatus status={item.status} />
                 </div>
-                {(item.status === "richiesta" || item.status === "confermata") && (
-                  <div className="mt-4 flex justify-end">
-                    <CancelBookingButton
+                {/* La proposta del coach viene prima: è l'unica che chiede
+                    una decisione, e va vista senza dover scorrere oltre. */}
+                {item.status === "controproposta" &&
+                  item.proposedDate &&
+                  item.proposedStartTime &&
+                  item.proposedEndTime && (
+                    <BookingProposalActions
                       bookingId={item.id}
                       coachName={item.coachName}
-                      date={item.date}
-                      startTime={item.startTime}
+                      originalDate={item.date}
+                      originalStartTime={item.startTime}
+                      proposedDate={item.proposedDate}
+                      proposedStartTime={item.proposedStartTime}
+                      proposedEndTime={item.proposedEndTime}
+                      coachMessage={item.coachMessage}
                     />
+                  )}
+                {/* Anche l'agenda è una vista operativa: senza il form qui, chi
+                    la tiene come vista predefinita non vedrebbe mai l'invito a
+                    recensire. */}
+                {(item.canReview || item.isReviewed || item.status === "richiesta" || item.status === "confermata") && (
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      {item.canReview && <ReviewForm bookingId={item.id} coachName={item.coachName} />}
+                      {item.isReviewed && (
+                        <p className="font-heading text-[10px] text-nebbia uppercase">Recensione inviata</p>
+                      )}
+                    </div>
+                    {(item.status === "richiesta" || item.status === "confermata") && (
+                      <CancelBookingButton
+                        bookingId={item.id}
+                        coachName={item.coachName}
+                        date={item.date}
+                        startTime={item.startTime}
+                      />
+                    )}
                   </div>
                 )}
               </article>
@@ -310,22 +388,23 @@ function AgendaView({ items }: { items: PlayerBookingSummary[] }) {
 export function PlayerBookingsOverview({ items }: { items: PlayerBookingSummary[] }) {
   const today = toLocalDateString(new Date());
   const firstUpcoming = items.find((item) => item.date >= today);
-  const [period, setPeriod] = useState<PeriodFilter>("prossime");
+  const [period, setPeriod] = useState<BookingPeriod>("prossime");
   const [status, setStatus] = useState<BookingStatus | "tutti">("tutti");
   const [type, setType] = useState<BookingType | "tutti">("tutti");
   const [view, setView] = useState<ViewMode>("lista");
   const [visibleMonth, setVisibleMonth] = useState(monthKey(firstUpcoming?.date ?? today));
 
   const filtered = useMemo(() => items
-    .filter((item) => {
-      const periodMatch = period === "tutte" || (period === "prossime" ? item.date >= today : item.date < today);
-      return periodMatch && (status === "tutti" || item.status === status) && (type === "tutti" || item.type === type);
-    })
+    .filter((item) => matchesBookingPeriod(item, period, today)
+      && (status === "tutti" || item.status === status)
+      && (type === "tutti" || item.type === type))
     .sort((a, b) => {
       const order = (a.date + a.startTime).localeCompare(b.date + b.startTime);
-      return period === "passate" ? -order : order;
+      // Passate e da recensire partono dalla più recente.
+      return period === "prossime" || period === "tutte" ? order : -order;
     }), [items, period, status, type, today]);
   const filtersActive = period !== "prossime" || status !== "tutti" || type !== "tutti";
+  const pendingReviews = items.filter((item) => item.canReview).length;
 
   function resetFilters() {
     setPeriod("prossime");
@@ -336,11 +415,17 @@ export function PlayerBookingsOverview({ items }: { items: PlayerBookingSummary[
   const stats = {
     upcoming: items.filter((item) => item.date >= today && !["annullata", "rifiutata"].includes(item.status)).length,
     pending: items.filter((item) => item.status === "richiesta").length,
+    // Una proposta del coach aspetta una risposta *tua*: sta in un contatore
+    // suo, altrimenti si confonde con le richieste in mano al coach.
+    toDecide: items.filter((item) => item.status === "controproposta").length,
     confirmed: items.filter((item) => item.status === "confermata" && item.date >= today).length,
   };
   const statCards: Array<{ label: string; value: number; icon: typeof CalendarDays }> = [
     { label: "Prossime", value: stats.upcoming, icon: CalendarDays },
     { label: "In attesa", value: stats.pending, icon: Clock3 },
+    ...(stats.toDecide > 0
+      ? [{ label: "Da decidere", value: stats.toDecide, icon: CalendarClock }]
+      : []),
     { label: "Confermate", value: stats.confirmed, icon: CheckCircle2 },
   ];
 
@@ -361,7 +446,10 @@ export function PlayerBookingsOverview({ items }: { items: PlayerBookingSummary[
 
   return (
     <div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      {/* `auto-fit` invece di tre colonne fisse: la scheda "Da decidere"
+          compare solo quando c'è una proposta aperta, e con quattro card una
+          griglia a 3 lascerebbe l'ultima sola su una riga. */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
         {statCards.map(({ label, value, icon: Icon }) => (
           <div key={label} className="border border-nebbia/20 bg-carta-alta p-4">
             <Icon className="size-5 text-accent-cyan-ink" aria-hidden />
@@ -371,17 +459,49 @@ export function PlayerBookingsOverview({ items }: { items: PlayerBookingSummary[
         ))}
       </div>
 
+      {/* Senza questo richiamo il pulsante "Lascia una recensione" esiste solo
+          dentro il filtro "Da recensire", che nessuno ha motivo di aprire: il
+          default "Prossime lezioni" mostra `date >= oggi`, la recensione vive
+          su `date <= oggi`. */}
+      {pendingReviews > 0 && period !== "da-recensire" && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-l-4 border-accent-ball-ink bg-carta-alta p-4">
+          <div className="flex min-w-0 items-start gap-3">
+            <Star className="mt-0.5 size-5 shrink-0 text-accent-ball-ink" aria-hidden />
+            <div className="min-w-0">
+              <p className="font-heading text-sm font-bold text-calce">
+                {pendingReviews === 1
+                  ? "Hai una lezione da recensire"
+                  : `Hai ${pendingReviews} lezioni da recensire`}
+              </p>
+              <p className="mt-1 text-sm text-nebbia">
+                Racconta com&apos;è andata: la tua valutazione aiuta gli altri giocatori a scegliere il coach.
+              </p>
+            </div>
+          </div>
+          <GameCta tone="ball" onClick={() => setPeriod("da-recensire")}>
+            Lascia una recensione
+          </GameCta>
+        </div>
+      )}
+
       <div className="mt-6 border border-nebbia/22 bg-carta-bassa p-4">
         <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
           <div className="grid gap-3 sm:grid-cols-3">
             <label>
               <span className="mb-1.5 block font-heading text-[10px] font-bold text-nebbia uppercase">Periodo</span>
-              <Select value={period} onValueChange={(value) => setPeriod(value as PeriodFilter)}>
-                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <Select value={period} onValueChange={(value) => setPeriod(value as BookingPeriod)}>
+                {/* Senza questa funzione il trigger mostra il valore grezzo, e
+                    "da-recensire" con il trattino sembra un difetto. */}
+                <SelectTrigger className="w-full">
+                  <SelectValue>{(value) => BOOKING_PERIOD_LABELS[value as BookingPeriod]}</SelectValue>
+                </SelectTrigger>
                 <SelectContent align="start">
-                  <SelectItem value="prossime">Prossime lezioni</SelectItem>
-                  <SelectItem value="passate">Lezioni passate</SelectItem>
-                  <SelectItem value="tutte">Tutte le date</SelectItem>
+                  {BOOKING_PERIODS.map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {BOOKING_PERIOD_LABELS[value]}
+                      {value === "da-recensire" && pendingReviews > 0 ? ` (${pendingReviews})` : ""}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </label>
@@ -392,6 +512,7 @@ export function PlayerBookingsOverview({ items }: { items: PlayerBookingSummary[
                 <SelectContent align="start">
                   <SelectItem value="tutti">Tutti gli stati</SelectItem>
                   <SelectItem value="richiesta">In attesa</SelectItem>
+                  <SelectItem value="controproposta">Nuovo orario proposto</SelectItem>
                   <SelectItem value="confermata">Confermata</SelectItem>
                   <SelectItem value="rifiutata">Rifiutata</SelectItem>
                   <SelectItem value="annullata">Annullata</SelectItem>

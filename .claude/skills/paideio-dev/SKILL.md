@@ -79,8 +79,10 @@ PNG proprietarie in `public/design/icons` e le primitive in
 `src/app/icon.png`/`apple-icon.png`; non convertirli in SVG. La shell usa
 sidebar desktop, topbar e bottom navigation mobile. La bottom nav
 (`mobile-nav.tsx`, guscio server in `app-bottom-nav.tsx`) ha quattro schede più
-uno sheet "Altro": nessuna rotta deve essere raggiungibile solo dalla sidebar
-desktop, quindi ogni voce nuova va aggiunta in entrambi i posti.
+uno sheet "Altro": nessuna rotta deve essere raggiungibile da una sola
+superficie. Le voci di navigazione si dichiarano in **`src/lib/navigation.ts`**
+(rail, sheet, breadcrumb ed elenco delle sottosezioni editoriali leggono da
+lì), non nei singoli componenti.
 
 La metafora del gioco non deve oscurare il servizio: l’hero esplicita sempre
 ricerca del coach e prenotazione. Contrasto WCAG AA in entrambi i temi,
@@ -104,6 +106,27 @@ scrittori sullo stesso slot - non sostituirlo con un `count(*)` nudo.
 Test: `npm run test:capienza`, da lanciare **solo** contro un Postgres locale
 usa-e-getta (lo script rifiuta URL non locali). Istruzioni complete
 nell'intestazione di `scripts/e2e-capienza.mts`.
+
+## Recensioni: la regola e la sua raggiungibilità
+
+`canReviewBooking()` in `constants.ts` è l'unica definizione di "recensibile"
+(confermata, data di oggi o passata, non ancora recensita); la usano
+`getBookingsForPlayer()`, `countReviewableBookingsWithCoach()` e
+`createReview()`. Il "una sola per prenotazione" è l'`unique` su
+`reviews.booking_id`.
+
+La regola era corretta ma **il pulsante non era raggiungibile**: il filtro
+Periodo di `/prenotazioni` mostra per default `date >= oggi`, la recensione
+vive su `date <= oggi`, quindi dal giorno dopo la lezione "Lascia una
+recensione" non compariva su nessuna schermata. Ora esistono il periodo
+`da-recensire`, un richiamo in cima alla pagina quando ce n'è almeno una, il
+form anche nella vista Agenda e un richiamo sul profilo del coach per chi ha
+davvero una lezione svolta con lui. `matchesBookingPeriod()` sta accanto a
+`canReviewBooking()` proprio perché il rapporto tra le due va riletto prima di
+toccare il default.
+
+Test: `npm run test:recensioni` (stesso Postgres usa-e-getta di
+`test:capienza`), che include la guardia di regressione sulla raggiungibilità.
 
 ## Micro-interazioni e tono playful
 
@@ -162,6 +185,24 @@ ricorrenza. Regola condivisa in `closureKey()`/`isSlotClosed()`
 l'advisory lock. Chiudere annulla e notifica le prenotazioni attive sulla data.
 Test: `npm run test:chiusure`. Dettagli in `AGENTS.md`.
 
+## Proposte di orario
+
+Il coach non può solo accettare o rifiutare: **rifiuta con motivazione** o
+**propone un altro orario con motivazione**, e il giocatore accetta o rifiuta.
+La proposta vive sulla riga della prenotazione (`coach_message`,
+`proposed_*`) più lo stato `controproposta`, non in una tabella a parte: così
+la macchina a stati resta una sola e l'accettazione è un `UPDATE` della stessa
+riga. `controproposta` è fuori da `('richiesta','confermata')`, quindi la
+fascia originale si libera subito e quella proposta **non** viene riservata.
+`acceptBookingProposal()` rivalida tutto sotto `pg_advisory_xact_lock`
+(chiave giorno+campo, la stessa di `createBooking`) e, se l'orario è stato
+preso nel frattempo, ritorna una frase invece di un errore SQL, lasciando la
+proposta in piedi. Regola condivisa fra form del coach e server:
+`proposableStarts()` in `constants.ts`. Cuore in
+`src/lib/booking-proposals.ts` (server-only, così il test può chiamarlo),
+Server Action in `src/lib/actions/booking-proposals.ts`.
+Test: `npm run test:proposte`. Dettagli in `AGENTS.md`.
+
 ## Overflow orizzontale
 
 Un figlio di grid o flex ha `min-width: auto` e non scende sotto la larghezza
@@ -180,6 +221,15 @@ decorative `-right-4` sono falsi positivi legittimi. Dettagli in `AGENTS.md`.
 adottata **solo con email verificata da Clerk**, conservando ruolo e id: prima
 il conflitto veniva ingoiato e l'utente risultava autenticato ma inesistente
 per l'app. Test: `npm run test:identita`.
+
+## Esiti e modali
+
+Le azioni che cambiano lo stato di una lezione mostrano l'esito in una modale
+(`useOutcome()`), non in un toast: il toast sparisce e non ha spazio per dire
+cosa succede dopo. Tutto il resto resta toast. Gli errori restano sempre toast.
+Chiudibilita': `Dialog` se chiudendo non si perde nulla, `AlertDialog` solo con
+un modulo a meta' o una conseguenza irreversibile da leggere. `ConfirmDialog`
+sceglie da solo in base a `body`/`warning`. Dettagli in `AGENTS.md`.
 
 ## Conferme
 
@@ -205,8 +255,12 @@ script di audit in `AGENTS.md`.
 Da `/cerca` ogni risultato offre una CTA `Prenota` verso
 `/coach/[id]#prenota`; il configuratore sul profilo è full-width e centrale,
 mai in una sidebar. Gli anonimi vedono “Accedi e prenota”, i player “Invia
-richiesta”. La sidebar desktop è una rail fissa da 80px con tooltip, senza
-espansione hover.
+richiesta”. La sidebar desktop è una rail fissa da 80px senza espansione hover,
+ma con **etichette sempre visibili** sotto le icone e raggruppate in "Gioca" e
+"Impara": le etichette in tooltip rendevano la struttura del sito
+inconoscibile a chi arrivava la prima volta. Non allargare la rail: `layout.tsx`
+e `site-footer.tsx` sono entrambi allineati a `md:pl-20`. Ogni pagina che non
+sia la home mostra il percorso di navigazione (`route-breadcrumb.tsx`).
 
 Le pagine Academy sono moduli didattici, non raccolte di liste: usare
 `src/components/academy/academy-ui.tsx` per obiettivo, principio, esercizio,
@@ -222,9 +276,15 @@ sono archiviate fuori da `public/` in
 campo modulare ripetuta (non un PNG overgrip); il grip è impiegato nella
 lezione Academy sull’attrezzatura.
 
-Ogni attesa di navigazione o di una mutazione utente usa
-`FullScreenGameLoader`. I reveal di `ArenaMotionDirector` devono restare
-route-safe: mai nascondere completamente contenuti in attesa
+Le attese di una **mutazione utente** usano `FullScreenGameLoader`. Le attese di
+**navigazione** no: i `loading.tsx` usano `RouteSkeleton`
+(`components/design/route-skeletons.tsx`, sei varianti per forma di pagina) e
+la finestra fra click e primo byte è coperta da `RouteProgressBar`, montata in
+`layout.tsx`. Il velo a tutto schermo copriva topbar, rail e bottom nav, cioè
+la shell che l'App Router tiene viva durante la navigazione: non va
+reintrodotto in un `loading.tsx`. Dettagli e tabella di copertura in AGENTS.md,
+sezione "Loader di navigazione". I reveal di `ArenaMotionDirector` devono
+restare route-safe: mai nascondere completamente contenuti in attesa
 dell’`IntersectionObserver`.
 
 Accessibilità: mantenere WCAG 2.2 AA in entrambe le modalità, focus visibile,
@@ -251,6 +311,16 @@ La pagina pubblica `/prossime-release` raccoglie feedback persistenti in
 `product_feedback`. L’invio Resend è opzionale e successivo alla persistenza:
 richiede `RESEND_API_KEY` e `FEEDBACK_RECIPIENT_EMAIL`. Usare esclusivamente
 indirizzi `@playpaideio.com`; dettagli in `docs/EMAIL-SETUP.md`.
+
+Ogni email del prodotto passa dal trasporto condiviso `src/lib/email/index.ts`
+(`sendEmail()`, `fetch` su Resend, timeout 5s, esito
+`"inviata" | "saltata" | "fallita"`, mai un throw). Senza `RESEND_API_KEY`
+l’esito è `"saltata"` e l’app si comporta come prima. La notifica al coach di
+una nuova richiesta sta in `src/lib/email/booking-request.ts`: si invia dopo il
+commit della prenotazione, fuori dalla transazione, e viene affidata a
+`waitUntil()` per non allungare la Server Action. Per un nuovo tipo di email:
+funzione pura che costruisce l’`EmailMessage` (testabile) + un wrapper
+best-effort, mai `fetch` inline dentro un’action. Test: `npm run test:email`.
 
 Le icone dell’interfaccia sono proprietarie Paideio: 56 PNG trasparenti in
 `public/design/icons`, generati da `scripts/generate-paideio-icons.mjs` e
@@ -287,7 +357,9 @@ voci cambia stato, così le sessioni future partono dal punto giusto.
       resto del sito su token nuovi ma decorazioni non ancora riportate
 - [x] Recensioni/voti coach, preferiti, traguardi giocatore, foto profilo
       coach (Vercel Blob, progetto già collegato - vedi `AGENTS.md` per i
-      dettagli e il token già configurato)
+      dettagli e il token già configurato). Le recensioni sono diventate
+      davvero raggiungibili solo dopo il fix del filtro di `/prenotazioni`:
+      vedi "Recensioni: la regola e la sua raggiungibilità"
 - [x] Hardening backend (validazione prenotazioni, transizioni di stato,
       cancellazione campo sicura, transazioni atomiche) + ricchezza frontend
       (prezzo, statistiche coach, loading/error states, dashboard coach-admin,

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, CheckCircle2, ExternalLink } from "@/components/icons/paideio-icons";
 import type { ReactNode } from "react";
 import { GameAsset, GameBadge, GameCta, GamePanel, type GameAssetName } from "@/components/design";
+import { EditorialSectionNav } from "@/components/editorial-section-nav";
 import { cn } from "@/lib/utils";
 
 export function EditorialHero({
@@ -19,24 +20,6 @@ export function EditorialHero({
   showSectionNav?: boolean;
   children?: ReactNode;
 }) {
-  const isAcademy = kicker.startsWith("Academy") || kicker.startsWith("Paideio Academy");
-  const localLinks = isAcademy
-    ? [
-        ["/academy", "Hub"],
-        ["/academy/tecnica", "Tecnica"],
-        ["/academy/strategia", "Strategia"],
-        ["/academy/regole", "Regole"],
-        ["/academy/training", "Training"],
-        ["/academy/attrezzatura", "Gear"],
-        ["/academy/storia-cultura", "Cultura"],
-      ]
-    : [
-        ["/circuito", "Hub"],
-        ["/circuito/classifiche", "Classifiche"],
-        ["/circuito/calendario", "Calendario"],
-        ["/circuito/come-funziona-il-ranking", "Ranking"],
-      ];
-
   return (
     <header className="relative overflow-hidden border-b border-game-cyan/22 bg-game-ink">
       <div className="mx-auto grid max-w-7xl items-center gap-8 px-5 py-12 md:grid-cols-[minmax(0,1fr)_280px] md:px-8 md:py-16">
@@ -52,21 +35,7 @@ export function EditorialHero({
         </div>
         <GameAsset name={asset} decorative sizes="280px" className="mx-auto max-h-64 w-auto object-contain" />
       </div>
-      {showSectionNav && (
-        <nav aria-label={isAcademy ? "Sezioni Academy" : "Sezioni Circuito"} className="overflow-x-auto border-t border-game-cyan/16">
-          <div className="mx-auto flex min-w-max max-w-7xl gap-1 px-5 md:px-8">
-            {localLinks.map(([href, label]) => (
-              <Link
-                key={href}
-                href={href}
-                className="min-h-11 border-b-2 border-transparent px-3 py-3 font-heading text-xs font-semibold text-game-white/72 uppercase transition-colors hover:border-game-cyan hover:text-game-white focus-visible:outline-2 focus-visible:outline-game-cyan"
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
-        </nav>
-      )}
+      {showSectionNav && <EditorialSectionNav />}
     </header>
   );
 }

@@ -272,6 +272,46 @@ export function computeLessonAvailability(
   };
 }
 
+/** Lunghezza massima della motivazione del coach (rifiuto o proposta). */
+export const MAX_COACH_MESSAGE_LENGTH = 500;
+/**
+ * Minimo perché "motivazione obbligatoria" voglia dire qualcosa. Un rifiuto
+ * muto è esattamente il problema che le proposte di orario risolvono.
+ */
+export const MIN_COACH_MESSAGE_LENGTH = 10;
+
+/**
+ * Inizi su cui il coach può davvero spostare **quella** lezione: quelli
+ * ammessi dentro la finestra (`allowedStarts`) su cui il tipo della lezione è
+ * ancora prenotabile (`computeLessonAvailability`).
+ *
+ * È la regola unica delle proposte, come `allowedStarts` lo è delle
+ * prenotazioni: la usano il form del coach in `/coach-admin/richieste` (per
+ * disegnare gli orari proponibili), la validazione della proposta e la
+ * rivalidazione al momento dell'accettazione. Se divergessero, il coach
+ * proporrebbe un orario che il giocatore non riuscirà mai ad accettare.
+ *
+ * `busy` non deve contenere la lezione che si sta spostando: la sua fascia
+ * attuale si libera per definizione.
+ */
+export function proposableStarts(
+  window: Interval,
+  busy: readonly BookedLesson[],
+  duration: number,
+  type: TrainingType,
+  groupCapacity: number,
+  coachTrainingTypes: readonly string[]
+): number[] {
+  return allowedStarts(window, busy, duration).filter((start) =>
+    computeLessonAvailability(
+      { start, end: start + duration },
+      busy,
+      groupCapacity,
+      coachTrainingTypes
+    ).availableTypes.includes(type)
+  );
+}
+
 export function levelBadgeClass(level: string) {
   return LEVEL_BADGE_CLASSES[level] ?? "bg-muted text-muted-foreground";
 }
@@ -285,6 +325,10 @@ export const BOOKING_STATUS_CONFIG: Record<string, { label: string; className: s
     label: "Confermata",
     className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300",
   },
+  controproposta: {
+    label: "Nuovo orario proposto",
+    className: "bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300",
+  },
   rifiutata: {
     label: "Rifiutata",
     className: "bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-300",
@@ -294,6 +338,59 @@ export const BOOKING_STATUS_CONFIG: Record<string, { label: string; className: s
     className: "bg-muted text-muted-foreground",
   },
 };
+
+/**
+ * Recensibilità di una prenotazione. Come per `computeSlotOccupancy()`, la
+ * regola sta in **un solo posto**: la usano `getBookingsForPlayer()` (per
+ * decidere se mostrare il form), `createReview()` (per validare) e il filtro
+ * "Da recensire" di `/prenotazioni`. Se divergono, la pagina offre una
+ * recensione che l'action poi rifiuta, o - come è successo - la calcola e non
+ * la mostra a nessuno.
+ */
+export function canReviewBooking(
+  booking: { status: string; date: string },
+  today: string,
+  alreadyReviewed: boolean
+): boolean {
+  return booking.status === "confermata" && booking.date <= today && !alreadyReviewed;
+}
+
+export const BOOKING_PERIODS = ["prossime", "passate", "da-recensire", "tutte"] as const;
+export type BookingPeriod = (typeof BOOKING_PERIODS)[number];
+
+export const BOOKING_PERIOD_LABELS: Record<BookingPeriod, string> = {
+  prossime: "Prossime lezioni",
+  passate: "Lezioni passate",
+  "da-recensire": "Da recensire",
+  tutte: "Tutte le date",
+};
+
+/**
+ * Filtro "Periodo" di `/prenotazioni`.
+ *
+ * **Attenzione al rapporto con `canReviewBooking()`**: il default `prossime` è
+ * `date >= today`, la recensibilità è `date <= today`. I due insiemi si
+ * toccano solo nel giorno stesso della lezione, quindi dal giorno dopo il
+ * pulsante "Lascia una recensione" esisteva ma non era su nessuna schermata
+ * raggiungibile senza cambiare il filtro a mano. Da qui il periodo dedicato
+ * `da-recensire` e il richiamo in cima alla pagina.
+ */
+export function matchesBookingPeriod(
+  item: { date: string; canReview: boolean },
+  period: BookingPeriod,
+  today: string
+): boolean {
+  switch (period) {
+    case "prossime":
+      return item.date >= today;
+    case "passate":
+      return item.date < today;
+    case "da-recensire":
+      return item.canReview;
+    case "tutte":
+      return true;
+  }
+}
 
 const DAY_NAMES = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
 

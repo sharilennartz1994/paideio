@@ -116,17 +116,33 @@ export const bookings = pgTable(
     type: text("type", { enum: ["singolo", "gruppo"] }).notNull(),
     level: text("level").notNull(),
     status: text("status", {
-      enum: ["richiesta", "confermata", "rifiutata", "annullata"],
+      enum: ["richiesta", "confermata", "rifiutata", "annullata", "controproposta"],
     })
       .notNull()
       .default("richiesta"),
     notes: text("notes").notNull().default(""),
+    // Motivazione del coach quando rifiuta o quando propone un altro orario.
+    // Una sola colonna per i due casi: è sempre "perché non va bene così".
+    coachMessage: text("coach_message").notNull().default(""),
+    // Orario alternativo proposto dal coach. Valorizzato solo mentre lo stato è
+    // `controproposta`; si azzera quando il giocatore accetta o rifiuta.
+    //
+    // Sta qui e non in una tabella a parte apposta: la proposta non è una
+    // seconda prenotazione, è la stessa lezione in attesa di un orario. Con una
+    // riga separata ci sarebbero due macchine a stati da tenere allineate
+    // (`bookings.status` e lo stato della proposta) e l'accettazione dovrebbe
+    // comunque aggiornare questa riga. Vedi AGENTS.md, "Proposte di orario".
+    proposedDate: text("proposed_date"), // "YYYY-MM-DD"
+    proposedStartTime: text("proposed_start_time"),
+    proposedEndTime: text("proposed_end_time"),
     createdAt: text("created_at").notNull(),
   },
   (table) => [
     // Una lezione singola occupa il campo in esclusiva: al massimo una attiva
     // con lo stesso inizio. Indice parziale, quindi rifiutate/annullate non
-    // bloccano nulla.
+    // bloccano nulla. `controproposta` è fuori dall'insieme "attivo" apposta:
+    // una proposta pendente non è ancora una prenotazione e non deve togliere
+    // l'orario agli altri giocatori.
     uniqueIndex("bookings_active_single_slot_idx")
       .on(table.coachId, table.locationId, table.date, table.startTime)
       .where(sql`status IN ('richiesta', 'confermata') AND type = 'singolo'`),
@@ -186,7 +202,16 @@ export const notifications = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     bookingId: text("booking_id").references(() => bookings.id, { onDelete: "cascade" }),
-    type: text("type", { enum: ["booking_created", "booking_cancelled"] }).notNull(),
+    type: text("type", {
+      enum: [
+        "booking_created",
+        "booking_cancelled",
+        "booking_rejected",
+        "booking_proposed",
+        "booking_proposal_accepted",
+        "booking_proposal_declined",
+      ],
+    }).notNull(),
     title: text("title").notNull(),
     message: text("message").notNull(),
     href: text("href").notNull(),

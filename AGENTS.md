@@ -120,9 +120,10 @@ normativa attuale è `design/SYSTEM.md`, con istruzioni d'implementazione in
 - Motion rapida e causale: press, hover, ingresso route e loader-pallina;
   niente attese teatrali o loop ornamentali. Tutto si disattiva con
   `prefers-reduced-motion`. I reveal non possono mai portare il contenuto a
-  `opacity: 0`: `ArenaMotionDirector` si riallinea a ogni pathname. Le route
-  `loading.tsx` e le attese delle azioni interattive usano
-  `FullScreenGameLoader`. La ricerca mobile usa uno Sheet Base UI accessibile.
+  `opacity: 0`: `ArenaMotionDirector` si riallinea a ogni pathname. Le attese
+  delle **azioni interattive** usano `FullScreenGameLoader`; le route
+  `loading.tsx` **no**, usano `RouteSkeleton` (vedi "Loader di navigazione").
+  La ricerca mobile usa uno Sheet Base UI accessibile.
 - Accessibilità WCAG 2.2 AA anche in modalità giorno: testo normale ≥4.5:1,
   testo grande e contorni UI ≥3:1, focus sempre visibile e target interattivi
   minimi 44px. `GameRouteStage` riporta le navigazioni normali al top ma
@@ -244,15 +245,162 @@ elementi con `scrollWidth - clientWidth > 2` che non siano `overflow-x:auto`.
 Attenzione ai falsi positivi legittimi: `.truncate` sfora per definizione, e le
 icone decorative posizionate `-right-4` sono ritagliate apposta.
 
+### Orientamento: la navigazione si legge senza interagire
+
+Diagnosi del 13 agosto 2026, partita da "dal menù a sinistra non è chiaro quale
+sia la navigazione per un utente che non conosce Paideio". Non era un problema
+di stile: era che **la struttura del sito non era leggibile senza compiere
+un'azione**. Le quattro prove misurate:
+
+1. **La rail desktop mostrava zero testo.** I sei link avevano l'etichetta in
+   uno `<span aria-hidden>` con `hidden group-hover:block`: misurando le voci,
+   `visibleSpans` era `["", "", "", "", "", ""]`. Chi arrivava vedeva sei glifi
+   muti. Su un tablet da 768px in su la rail compare ma l'hover no, quindi
+   Academy e Circuito erano di fatto **inconoscibili**.
+2. **Nessuna indicazione di posizione fuori dalla rail.** Aperta
+   `/academy/regole` da un link esterno o da una ricerca, l'unico indizio era il
+   kicker dell'hero, che è copy editoriale e non un percorso risalibile.
+3. **La nav di sezione di Academy/Circuito non aveva stato attivo.** Su
+   `/academy/tecnica` nessuno dei sette link aveva `aria-current` né stile
+   diverso: la nav diceva cosa esiste, non dove sei. In più era
+   `overflow-x-auto` con `min-w-max`, **553px dentro 375px**: Training,
+   Attrezzatura e Storia restavano fuori schermo senza affordance, lo stesso
+   difetto già corretto in `coach-admin-nav.tsx`.
+4. **Il desktop era un sottoinsieme del mobile.** Lo sheet "Altro" elencava
+   Notifiche, Il concept e Prossime release; la rail no. E `/prenotazioni`
+   compariva nello sheet anche per i coach, dove `prenotazioni/page.tsx` fa
+   `redirect("/")`: era un link morto.
+
+Le scelte, in ordine di importanza:
+
+- **`src/lib/navigation.ts` è la tassonomia unica.** Prima ogni superficie
+  aveva la propria lista e le liste divergevano (da cui il punto 4, e "Gear"
+  nella nav di sezione contro "Attrezzatura" nelle card dell'hub: due nomi per
+  la stessa pagina rendono impossibile capire dove si è). Le voci si aggiungono
+  lì, poi rail, sheet, breadcrumb e nav di sezione le leggono. La regola
+  storica "nessuna rotta raggiungibile da una sola superficie" adesso si
+  verifica leggendo **un solo file**: `primaryNavGroups()` (rail) e
+  `moreSheetGroups()` (sheet) sono lì una accanto all'altra.
+- **La rail resta 80px, le etichette diventano visibili** (icona sopra
+  etichetta, `text-[10px]`, la stessa soluzione di `coach-admin-nav.tsx` e
+  della bottom nav). **Non allargarla**: `layout.tsx` (`md:pl-20`) e
+  `site-footer.tsx` (`md:pl-20`) sono entrambi allineati a quella misura, e il
+  footer è vincolato a restare così, quindi una rail più larga scollerebbe il
+  footer dal contenuto di 160px. Le etichette più lunghe misurano 53px
+  ("Preferiti") in 67px di box: stanno su una riga sola.
+- **La rail è raggruppata**: "Gioca" (Home, Cerca, e per i player Lezioni e
+  Preferiti) e "Impara" (Academy, Circuito). I due titoli a 9px sono ciò che
+  spiega la struttura del prodotto a chi arriva la prima volta, e lo sheet
+  mobile usa gli stessi due nomi più "Paideio", così il modello mentale è lo
+  stesso sulle due superfici.
+- **`route-breadcrumb.tsx` in `layout.tsx`, dentro `<main>` e fuori da
+  `GameRouteStage`** (le animazioni di route non devono toccarlo). Si disegna
+  su ogni pagina che non sia la home o le rotte Clerk. L'ultima briciola è
+  anche il titolo della pagina, quindi risponde insieme a "dove sono" e "come
+  torno indietro". Superficie fissa `--game-ink` come la topbar, quindi testo
+  fisso: si incolla alla topbar e forma un unico blocco di chrome in entrambi i
+  temi. I segmenti tecnici si saltano (`/coach` non è un indice: il percorso è
+  "Home / Profilo coach", non "Home / Coach / Profilo coach") e le rotte non
+  registrate ricadono su uno slug reso leggibile, così una pagina nuova non
+  rompe il breadcrumb.
+- **`editorial-section-nav.tsx`** sostituisce la nav inline di
+  `EditorialHero`: stato attivo con `aria-current`, etichette italiane dalla
+  tassonomia, e `flex-wrap` al posto di `overflow-x-auto` (a 375px va su tre
+  righe, tutte e sette le voci visibili). La sezione si deduce da
+  `usePathname`, non più da `kicker.startsWith("Academy")`: quella inferenza
+  mostrava la nav del Circuito su qualunque pagina con un kicker diverso.
+- **`/prenotazioni` è solo per i player** nella tassonomia, perché la pagina
+  fa `redirect("/")` per gli altri ruoli. Un link di navigazione che riporta in
+  home senza spiegare perché è peggio dell'assenza del link.
+
+Contrasti misurati (canvas 1×1, entrambi i temi, valori **identici** perché
+sono tutte superfici fisse con testo fisso): titolo di gruppo della rail
+11,41:1, voce inattiva 11,9:1, voce attiva 14,47:1, CTA coach 15,01:1,
+breadcrumb link 10,45:1, breadcrumb corrente 11,41:1, sezione inattiva 9,67:1,
+sezione attiva 16,84:1. Target: voci della rail 67×53, breadcrumb e nav di
+sezione `min-h-11`. A 375px nessuna delle pagine controllate ha scroll
+orizzontale di documento e non resta nessun `overflow-x-auto` senza affordance.
+### Loader di navigazione
+
+Prima di questo giro l'utente diceva "non vedo nessun loader", e il motivo non
+era che mancassero i file: `src/app/loading.tsx` esiste da sempre e il suo
+boundary copre **tutte** le rotte discendenti. Le cause erano altre due.
+
+1. **Il prefetch salta il fallback.** `<Link>` prefetcha ogni rotta che entra
+   nel viewport, e la sidebar/il footer li tengono tutti in viewport. Quando
+   clicchi, il payload RSC è già in cache: la rotta si impegna in pochi
+   millisecondi e il `loading.tsx` non viene mai renderizzato. Misurato in
+   locale: navigare `/` → `/academy` produceva **zero** frame con fallback.
+   Non è un difetto da correggere, è il comportamento voluto; il buco è
+   altrove.
+2. **Il buco vero è fra il click e il primo byte.** Se il prefetch non è
+   ancora arrivato (rete lenta, link appena comparso), lì non succede niente
+   sullo schermo e `loading.tsx` non aiuta, perché entra in scena solo *dopo*
+   che la rotta è stata impegnata.
+
+Quindi le difese sono due, e coprono due momenti diversi:
+
+- **`RouteProgressBar`** (`components/design/route-progress-bar.tsx`, montato in
+  `layout.tsx`): barra da 3px in cima, copre click → primo byte. La via
+  idiomatica sarebbe `useLinkStatus` di `next/link`, ma va montato *dentro*
+  ogni `<Link>` e i link vivono in `sidebar-nav.tsx`/`mobile-nav.tsx`/
+  `site-footer.tsx`; questa è la versione globale, un listener delegato sui
+  click di ancora. Lo stato pendente è **la chiave della pagina che stiamo
+  lasciando**, non un booleano, e viene azzerato *in fase di render* quando la
+  rotta cambia: con un booleano azzerato in `useEffect` il linter segnala il
+  setState sincrono in effetto, e in più il tasto Indietro riaccendeva la
+  barra. La comparsa è ritardata di 140ms **in CSS**, così le navigazioni già
+  prefetchate non la fanno mai lampeggiare.
+- **`RouteSkeleton`** (`components/design/route-skeletons.tsx`): il fallback dei
+  `loading.tsx`. Sei varianti (`editorial`, `list`, `profile`, `dashboard`,
+  `document`, `block`), una per forma di pagina, così il passaggio scheletro →
+  contenuto non sposta la griglia.
+
+**I `loading.tsx` non usano più `FullScreenGameLoader`.** Quel componente è un
+velo `fixed inset-0 bg-game-ink` e copriva topbar, rail e bottom nav, cioè
+proprio la shell che l'App Router tiene viva e interattiva durante una
+navigazione; in modalità giorno era anche un lampo nero a tutto schermo ad ogni
+click. Resta la scelta giusta per le **attese delle azioni interattive**, dove
+bloccare l'interfaccia è il punto. Non reintrodurlo in un `loading.tsx`.
+
+Copertura attuale (un `loading.tsx` copre anche i segmenti figli):
+
+| file | variante | rotte coperte |
+| --- | --- | --- |
+| `app/loading.tsx` | `editorial` | `/`, `/sign-in`, `/sign-up`, e tutto il resto senza fallback più vicino |
+| `app/academy/loading.tsx` | `editorial` + nav | `/academy` e le 6 sottosezioni |
+| `app/circuito/loading.tsx` | `editorial` + nav | `/circuito` e le 3 sottosezioni |
+| `app/chi-siamo`, `diventa-coach`, `prossime-release` | `editorial` | le rispettive |
+| `app/termini`, `app/privacy` | `document` | testo lungo con indice laterale |
+| `app/cerca`, `preferiti`, `prenotazioni`, `notifiche` | `list` | filtri + righe |
+| `app/coach/[id]/loading.tsx` | `profile` | hero scuro + pannello prenotazione |
+| `app/coach-admin/loading.tsx` | `dashboard` | `/coach-admin` e le 4 schede |
+| `app/design-system/loading.tsx` | `block` | pallina centrata |
+
+`coach-admin/loading.tsx` merita una nota: un `loading.tsx` **non** avvolge il
+layout del proprio segmento, quindi sta *dentro* `coach-admin/layout.tsx`.
+Cambiando scheda, l'intestazione "Area coach" e la barra dei tab restano
+visibili e solo il pannello si ricarica: era impossibile ottenerlo con il velo
+a tutto schermo.
+
+I blocchi scheletro sopra una superficie arena fissa (`bg-game-ink`) devono
+usare `.game-skeleton-arena` insieme a `.game-skeleton-shape`: `--nebbia` è
+theme-aware e in modalità giorno sull'inchiostro sparisce (vedi "Regola
+token"). Sotto `prefers-reduced-motion` lo sweep degli scheletri era già
+disattivato; la barra resta visibile ma diventa un blocco fermo a piena
+larghezza, senza segmento che scorre in loop.
+
 ### Navigazione mobile
 
 `app-bottom-nav.tsx` è solo il guscio server (ruolo + contatore notifiche);
 l’interfaccia sta in `mobile-nav.tsx` (client). Quattro schede - Home, Cerca,
 una terza che cambia con il ruolo (Lezioni / Coach / Academy per gli anonimi) e
-**Altro**, che apre uno Sheet Base UI con il resto della navigazione (Academy,
-Circuito, Preferiti, Notifiche, Diventa coach, Il concept, Prossime release).
-La regola è che **nessuna rotta sia raggiungibile solo dalla sidebar desktop**:
-quando aggiungi una voce alla sidebar, aggiungila anche allo sheet. Lo stato
+**Altro**, che apre uno Sheet Base UI con il resto della navigazione, raggruppato
+in "Gioca", "Impara" e "Paideio". Il contenuto dello sheet arriva da
+`moreSheetGroups()` in `src/lib/navigation.ts`, la stessa sorgente della rail
+desktop, e la voce corrispondente alla terza scheda viene filtrata via per non
+duplicarla. La regola è che **nessuna rotta sia raggiungibile da una sola
+superficie**: si tiene aggiornando la tassonomia, non le due liste. Lo stato
 attivo è calcolato con `usePathname` e comprende le sottorotte; la scheda
 "Altro" si accende quando la pagina corrente vive dentro lo sheet. Le voci dello
 sheet sono `SheetClose` con `render={<Link/>}` e `nativeButton={false}`, così la
@@ -564,6 +712,106 @@ dall'interfaccia e non sarebbe più riapribile.
 Test: `npm run test:chiusure` (stesso Postgres usa-e-getta di
 `test:capienza`, istruzioni in testa allo script).
 
+## Proposte di orario (13 agosto 2026)
+
+Prima il coach poteva solo accettare o rifiutare, e il rifiuto era muto: il
+giocatore vedeva "Rifiutata" senza sapere perché né cosa fare. Ora il coach
+**rifiuta con motivazione** oppure **propone un altro orario con
+motivazione**, e il giocatore accetta o rifiuta la proposta. Accettando, la
+lezione si sposta e da quel momento occupa il calendario come qualunque altra
+prenotazione confermata.
+
+### La proposta sta sulla riga della prenotazione, non in una tabella
+
+`bookings` ha quattro colonne in più (`coach_message`, `proposed_date`,
+`proposed_start_time`, `proposed_end_time`) e uno stato in più,
+`controproposta`. Niente tabella `booking_proposals`, per tre motivi:
+
+1. **Una sola macchina a stati.** Con una tabella a parte ce ne sarebbero due
+   (`bookings.status` e lo stato della proposta) da tenere allineate a mano:
+   la classica coppia che diverge, con prenotazioni rifiutate e proposte
+   ancora "pendenti" sopra.
+2. **L'accettazione è comunque un UPDATE di questa riga.** Data e orario
+   della lezione vivono qui, e qui devono cambiare: una riga in più
+   aggiungerebbe una scrittura senza togliere niente.
+3. **Il vincolo di non sovrapposizione vede solo `bookings`.** Tenere
+   l'orario proposto in colonne che il vincolo non guarda è esattamente ciò
+   che serve: la proposta esiste, ma non prenota.
+
+Il prezzo accettato: **niente storico della trattativa**. Una proposta è un
+giro solo, il coach ne fa una e il giocatore risponde. Se un giorno servisse
+una vera contrattazione a più giri, quello è il momento per la tabella.
+
+### Una proposta pendente non blocca niente
+
+`controproposta` è **fuori** dall'insieme `('richiesta','confermata')`, quindi
+gli indici parziali, il vincolo GiST e tutte le query di occupazione la
+ignorano. Due conseguenze volute:
+
+- la fascia **originale si libera subito**: il coach ha appena detto che non
+  può, tenerla occupata toglierebbe disponibilità reale a tutti;
+- la fascia **proposta non viene riservata**: finché il giocatore non accetta
+  non esiste nessuna lezione da difendere, e bloccare un orario per una
+  proposta che può restare senza risposta per giorni è peggio del rischio che
+  qualcuno la prenda prima.
+
+### La corsa fra proposta e accettazione
+
+Fra il "propongo giovedì alle 11" e il click del giocatore possono passare
+giorni: nel frattempo l'orario può essere stato preso, il coach può aver
+chiuso la data o tolto il turno. `acceptBookingProposal()` **rivalida tutto
+dentro `pg_advisory_xact_lock`**, con la stessa chiave giorno+campo di
+`createBooking()` - così un'accettazione e una prenotazione nuova sullo stesso
+campo si aspettano a vicenda invece di leggere entrambe lo stesso "libero".
+Se non ci sta più, l'azione ritorna una **frase** (`"L'orario proposto non è
+più disponibile. Quell'orario è già occupato da una lezione singola."`) e la
+proposta **resta lì**: il coach può farne un'altra. Il `catch` su `23505` e
+`23P01` è solo il backstop, non la difesa principale.
+
+### La regola di cosa è proponibile è unica
+
+`proposableStarts()` in `constants.ts` = `allowedStarts()` filtrato per i tipi
+ancora disponibili su quell'intervallo (`computeLessonAvailability`). La usano
+il form del coach in `/coach-admin/richieste` (per disegnare gli orari), la
+validazione della proposta e la rivalidazione in accettazione. Vale la stessa
+regola del resto del calendario: **se le strade divergono, il coach propone un
+orario che il giocatore non riuscirà mai ad accettare.** L'orario proposto
+deve quindi stare dentro una finestra pubblicata: non esistono lezioni fuori
+dalle disponibilità dichiarate, nemmeno se le propone il coach.
+
+### Transizioni e file
+
+- coach: `richiesta → rifiutata` (con motivazione) oppure
+  `richiesta → controproposta`;
+- giocatore: `controproposta → confermata` (accetta) oppure
+  `controproposta → rifiutata` (rifiuta).
+
+Accettare porta **direttamente a `confermata`**: l'orario l'ha scelto il
+coach, chiedergli una seconda conferma sarebbe un giro a vuoto. Rifiutare la
+proposta chiude come `rifiutata` e non come `annullata`, perché la richiesta
+iniziale il coach l'aveva già scartata; `coach_message` resta sulla riga, così
+il giocatore continua a leggere il perché.
+
+- `src/lib/booking-proposals.ts` - cuore transazionale, **server-only**, non
+  Server Action (stesso schema di `queries.ts`). Sta fuori da `actions/`
+  perché `"use server"` obbliga ogni export a essere un'azione remota e
+  perché il test end-to-end deve poterlo chiamare senza sessione Clerk né
+  contesto di richiesta.
+- `src/lib/actions/booking-proposals.ts` - le Server Action: autenticano,
+  chiamano il cuore, rivalidano. File separato da `actions/bookings.ts`
+  apposta: lì c'è la prenotazione, qui la trattativa.
+- UI: `booking-request-actions.tsx` (coach, tre azioni) e
+  `booking-proposal-actions.tsx` (giocatore, dentro le card di
+  `/prenotazioni`). Entrambe passano da `ConfirmDialog`, con il campo
+  motivazione nel nuovo prop `body` - non in `description`, che è la
+  `Description` di Base UI, cioè un `<p>`.
+
+Test: `npm run test:proposte` (27 verifiche, stesso Postgres usa-e-getta di
+`test:capienza`). L'ultima è la corsa vera: due proposte sulla stessa fascia,
+due accettazioni in `Promise.all`, una sola deve passare - e la perdente deve
+fallire nella **rivalidazione**, non sull'indice unico, altrimenti vuol dire
+che il lock non ha serializzato niente.
+
 ## Notifiche prenotazioni
 
 - `notifications` conserva notifiche in-app per giocatore e coach, collegate
@@ -572,11 +820,85 @@ Test: `npm run test:chiusure` (stesso Postgres usa-e-getta di
 - `createBooking` crea atomicamente la prenotazione e due notifiche
   `booking_created`, una per ruolo. L’annullamento crea due notifiche
   `booking_cancelled` nella stessa transazione che aggiorna lo stato.
+- Stessa regola per le proposte di orario: `booking_rejected`,
+  `booking_proposed`, `booking_proposal_accepted` e
+  `booking_proposal_declined`, sempre **due righe nella stessa transazione**
+  che cambia lo stato, una per ruolo. Il messaggio al giocatore contiene la
+  motivazione del coach: è il punto di tutta la funzione. Le icone di
+  `/notifiche` stanno in `NOTIFICATION_ICON`, non più in un ternario.
 - L’annullamento dal lato giocatore passa sempre da un `AlertDialog` Base UI
   esplicito; nessuna cancellazione può partire dal primo click.
 - Le mutazioni notifiche invalidano il root layout con
   `revalidatePath("/", "layout")`, così il contatore della campanella si
   aggiorna immediatamente.
+
+### Email: un solo trasporto, sempre best-effort
+
+Ogni email del prodotto passa da `src/lib/email/index.ts`. `sendEmail()` chiama
+l'API HTTP di Resend con `fetch` (nessun SDK, come già faceva il form feedback),
+ha un timeout di 5 secondi e ritorna
+`"inviata" | "saltata" | "fallita"`: **non lancia mai**. Senza `RESEND_API_KEY`
+l'esito è `"saltata"` e l'applicazione si comporta esattamente come prima.
+Mittente `notifiche@playpaideio.com` (override con `EMAIL_FROM`), link assoluti
+via `absoluteUrl()`. Tabella delle variabili e setup in `docs/EMAIL-SETUP.md`.
+
+La notifica al coach di una nuova richiesta di lezione sta in
+`src/lib/email/booking-request.ts`, non in `actions/bookings.ts`. Tre vincoli da
+non perdere:
+
+1. **Fuori dalla transazione.** `createBooking()` chiama
+   `notifyCoachOfBookingRequest()` solo dopo il commit: la prenotazione e le due
+   notifiche in-app sono già salvate, un errore SMTP non può annullarle né
+   lasciarle a metà. Le notifiche in-app restano la fonte primaria, l'email è un
+   promemoria.
+2. **Niente attese nel percorso della richiesta.** La Server Action gira su
+   Fluid Compute: la promessa va a `waitUntil()` di `@vercel/functions`, che
+   tiene vivo il runtime senza far aspettare il giocatore. Fuori da Vercel è un
+   no-op e la promessa gira comunque in background.
+3. **Costruzione separata dall'invio.** `buildBookingRequestEmail()` è pura (né
+   rete né database) proprio per essere ispezionabile da un test;
+   `deliverBookingRequestEmail()` accetta un `EmailTransport` iniettabile.
+   Per un nuovo tipo di email replicare questa coppia, mai una `fetch` inline
+   dentro un'action. Test: `npm run test:email` (nessun database, nessuna posta
+   vera).
+
+### Esiti in modale, e quando invece basta un toast
+
+Un toast dura tre secondi e se ne va: va bene per dire "campo salvato", non per
+dire a un giocatore che la richiesta e' partita ma la lezione **non e' ancora
+confermata**. Le azioni che cambiano lo stato di una lezione mostrano l'esito
+in una modale (`OutcomeProvider` + `useOutcome()` in
+`components/outcome-dialog.tsx`), che ferma l'attenzione e ha spazio per il
+campo `next`: cosa succede adesso, chi deve fare cosa.
+
+**La linea.** Modale per: richiesta inviata, lezione confermata, richiesta
+rifiutata, proposta di orario inviata, proposta accettata o rifiutata,
+annullamento, recensione inviata. Toast per tutto il resto: preferito, campo
+aggiunto o rimosso, fascia pubblicata, chiusura di una data, profilo salvato,
+avatar caricato, notifiche segnate come lette. Una modale a ogni click sarebbe
+piu' fastidiosa del problema che risolve: se non c'e' niente da spiegare oltre
+"fatto", resta il toast.
+
+**Gli errori restano toast anche sulle azioni importanti.** Sono transitori e
+si risolvono sul posto; per giunta molti nascono dentro un `ConfirmDialog` che
+resta aperto, e impilare una modale sopra un'altra e' peggio del problema.
+
+### Chiudibile o no: `Dialog` contro `AlertDialog`
+
+Base UI distingue le due primitive per semantica, non per stile: `AlertDialog`
+pretende una risposta e ignora click fuori ed Esc, `Dialog` si chiude in tutti
+i modi che una persona si aspetta. Il progetto usava `AlertDialog` ovunque,
+anche dove non c'era niente da decidere.
+
+Regola: **se chiudendo non si perde nulla, si deve poter chiudere.** Gli esiti
+informativi sono sempre `Dialog`, con X da 44px, Esc e click fuori.
+
+`ConfirmDialog` sceglie da solo, senza che i punti di chiamata debbano pensarci:
+resta `AlertDialog` se c'e' un `body` (un modulo compilato a meta' andrebbe
+perso) o un `warning` (c'e' una conseguenza irreversibile da leggere),
+altrimenti diventa `Dialog`. La prop `mustDecide` forza il primo caso, ma va
+usata solo con una ragione scritta. In pratica: rimuovere un campo e annullare
+una lezione trattengono, chiudere una data o rimuovere una fascia no.
 
 ### Conferme: `ConfirmDialog`, mai `window.confirm()`
 
@@ -609,6 +931,13 @@ passano tutte da qui.
   segnale al solo colore è debole comunque: meglio dire *cosa* succede.
 - I titoli sono in seconda persona e nominano l’oggetto - “Vuoi davvero
   chiudere questo slot?”, non “Chiudere…?”.
+- `body` è per i campi che l'utente deve compilare prima di confermare (la
+  motivazione di un rifiuto, l'orario di una proposta), con
+  `confirmDisabled` a gestire il "non ancora completo". Non metterli in
+  `description`: quella è la `Description` di Base UI, cioè un `<p>`, e
+  annidarci dentro form control produce markup non valido. Dentro il dialog
+  evita anche i `Select`: il loro popup sta a `z-50` contro il `z-[220]` del
+  dialog, quindi finisce dietro. Chip e bottoni, come nel form delle proposte.
 - Il `trigger` è un `Button` reale, quindi **non** va `nativeButton={false}`
   (vedi “Note Base UI”).
 
@@ -617,12 +946,55 @@ passano tutte da qui.
 - `/prenotazioni` delega la parte interattiva a
   `src/components/player-bookings-overview.tsx`. I dati restano caricati nel
   Server Component e vengono passati al client come sommario serializzabile.
-- Filtri disponibili: periodo (`prossime`, `passate`, `tutte`), stato e formato
-  (`singolo`/`gruppo`). Le lezioni passate sono ordinate dalla più recente.
+- Filtri disponibili: periodo (`prossime`, `passate`, `da-recensire`, `tutte`),
+  stato e formato (`singolo`/`gruppo`). Le lezioni passate e quelle da
+  recensire sono ordinate dalla più recente.
 - Tre viste condividono lo stesso dataset filtrato: `Lista` per gestione,
   `Calendario` mensile per orientamento temporale e `Agenda` raggruppata per
   giorno. Annullamento e recensione restano disponibili nelle viste operative;
   il calendario è deliberatamente compatto e solo informativo.
+
+## Recensire una lezione: la regola e la sua raggiungibilità
+
+La recensibilità sta in **un solo posto**, `canReviewBooking()` in
+`constants.ts`: confermata, con data di oggi o passata, non ancora recensita.
+La usano `getBookingsForPlayer()` (per mostrare il form),
+`countReviewableBookingsWithCoach()` (per il richiamo sul profilo pubblico) e
+`createReview()` (per validare, con messaggio specifico sul motivo del
+rifiuto). Il vincolo "una sola recensione per prenotazione" è l'`unique` su
+`reviews.booking_id`, non solo il controllo applicativo.
+
+**La regola era giusta, il pulsante era irraggiungibile.** Il filtro Periodo di
+`/prenotazioni` ha come default `prossime`, cioè `date >= oggi`, mentre una
+lezione è recensibile su `date <= oggi`: i due insiemi si toccano **solo nel
+giorno stesso della lezione**. Dal giorno dopo "Lascia una recensione" esisteva
+nel codice, `canReview` era `true`, e non compariva su nessuna schermata che
+qualcuno avesse motivo di aprire. Nessun indizio segnalava che ci fosse
+qualcosa da recensire, quindi il percorso era di fatto morto.
+
+Le due strade sono ora tenute insieme da `matchesBookingPeriod()`, accanto a
+`canReviewBooking()` nello stesso file, con il rapporto tra le due scritto nel
+commento. Chi cambia il default del filtro deve rileggerlo.
+
+Difese contro la ricomparsa del difetto:
+1. periodo dedicato **`da-recensire`** nel selettore, con il conteggio
+   nell'etichetta;
+2. **richiamo in cima a `/prenotazioni`** quando `pendingReviews > 0`, con la
+   CTA che imposta il filtro: due click dall'atterraggio, nessuna esplorazione
+   dei filtri richiesta;
+3. il form è reso sia nella vista `Lista` sia in `Agenda` (entrambe operative);
+4. sul profilo pubblico del coach il vecchio invito "sii il primo a lasciarne
+   una" era un vicolo cieco (da lì non si recensisce): ora compare un richiamo
+   a `/prenotazioni` **solo** a chi ha davvero una lezione svolta con quel
+   coach, e il testo dello stato vuoto spiega da dove arrivano le recensioni;
+5. `npm run test:recensioni` include la guardia di regressione: verifica che il
+   default `prossime` da solo non basti e che `da-recensire` mostri tutte e
+   sole le recensibili.
+
+Nota: `SelectValue` di Base UI mostra il **valore grezzo** se non gli si passa
+una funzione figlia. Con i valori a una parola non si notava; `da-recensire`
+sarebbe apparso col trattino, quindi il Periodo ora mappa il valore su
+`BOOKING_PERIOD_LABELS`.
 
 ## Roadmap e feedback prodotto
 
@@ -655,8 +1027,10 @@ passano tutte da qui.
   spiegano l’effetto delle modifiche, raggruppano gli orari per giorno e
   chiedono conferma prima di rimuovere campi o turni.
 - La sidebar desktop resta una rail compatta da 80px e non si espande sopra i
-  contenuti; le etichette appaiono come tooltip. I `devIndicators` Next sono
-  disabilitati per non sovrapporre il pulsante dev alla rail durante i test.
+  contenuti, ma **le etichette sono visibili**, non più tooltip in hover: vedi
+  "Orientamento: la navigazione si legge senza interagire". I `devIndicators`
+  Next sono disabilitati per non sovrapporre il pulsante dev alla rail durante
+  i test.
 
 ### Le cinque schede coach devono stare tutte nello schermo
 
@@ -764,9 +1138,13 @@ Le conseguenze, da tenere allineate se tocchi una di queste superfici:
 - Dati dinamici e normativa mostrano sempre fonte e data di verifica. Le
   regole base usano FIP 2026; i regolamenti FITP delle manifestazioni sono
   distinti. Le classifiche correnti sono snapshot editoriali, non feed live.
-- Componenti condivisi in `src/components/editorial-layout.tsx`; tassonomia
-  in `src/lib/editorial-content.ts`. Academy e Circuito sono presenti nella
-  sidebar e lo stato attivo comprende le sottorotte.
+- Componenti condivisi in `src/components/editorial-layout.tsx`; i contenuti
+  delle card in `src/lib/editorial-content.ts`, l'elenco delle sottosezioni e
+  le loro etichette canoniche in `src/lib/navigation.ts` (`EDITORIAL_SECTIONS`).
+  Academy e Circuito sono presenti nella sidebar e lo stato attivo comprende le
+  sottorotte. La nav delle sottosezioni è `editorial-section-nav.tsx`: ha stato
+  attivo, va a capo invece di scorrere e usa le stesse etichette delle card
+  dell'hub - vedi "Orientamento: la navigazione si legge senza interagire".
 
 ## Convenzioni
 
@@ -814,9 +1192,22 @@ Dal 12 agosto 2026 c'è un Postgres locale in `docker-compose.yml`:
 
 ```bash
 npm run db:local:up      # container su localhost:55433
-npm run db:local:reset   # schema + vincoli GiST + dati demo
+npm run db:local:reset   # azzera schema, ripubblica, vincoli GiST, dati demo
 npm run dev
 ```
+
+`db:local:reset` **azzera lo schema** prima di ripubblicarlo, e non è un
+eccesso di zelo: `drizzle-kit push` su un database che ha già le tabelle apre un
+prompt interattivo per capire se una colonna nuova sia la rinomina di una
+esistente. Senza TTY fallisce, e dentro la catena `&&` il fallimento passava
+inosservato: il seed partiva lo stesso e si schiantava su una colonna mancante.
+Su schema vuoto non c'è niente da disambiguare. Lo script rifiuta qualunque
+`DATABASE_URL` non locale.
+
+**Corollario per la produzione**: aggiornare lo schema di Neon con
+`npm run db:push` va fatto **da un terminale vero**, perché quel prompt lì
+comparirà e va risposto a mano. Subito dopo serve `npm run db:constraints`, che
+`drizzle-kit` non sa generare.
 
 Il ponte è **`.env.development.local`** (non versionato, `.gitignore` ha
 `.env*`), che contiene solo `DATABASE_URL`. Next lo carica con priorità più
@@ -844,8 +1235,11 @@ sistema. `npm run db:push`, `db:seed` e `db:constraints` puntano ancora a
   soli, vedi skill `vercel-storage`)
 - `npm run db:push` - applica lo schema Drizzle al database (stessa nota sul
   dotenv, già nello script)
-- `npm run test:capienza` / `npm run test:chiusure` - test end-to-end contro un
-  Postgres usa-e-getta (istruzioni in testa agli script in `scripts/`)
+- `npm run test:capienza` / `test:chiusure` / `test:identita` /
+  `test:recensioni` / `test:proposte` - test end-to-end contro un Postgres
+  usa-e-getta (istruzioni in testa agli script in `scripts/`)
+- `npm run test:email` - verifica il contenuto della notifica email al coach e
+  il comportamento senza `RESEND_API_KEY` (nessun database, nessun invio reale)
 - `npm run build` - build di produzione
 
 ## Dati demo
@@ -989,6 +1383,19 @@ bloccato) per un banner "Deployment Blocked" / "Fix Git Configuration".
 - [x] Chiusure del calendario: il coach può togliere una data precisa (un
       turno o l'intera giornata) senza smontare la ricorrenza - vedi la
       sezione "Chiusure del calendario". Test: `npm run test:chiusure`.
+- [x] Email al coach quando arriva una richiesta di lezione - trasporto
+      condiviso `src/lib/email/`, invio best-effort dopo il commit via
+      `waitUntil`. Resta da impostare `RESEND_API_KEY` in produzione e da
+      verificare il mittente `notifiche@playpaideio.com` su Resend; senza
+      chiave l'app funziona come prima. Vedi "Email: un solo trasporto,
+      sempre best-effort" e `docs/EMAIL-SETUP.md`.
+- [ ] Email al giocatore quando il coach conferma o rifiuta (il trasporto c'è
+      già, manca il template: non fatto in questo giro per non toccare il
+      flusso di conferma/rifiuto)
+- [x] Rifiuto motivato e proposta di un altro orario - vedi la sezione
+      "Proposte di orario". Stato `controproposta` e colonne sulla riga della
+      prenotazione, rivalidazione sotto advisory lock in accettazione. Test:
+      `npm run test:proposte`.
 - [ ] Policy di cancellazione: oggi un giocatore può annullare una
       prenotazione `confermata` in qualsiasi momento, senza finestra minima
       né conseguenze per il coach che ha bloccato lo slot.
@@ -1006,7 +1413,10 @@ bloccato) per un banner "Deployment Blocked" / "Fix Git Configuration".
       `confermata` con data passata, una recensione per prenotazione. Media
       calcolata in JS su tutte le review del coach (dataset piccolo, non serve
       SQL aggregate). Il prompt "Lascia una recensione" appare in
-      `/prenotazioni` (`getBookingsForPlayer` calcola `canReview`/`isReviewed`)
+      `/prenotazioni` (`getBookingsForPlayer` calcola `canReview`/`isReviewed`).
+      Era però irraggiungibile dal giorno dopo la lezione, nascosto dal filtro
+      di default: vedi "Recensire una lezione: la regola e la sua
+      raggiungibilità". Test: `npm run test:recensioni`.
 - [x] Coach preferiti (tabella `favorites`, unique su `(playerId, coachId)`,
       `actions/favorites.ts`, `favorite-button.tsx`) - nuova pagina protetta
       `/preferiti`, aggiunta a `proxy.ts`

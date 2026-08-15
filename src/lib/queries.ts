@@ -17,6 +17,7 @@ import {
   intervalsOverlap,
   allowedStarts,
   LESSON_DURATIONS,
+  canReviewBooking,
   DEFAULT_GROUP_CAPACITY,
 } from "./constants";
 import type { BookedLesson } from "./constants";
@@ -295,7 +296,8 @@ async function buildCoachSchedule(coachId: string, daysAhead: number): Promise<S
   const profile = await db.query.coachProfiles.findFirst({
     where: eq(coachProfiles.userId, coachId),
   });
-  const groupCapacity = profile?.groupCapacity ?? DEFAULT_GROUP_CAPACITY;
+  // La capienza non serve più qui: con il modello a finestre i posti si
+  // calcolano sul singolo ritaglio, lato client o in `createBooking`.
   const coachTrainingTypes = parseJsonArray(profile?.trainingTypes ?? "[]");
 
   const closures = await db.query.availabilityClosures.findMany({
@@ -412,6 +414,25 @@ export async function getCoachClosedDays(coachId: string, daysAhead = 28): Promi
     .sort();
 }
 
+/**
+ * Capienza e tipi di lezione del coach, i due valori che servono ovunque si
+ * calcoli la prenotabilità di una fascia (calendario, proposte di orario).
+ * Un profilo mancante non è un errore: il coach può non averlo ancora
+ * compilato, e in quel caso non offre nulla.
+ */
+export async function getCoachProfileBasics(
+  coachId: string
+): Promise<{ groupCapacity: number; trainingTypes: string[]; levels: string[] }> {
+  const profile = await db.query.coachProfiles.findFirst({
+    where: eq(coachProfiles.userId, coachId),
+  });
+  return {
+    groupCapacity: profile?.groupCapacity ?? DEFAULT_GROUP_CAPACITY,
+    trainingTypes: parseJsonArray(profile?.trainingTypes ?? "[]"),
+    levels: parseJsonArray(profile?.levels ?? "[]"),
+  };
+}
+
 export async function getBookingsForPlayer(playerId: string) {
   const rows = await db.query.bookings.findMany({ where: eq(bookings.playerId, playerId) });
   const reviewedBookingIds = new Set(
@@ -425,7 +446,7 @@ export async function getBookingsForPlayer(playerId: string) {
       const location = b.locationId
         ? await db.query.locations.findFirst({ where: eq(locations.id, b.locationId) })
         : undefined;
-      const canReview = b.status === "confermata" && b.date <= today && !reviewedBookingIds.has(b.id);
+      const canReview = canReviewBooking(b, today, reviewedBookingIds.has(b.id));
       return {
         booking: b,
         coach,
@@ -437,6 +458,23 @@ export async function getBookingsForPlayer(playerId: string) {
     })
   );
   return withDetails.sort((a, b) => (a.booking.date + a.booking.startTime).localeCompare(b.booking.date + b.booking.startTime));
+}
+
+/**
+ * Quante lezioni svolte con questo coach il giocatore può ancora recensire.
+ * Serve al profilo pubblico: la sezione "Recensioni" invitava a lasciarne una
+ * senza offrire alcun modo di farlo.
+ */
+export async function countReviewableBookingsWithCoach(playerId: string, coachId: string): Promise<number> {
+  const rows = await db.query.bookings.findMany({
+    where: and(eq(bookings.playerId, playerId), eq(bookings.coachId, coachId)),
+  });
+  if (rows.length === 0) return 0;
+  const reviewedBookingIds = new Set(
+    (await db.query.reviews.findMany({ where: eq(reviews.playerId, playerId) })).map((r) => r.bookingId)
+  );
+  const today = toLocalDateString(new Date());
+  return rows.filter((b) => canReviewBooking(b, today, reviewedBookingIds.has(b.id))).length;
 }
 
 export async function getBookingsForCoach(coachId: string) {

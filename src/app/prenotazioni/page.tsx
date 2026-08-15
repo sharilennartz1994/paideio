@@ -47,6 +47,10 @@ export default async function PrenotazioniPage() {
             notes: booking.notes,
             canReview,
             isReviewed,
+            coachMessage: booking.coachMessage,
+            proposedDate: booking.proposedDate,
+            proposedStartTime: booking.proposedStartTime,
+            proposedEndTime: booking.proposedEndTime,
           }))}
         />
       </div>

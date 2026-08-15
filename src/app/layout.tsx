@@ -6,9 +6,11 @@ import { Hanken_Grotesk, Oxanium } from "next/font/google";
 import { AppSidebar } from "@/components/app-sidebar";
 import { AppTopbar } from "@/components/app-topbar";
 import { AppBottomNav } from "@/components/app-bottom-nav";
+import { RouteBreadcrumb } from "@/components/route-breadcrumb";
 import { SiteFooter } from "@/components/site-footer";
 import { Toaster } from "@/components/ui/sonner";
-import { ArenaMotionDirector, GameRouteStage } from "@/components/design";
+import { OutcomeProvider } from "@/components/outcome-dialog";
+import { ArenaMotionDirector, GameRouteStage, RouteProgressBar } from "@/components/design";
 import "./globals.css";
 
 const hankenGrotesk = Hanken_Grotesk({
@@ -53,19 +55,23 @@ export default function RootLayout({
           >
             Vai al contenuto principale
           </a>
+          <OutcomeProvider>
           <AppTopbar />
           <AppSidebar />
           <ArenaMotionDirector />
+          <RouteProgressBar />
           <main
             id="contenuto-principale"
             tabIndex={-1}
             className="min-h-screen pt-16 md:pl-20"
           >
+            <RouteBreadcrumb />
             <GameRouteStage>{children}</GameRouteStage>
           </main>
           <SiteFooter />
           <AppBottomNav />
           <Toaster position="top-center" />
+          </OutcomeProvider>
         </ClerkProvider>
       </body>
     </html>

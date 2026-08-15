@@ -63,3 +63,6 @@ next-env.d.ts
 
 # Backup database (dati personali reali) — mai nel repo
 .backup/
+
+# worktree temporanei degli agenti
+.claude/worktrees/
