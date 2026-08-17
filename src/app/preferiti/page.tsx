@@ -39,7 +39,7 @@ export default async function PreferitiPage() {
         {favorites.map(({ coach, profile, locations, rating, hasPublishedAvailability, offersLessons }) => (
           <div
             key={coach.id}
-            className="card-clip group flex flex-col gap-4 border-t border-secondary-fixed bg-surface-container-low p-6 transition-colors hover:bg-surface-container-high"
+            className="card-clip group flex flex-col gap-4 border-t border-accent-ball-ink bg-surface-container-low p-6 transition-colors hover:bg-surface-container-high"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-3">
@@ -57,7 +57,7 @@ export default async function PreferitiPage() {
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1.5">
                 {profile.pricePerLesson != null && (
-                  <span className="font-mono text-label-caps font-bold text-secondary-fixed">
+                  <span className="font-mono text-label-caps font-bold text-accent-ball-ink">
                     €{profile.pricePerLesson}/lezione
                   </span>
                 )}
@@ -94,7 +94,7 @@ export default async function PreferitiPage() {
             )}
             <Link
               href={`/coach/${coach.id}`}
-              className="group/btn flex w-fit items-center gap-2 font-heading text-label-caps font-bold text-secondary-fixed uppercase transition-colors duration-150 hover:text-calce"
+              className="group/btn flex w-fit items-center gap-2 font-heading text-label-caps font-bold text-accent-ball-ink uppercase transition-colors duration-150 hover:text-calce"
             >
               {hasPublishedAvailability && offersLessons ? "Vedi profilo e calendario" : "Vedi profilo"}{" "}
               <ArrowRight className="size-4" />

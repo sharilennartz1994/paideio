@@ -4,6 +4,13 @@ import { useState } from "react";
 import { Star } from "@/components/icons/paideio-icons";
 import { cn } from "@/lib/utils";
 
+/*
+ * Le stelle usano `accent-ball-ink`, non `ball`: il giallo pallina è un colore
+ * FISSO e su fondo chiaro dà 1,01:1, cioè un riempimento invisibile con solo il
+ * contorno a reggere. Con l'accento theme-aware si ottiene 5,16:1 di giorno e
+ * 14,49:1 di notte. Le stelle vuote passano da `/55` a `/80` perché al 55%
+ * davano 2,29:1, sotto la soglia di 3:1 per gli elementi non testuali.
+ */
 export function StarRatingDisplay({
   rating,
   count,
@@ -24,7 +31,7 @@ export function StarRatingDisplay({
         {Array.from({ length: 5 }).map((_, i) => (
           <Star
             key={i}
-            className={cn(sizeClass, i < rounded ? "fill-ball text-accent-ball-ink" : "fill-transparent text-muted-foreground/55")}
+            className={cn(sizeClass, i < rounded ? "fill-accent-ball-ink text-accent-ball-ink" : "fill-transparent text-muted-foreground/80")}
           />
         ))}
       </div>
@@ -65,7 +72,7 @@ export function StarRatingInput({ value, onChange }: { value: number; onChange: 
             aria-label={`${starValue} stelle`}
           >
             <Star
-              className={cn("size-6", starValue <= active ? "fill-ball text-accent-ball-ink" : "fill-transparent text-muted-foreground/55")}
+              className={cn("size-6", starValue <= active ? "fill-accent-ball-ink text-accent-ball-ink" : "fill-transparent text-muted-foreground/80")}
             />
           </button>
         );

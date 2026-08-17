@@ -159,6 +159,27 @@ Corollari già applicati:
   proprio: `.game-cta` lo risolve con l’ombra netta, altrove serve
   `border-game-ink` esplicito.
 
+### Il caso simmetrico: `secondary-fixed` sulle superfici tematizzate
+
+`--color-secondary-fixed` e `--color-ball` sono alias di `--ottico`, il giallo
+pallina, che e' **fisso**. Vanno bene come *riempimento* (con `game-ink` sopra,
+15:1), ma usarli come **testo o bordo** su `carta`/`carta-alta` da' **1,01:1**:
+in modalita' giorno spariscono. Su `/preferiti` era cosi' il prezzo, il bordo
+superiore della card e il link "Vedi profilo e calendario"; nella dashboard
+coach il bordo di una statistica, il contorno dell'avatar e la data della
+richiesta. Ora usano `accent-ball-ink` (5,16:1 di giorno, 14,49:1 di notte).
+
+Le stelle avevano lo stesso difetto in forma peggiore: `fill-ball` rendeva il
+riempimento **invisibile** di giorno e lasciava reggere solo il contorno, per
+cui una valutazione piena e una vuota si distinguevano a fatica. Ora il
+riempimento e' `accent-ball-ink`. Le stelle vuote sono passate da
+`text-muted-foreground/55` (2,29:1, sotto la soglia di 3:1 per gli elementi non
+testuali) a `/80` (3,64:1).
+
+Regola pratica: **`ball`/`secondary-fixed` solo come sfondo pieno**. Per testo,
+bordi, icone e riempimenti su superfici che cambiano con il tema, sempre
+`accent-ball-ink`.
+
 ### La regola inversa: superficie fissa ⇒ testo fisso
 
 Sopra c’è la regola “su superficie tematizzata usa accenti theme-aware”. Vale

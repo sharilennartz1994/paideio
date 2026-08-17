@@ -177,7 +177,7 @@ export default async function CoachAdminDashboard() {
           <p className="mb-2 font-mono text-label-caps text-on-surface-variant uppercase">Richieste in attesa</p>
           <p className="font-heading text-headline-lg text-on-surface">{stats.pendingRequests}</p>
         </div>
-        <div className="group relative overflow-hidden border-t border-secondary-fixed bg-surface-container-high p-6">
+        <div className="group relative overflow-hidden border-t border-accent-ball-ink bg-surface-container-high p-6">
           <CalendarCheck className="absolute -right-4 -bottom-4 size-32 text-on-surface opacity-5 transition-transform duration-500 group-hover:scale-110" />
           <p className="mb-2 font-mono text-label-caps text-on-surface-variant uppercase">Confermate questa settimana</p>
           <p className="font-heading text-headline-lg text-on-surface">{stats.confirmedThisWeek}</p>
@@ -228,7 +228,7 @@ export default async function CoachAdminDashboard() {
           {pending.map(({ booking, player, location }) => (
             <div key={booking.id} className="card-clip flex flex-col gap-6 bg-surface-container-high p-6 transition-colors duration-150 hover:bg-surface-bright md:flex-row">
               {player ? (
-                <CoachAvatar name={player.name} className="size-20 shrink-0 border-2 border-secondary-fixed text-xl" />
+                <CoachAvatar name={player.name} className="size-20 shrink-0 border-2 border-accent-ball-ink text-xl" />
               ) : (
                 <div className="flex size-20 shrink-0 items-center justify-center rounded-full border-2 border-outline-variant bg-surface-container-highest">
                   <User className="size-8 text-outline" />
@@ -246,7 +246,7 @@ export default async function CoachAdminDashboard() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-heading text-headline-md text-secondary-fixed">{booking.date}</p>
+                    <p className="font-heading text-headline-md text-accent-ball-ink">{booking.date}</p>
                     <p className="font-mono text-[10px] text-on-surface-variant">{location?.name}</p>
                   </div>
                 </div>
